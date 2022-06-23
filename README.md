@@ -23,3 +23,13 @@ The Decelium Wallet repository bundles two features together; a user wallet to a
     3. See Examples repository for more information
 
 If you are interested in creating systems on the Decelium Network, please visit decelium.com. You will find an Examples repository which will link many real life examples of systems hosted on the Decelium Nework. If you would like to contribute, please visit decelium.com and get in touch.
+
+
+# Getting Started
+### Get up and running on the network right away
+
+Clone the wallet to get started. 
+> git clone https://github.com/Decelium/decelium_wallet
+
+Install any dependencies locally
+> pip install -r requirements.txt
