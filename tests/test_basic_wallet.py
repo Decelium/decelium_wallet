@@ -14,7 +14,7 @@ import decelium.crypto as crypto
 from sys import getsizeof
 from os.path import exists
 
-
+'''
 class OpenDeceliumWallet():
     '''
     A simple open source wallet for holding decelium network artifacts. This wallet is a code level
@@ -104,6 +104,7 @@ class OpenDeceliumWallet():
 
     def recover_user(self,private_key):
         return crypto.crypto.generate_user_from_string(private_key,version='python-ecdsa-0.1')
+'''
 
 class TestBasicWallet(unittest.TestCase):     
     def __init__(self, *args, **kwargs):

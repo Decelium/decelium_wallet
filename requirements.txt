@@ -1,3 +1,6 @@
 ecdsa
 cryptography
 flask
+pandas
+zipfile
+pickle

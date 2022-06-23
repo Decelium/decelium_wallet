@@ -33,3 +33,15 @@ Clone the wallet to get started.
 
 Install any dependencies locally
 > pip install -r requirements.txt
+
+In a python file, import key libraries:
+> import decelium.decelium as decelium
+> import decelium.crypto as crypto
+> 
+> 
+
+In a python file, create your first wallet:
+> 
+> 
+> 
+> 

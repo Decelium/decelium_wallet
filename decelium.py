@@ -5,8 +5,9 @@ A Collection of tools used by the public to interface with Decentralized Cloud s
 Compatible with the HTTP and websockets format of the Decelium project.
 
 Author: Justin Girard
+Date: December 2016
 Licence: MIT Licence. Free to expand on the work and distribute freely.
-
+ -- TODO This connector is (a) old (b) battle hardened. It needs a refactor but it is also currently bulletproof. 
  -- TODO move whole client connector into open source and revise PaxFinancial naming
 '''
 
@@ -389,7 +390,6 @@ class paxqueryengine():
             print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CANT AUTHENTICATE')
             pprint.pprint(networkDef[key])            
             raise(e)
-        #print(">>>>>>>cregistered," + source_id )
         
         try:
             if context_in == None:
@@ -606,12 +606,20 @@ class ImportedPaxFinancialAPI():
         return ImportedPaxFinancialAPI.instances[k]
     
     
-'''
-users= {'test_admin':{'api_key': 'LONG_KEY', 
-                      'private_key': 'SHORTER_KEY', 
-                      'type': 'ecdsa.SECP256k1'}}    
-'''
 class SimpleCryptoRequester():
+    '''
+    A small class that can sit over top of Decelium Network connection, and sign each request as it is sent.
+    Only use SimpleCryptoRequester if you ABSOLUTELY trust every local command you are running. If you run an odd program and 
+    begin processing requests, they will all be auto-verified.
+    
+    The SimpleCryptoRequester is good for small local applications, and tasks like deploying websites, or doing admin work.
+
+    Structure:    
+    pq - a Decelium (or PaxFinancialAPIClass) instance, which has been connected
+    users- {'test_admin':{'api_key': 'LONG_KEY', 
+                        'private_key': 'SHORTER_KEY', 
+                        'version': 'VERSION_INFO'}}    
+    '''
     def __init__(self,pq,users):
         self.pq = pq
         self.users = users.copy()
@@ -633,3 +641,97 @@ class SimpleCryptoRequester():
             qsig = q
         func = getattr(self.pq, self.current_attr)
         return func(qsig,remote=remote,wait_seconds = wait_seconds,re_query_delay=re_query_delay,show_url=show_url)
+
+from sys import getsizeof
+from os.path import exists
+
+
+class SimpleWallet():
+    '''
+    A simple wallet for holding decelium network artifacts. This wallet is a code level
+    wallet only, and does not have a GUI for user interaction. Volunteers are presently working on
+    hardware, javascript, and GUI wallet implementations! 
+
+    Why? We had a lot of problems in web 3.0 with three issues:
+    - sign transactions
+    - store accounts and addresses
+    - store generic secrets, keeping them encrypted too
+    '''
+
+    def load(self,path=None):
+        self.wallet = {}
+        if path != None:
+            if not exists(path):
+                return
+            with open(path,'r') as f:
+                astr = f.read()
+                self.wallet= crypto.do_decode_string(astr )
+
+    def save(self,path):
+        with open(path,'w') as f:
+            dumpstr = crypto.do_encode_string(self.wallet)
+            f.write(dumpstr)
+        with open(path,'r') as f:
+            savedstr = f.read()
+            assert dumpstr == savedstr
+
+    def request_sign(self,message):
+        '''
+        Request a signature on a message from the user.
+        '''
+        print("Authorizing message")
+        return True
+
+    def create_account(self):
+        user = crypto.generate_user(version='python-ecdsa-0.1')
+        assert 'api_key' in user
+        assert 'private_key' in user
+        assert 'version' in user
+        account_data = {'user':user,
+                        'title':user['api_key'],
+                        'image':None,
+                        'description':None,
+                        'secrets':{},
+                        'watch_addresses':[]}
+        self.wallet[user['api_key']] = account_data
+        return user['api_key']
+
+    def list_accounts(self):
+        return list(self.wallet.keys())
+
+    def get_account(self,api_key):
+        if not api_key in self.wallet:
+            return {'error':'User is not in wallet manager'}
+        return self.wallet[user['api_key']] 
+
+    def get_user(self,api_key):
+        if not api_key in self.wallet:
+            return {'error':'User is not in wallet manager'}
+        return self.wallet[api_key]['user'] 
+
+    def set_secret(self,api_key, sid,sjson):
+        if not api_key in self.wallet:
+            return {'error':'User is not in wallet manager'}
+        try:
+            a_string = crypto.do_encode_string(sjson)
+        except:
+            return {'error':'could not encode secret as json'}
+
+        if getsizeof(a_string) > 1024*2:
+            return {'error':'can not store a secret larger than 2kb'}
+
+        self.wallet[api_key]['secrets'][sid] = sjson 
+        return True
+    
+    def get_secret(self,api_key, sid):
+        if not api_key in self.wallet:
+            return {'error':'User is not registered'}
+        if not sid in self.wallet[api_key]['secrets']:
+            return {'error':'secret not saved'}
+        return self.wallet[api_key]['secrets'][sid] 
+
+    def get_raw(self):
+        return this.wallet
+
+    def recover_user(self,private_key):
+        return crypto.generate_user_from_string(private_key,version='python-ecdsa-0.1')
