@@ -35,7 +35,7 @@ Install any dependencies locally
 > pip install -r requirements.txt
 
 Create and print a new user in plantext. Save encrypted.
-> ```
+```
     #Create
     path = './test-'+str(uuid.uuid4())+'.wallet.dec'
     dw = decelium.SimpleWallet()
@@ -47,8 +47,10 @@ Create and print a new user in plantext. Save encrypted.
     dw = decelium.SimpleWallet()
     dw.load(path,"Test_a_strong_password_here")
     print(dw.get_raw())
-> ``` 
-> Note: It would be hard to crack your wallet, but it is absolutely possible for a trained professional to brute force your wallet. Save it somewhere secure, and even better, use a hardware wallet or keygen device that is air gapped to generate keys. We will be releasing a full air-gapped wallet solution soon.
+``` 
+> Note: It would be hard to crack your wallet, but it is absolutely possible for a trained professional to brute force your wallet.
+> Save it somewhere secure. We will be releasing a full air-gapped cold wallet solution as soon as possible, 
+> and if you are a volunteer interested in this part of the project get in touch!
 
 
 Create your first wallet:
