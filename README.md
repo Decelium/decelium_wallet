@@ -26,7 +26,7 @@ If you are interested in creating systems on the Decelium Network, please visit 
 
 
 # Getting Started
-### Get up and running on the network right away
+### Install
 
 Clone the wallet to get started. 
 > git clone https://github.com/Decelium/decelium_wallet
@@ -34,7 +34,7 @@ Clone the wallet to get started.
 Install any dependencies locally
 > pip install -r requirements.txt
 
-Create and print a new user in plantext. Save encrypted.
+### Create a wallet (Local)
 ```
     #Create
     path = './test-'+str(uuid.uuid4())+'.wallet.dec'
@@ -47,31 +47,47 @@ Create and print a new user in plantext. Save encrypted.
     dw = decelium.SimpleWallet()
     dw.load(path,"Test_a_strong_password_here")
     print(dw.get_raw())
+    
+    # Create Network Connection to the Testnet
+    url_version = 'test.paxfinancial.ai'   
+    pq_raw = decelium.Decelium(url_version=url_version,api_key=user['api_key'])
+    pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
 ``` 
 > Note: It would be hard to crack your wallet, but it is absolutely possible for a trained professional to brute force your wallet.
 > Save it somewhere secure. We will be releasing a full air-gapped cold wallet solution as soon as possible, 
 > and if you are a volunteer interested in this part of the project get in touch!
 
+### IPFS Based Website
+```
+    website = '''<!DOCTYPE html><html><body><h1>Generic Heading</h1></p></body></html>'''
+    # Push file online
+    res_obj =pq.create_entity({'api_key':user['api_key'],  
+                                'path':'/html_files/', 
+                                'name':'index.html',
+                                'file_type':'ipfs', 
+                                'payload':website,},remote=True)
 
-Create your first wallet:
-> 
-> 
-> 
+    # Visit 'http://dev.paxfinancial.ai/obj/'+res_obj to see the website!
+    cid_information =pq.download_entity({'api_key':user['api_key'],  
+                                         'path':'index.html',
+                                         'attrib':True})
+    data =pq.download_entity({'api_key':user['api_key'],  
+                                         'path':'index.html'})
+``` 
 
-Create a website:
-> 
-> 
-> 
-
-Create second user:
->
->
->
-
-Transfer website to user:
->
->
->
-
-
-
+### Custom Domain Name
+``` 
+    # Register a domain (you must own the DNS and will get instructions from this method)
+    res_url =pq.create_entity({'api_key':user['api_key'],
+                                    'path':'/apps/'+app_dir+'/domains/',
+                                    'name':"my_test_domain.com",
+                                    'file_type':'host',
+                                    'attrib':{'host':my_test_domain.com,
+                                                'secret_password':"CHOOSE_A_PASSWORD_HERE",
+                                                'target_id':res_obj}
+                                },remote=True)
+```
+### Final Notes
+1. The Decelium Network hosts have over 192 avaliable functions!
+2. Over the coming months, we are working toward simplifying the system
+3. Feel free to get in touch!
