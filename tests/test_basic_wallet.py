@@ -23,11 +23,13 @@ class TestBasicWallet(unittest.TestCase):
         # Set up a wallet from scratch        
         path = './test-'+str(uuid.uuid4())+'.wallet.dec'
         dw = decelium.SimpleWallet()
-        dw.load(path)
+
+
+        dw.load(path=path)
         user = dw.create_account()
-        dw.save(path,"Test_password")
+        dw.save(path=path,password="Example_password")
         dw = decelium.SimpleWallet()
-        dw.load(path,"Test_password")
+        dw.load(path=path,password="Example_password")
         print(dw.get_raw())
         
         # print(pq)
@@ -59,7 +61,7 @@ class TestBasicWallet(unittest.TestCase):
         website = '''<!DOCTYPE html>
 <html>
 <body>
-<h1>Generic Heading</h1>
+<h1>Generic Headin 2</h1>
 <p>Generic paragraph.</p>
 </body>
 </html>'''
@@ -71,7 +73,7 @@ class TestBasicWallet(unittest.TestCase):
         res_data =pq.download_entity({'api_key':user['api_key'], 'path':'/apps/'+app_dir+'/html_files/index.html'},remote=remote)
         print(res_data)        
         assert website==res_data
-        '''https://dev.paxfinancial.ai/obj/obj-153f2733-4ac6-4b35-a375-cf228f5892c9'''
+        '''https://test.paxfinancial.ai/obj/obj-153f2733-4ac6-4b35-a375-cf228f5892c9'''
         '''
         res_url =pq.create_entity({'api_key':api_key,
                                     'path':'/apps/'+app_dir+'/domains/',

@@ -75,6 +75,8 @@ class crypto:
             sk = ecdsa.SigningKey.from_string(pk,hashfunc=hashlib.sha256,curve=ecdsa.SECP256k1)
             sigs[signer['api_key']] = sk.sign(q.encode()).hex()
         msg['__sigs'] = sigs
+        import pprint
+        pprint.pprint(msg)
         return msg
 
     def verify_request(msg,version='python-ecdsa-0.1'):

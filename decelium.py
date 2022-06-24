@@ -658,16 +658,22 @@ class SimpleWallet():
     - store generic secrets, keeping them encrypted too
     '''
 
-    def load(self,path=None,password=None):
+    def load(self,path=None,password=None,data=None):
         self.wallet = {}
-        if path != None:
-            if not exists(path):
-                return
-            with open(path,'r') as f:
-                astr = f.read()
-                if password != None:
-                    astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
-                self.wallet= crypto.do_decode_string(astr )
+        if path != None or data !=None:
+            if data == None:
+                if not exists(path):
+                    return
+                with open(path,'r') as f:
+                    astr = f.read()
+            elif type(data) == dict:
+                # Force validation via encoding
+                astr = crypto.do_encode_string(data)
+            else:
+                astr = crypto.do_encode_string(json.loads(data))
+            if password != None:
+                astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
+            self.wallet= crypto.do_decode_string(astr )
 
     def save(self,path,password=None):
         with open(path,'w') as f:
