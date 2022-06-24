@@ -89,5 +89,7 @@ Install any dependencies locally
 ```
 ### Final Notes
 1. The Decelium Network hosts have over 192 avaliable functions!
-2. Over the coming months, we are working toward simplifying the system
-3. Feel free to get in touch!
+2. Over the coming months, we are working on documentation.
+3. The best place to begin is the ./tests/ folder.
+4. This is a new repository and still in progress
+5. Get in touch!
