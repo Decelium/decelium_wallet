@@ -34,11 +34,22 @@ Clone the wallet to get started.
 Install any dependencies locally
 > pip install -r requirements.txt
 
-In a python file, import key libraries:
-> import decelium.decelium as decelium
-> import decelium.crypto as crypto
-> 
-> 
+Create and print a new user in plantext. Save encrypted.
+> ```
+    #Create
+    path = './test-'+str(uuid.uuid4())+'.wallet.dec'
+    dw = decelium.SimpleWallet()
+    dw.load(path)
+    user = dw.create_account()
+    dw.save(path,"Test_a_strong_password_here")
+    
+    # Load
+    dw = decelium.SimpleWallet()
+    dw.load(path,"Test_a_strong_password_here")
+    print(dw.get_raw())
+> ``` 
+> Note: It would be hard to crack your wallet, but it is absolutely possible for a trained professional to brute force your wallet. Save it somewhere secure, and even better, use a hardware wallet or keygen device that is air gapped to generate keys. We will be releasing a full air-gapped wallet solution soon.
+
 
 Create your first wallet:
 > 
