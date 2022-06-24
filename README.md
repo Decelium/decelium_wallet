@@ -11,12 +11,12 @@ Every modern computer has four properties: Network, Memory, Processing, and a Se
 
 The Decelium Wallet repository bundles two features together; a user wallet to allow users self-custody over their resources (websites, processes, jobs). Second, a Protocol client for connecting to the network and running commands. These tools are in an experimental stage, and we will be crafting our own underlying libraries.
 
-1. A User Wallet - wallet.py
+1. A User Wallet
     1. Self Custody: Local User Key Management
     2. Mini Database: Local Secrets Management
     3. Authorization: Local Message Signing
     4. Privacy: Local Cypher Support
-2. A Decelium Protocol Client -decelium.py
+2. A Decelium Protocol Client
     1. Create a Website
     2. Create a User
     2. Sign a Request
