@@ -117,7 +117,6 @@ class crypto:
         token = f.encrypt(str.encode(content))
         return token.decode()
     
-    
     def encode_key(content,password,version='python-ecdsa-0.1'): 
         assert version == "python-ecdsa-0.1"
         password = password.encode('utf-8')

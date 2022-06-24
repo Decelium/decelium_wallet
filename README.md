@@ -40,8 +40,25 @@ In a python file, import key libraries:
 > 
 > 
 
-In a python file, create your first wallet:
+Create your first wallet:
 > 
 > 
 > 
+
+Create a website:
 > 
+> 
+> 
+
+Create second user:
+>
+>
+>
+
+Transfer website to user:
+>
+>
+>
+
+
+

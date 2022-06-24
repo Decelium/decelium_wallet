@@ -658,18 +658,23 @@ class SimpleWallet():
     - store generic secrets, keeping them encrypted too
     '''
 
-    def load(self,path=None):
+    def load(self,path=None,password=None):
         self.wallet = {}
         if path != None:
             if not exists(path):
                 return
             with open(path,'r') as f:
                 astr = f.read()
+                if password != None:
+                    astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
                 self.wallet= crypto.do_decode_string(astr )
 
-    def save(self,path):
+    def save(self,path,password=None):
         with open(path,'w') as f:
             dumpstr = crypto.do_encode_string(self.wallet)
+            if password != None:
+                dumpstr = crypto.encode(dumpstr,password,version='python-ecdsa-0.1')
+
             f.write(dumpstr)
         with open(path,'r') as f:
             savedstr = f.read()
@@ -677,7 +682,7 @@ class SimpleWallet():
 
     def request_sign(self,message):
         '''
-        Request a signature on a message from the user.
+            Request a signature on a message from the user.
         '''
         print("Authorizing message")
         return True
@@ -694,7 +699,7 @@ class SimpleWallet():
                         'secrets':{},
                         'watch_addresses':[]}
         self.wallet[user['api_key']] = account_data
-        return user['api_key']
+        return user
 
     def list_accounts(self):
         return list(self.wallet.keys())
@@ -709,7 +714,7 @@ class SimpleWallet():
             return {'error':'User is not in wallet manager'}
         return self.wallet[api_key]['user'] 
 
-    def set_secret(self,api_key, sid,sjson):
+    def set_secret(self,api_key, sid, sjson):
         if not api_key in self.wallet:
             return {'error':'User is not in wallet manager'}
         try:
@@ -731,7 +736,7 @@ class SimpleWallet():
         return self.wallet[api_key]['secrets'][sid] 
 
     def get_raw(self):
-        return this.wallet
+        return self.wallet
 
     def recover_user(self,private_key):
         return crypto.generate_user_from_string(private_key,version='python-ecdsa-0.1')
