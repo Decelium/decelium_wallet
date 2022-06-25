@@ -39,7 +39,7 @@ class crypto:
         return encoded.decode('ascii') 
 
     def do_decode_string(data_packet):
-        user_data_dev = base64.b64decode(data_packet)                   
+        user_data_dev = base64.b64decode(data_packet) 
         data2 = jsondateencode_crypto.loads(user_data_dev.decode("ascii"))
         return data2
     
@@ -68,15 +68,12 @@ class crypto:
         assert version == "python-ecdsa-0.1"
         q = crypto.do_encode_string(msg)
         msg = msg.copy()
-        #print(q)
         sigs = {}
         for signer in signers:
             pk = binascii.unhexlify(signer['private_key'])
             sk = ecdsa.SigningKey.from_string(pk,hashfunc=hashlib.sha256,curve=ecdsa.SECP256k1)
             sigs[signer['api_key']] = sk.sign(q.encode()).hex()
         msg['__sigs'] = sigs
-        import pprint
-        pprint.pprint(msg)
         return msg
 
     def verify_request(msg,version='python-ecdsa-0.1'):

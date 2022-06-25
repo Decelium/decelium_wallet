@@ -24,6 +24,7 @@ import json
 import datetime
 import urllib.parse
 from .crypto import crypto
+import os
 
 import sys 
 sys.path.append('../')
@@ -676,6 +677,9 @@ class SimpleWallet():
             self.wallet= crypto.do_decode_string(astr )
 
     def save(self,path,password=None):
+        if exists(path):
+            os.remove(path)
+
         with open(path,'w') as f:
             dumpstr = crypto.do_encode_string(self.wallet)
             if password != None:
@@ -693,8 +697,9 @@ class SimpleWallet():
         print("Authorizing message")
         return True
 
-    def create_account(self):
-        user = crypto.generate_user(version='python-ecdsa-0.1')
+    def create_account(self,user = None,label=None,version='python-ecdsa-0.1'):
+        if user == None:
+            user = crypto.generate_user(version=version)
         assert 'api_key' in user
         assert 'private_key' in user
         assert 'version' in user
@@ -704,24 +709,30 @@ class SimpleWallet():
                         'description':None,
                         'secrets':{},
                         'watch_addresses':[]}
-        self.wallet[user['api_key']] = account_data
+        if label == None:
+            label = user['api_key']
+        self.wallet[label] = account_data
         return user
 
     def list_accounts(self):
         return list(self.wallet.keys())
 
-    def get_account(self,api_key):
-        if not api_key in self.wallet:
+    def rename_account(self,old_label,new_label):
+        self.wallet[new_label] = self.wallet[old_label]
+        del(self.wallet[old_label])
+        
+    def get_account(self,label):
+        if not label in self.wallet:
             return {'error':'User is not in wallet manager'}
-        return self.wallet[user['api_key']] 
+        return self.wallet[label] 
 
-    def get_user(self,api_key):
-        if not api_key in self.wallet:
+    def get_user(self,label):
+        if not label in self.wallet:
             return {'error':'User is not in wallet manager'}
-        return self.wallet[api_key]['user'] 
+        return self.wallet[label]['user'] 
 
-    def set_secret(self,api_key, sid, sjson):
-        if not api_key in self.wallet:
+    def set_secret(self,label, sid, sjson):
+        if not label in self.wallet:
             return {'error':'User is not in wallet manager'}
         try:
             a_string = crypto.do_encode_string(sjson)
@@ -731,15 +742,15 @@ class SimpleWallet():
         if getsizeof(a_string) > 1024*2:
             return {'error':'can not store a secret larger than 2kb'}
 
-        self.wallet[api_key]['secrets'][sid] = sjson 
+        self.wallet[label]['secrets'][sid] = sjson 
         return True
     
-    def get_secret(self,api_key, sid):
-        if not api_key in self.wallet:
+    def get_secret(self,label, sid):
+        if not label in self.wallet:
             return {'error':'User is not registered'}
-        if not sid in self.wallet[api_key]['secrets']:
+        if not sid in self.wallet[label]['secrets']:
             return {'error':'secret not saved'}
-        return self.wallet[api_key]['secrets'][sid] 
+        return self.wallet[label]['secrets'][sid] 
 
     def get_raw(self):
         return self.wallet
