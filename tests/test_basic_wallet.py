@@ -27,7 +27,7 @@ class TestBasicWallet(unittest.TestCase):
         dw = decelium.SimpleWallet()
         dw.load(path=path)
         user = dw.create_account()
-        dw.rename(user['api_key'],'admin')
+        dw.rename_account(user['api_key'],'admin')
         dw.save(path=path,password="Example_password")
         dw = decelium.SimpleWallet()
         dw.load(path=path,password="Example_password")
@@ -39,9 +39,9 @@ class TestBasicWallet(unittest.TestCase):
         dw = decelium.SimpleWallet()
         dw.load(path,password)
         accts = dw.list_accounts()
+        #print(accts)
         assert 'admin' in accts
-        #print(dw.get_user('admin'))
-
+        print(dw.get_user('admin'))
         # Network Connection
         user = dw.get_user('admin')
         url_version = 'dev.paxfinancial.ai'
@@ -61,7 +61,7 @@ class TestBasicWallet(unittest.TestCase):
         res_obj =pq.create_entity({'api_key':user['api_key'],  'path':'/html_files/', 
                                     'name':'index.html','file_type':'file', 
                                     'payload':website,},remote=remote)
-        print(res_obj)        
+
         res_data =pq.download_entity({'api_key':user['api_key'], 'path':'/html_files/index.html'},remote=remote)
         print(res_data)        
         assert website==res_data
@@ -86,6 +86,6 @@ if __name__ == "__main__":
     tbw = TestBasicWallet()
     # Set up query engine
     remote = True
-    #tbw.test_user_setup(pq=None,api_key=None,remote=True)
+    # tbw.test_user_setup(pq=None,api_key=None,remote=True)
     tbw.test_create_website(pq=None,api_key=None,remote=True)
     
