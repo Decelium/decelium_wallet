@@ -1,34 +1,22 @@
 from flask import send_from_directory,Flask, Response
-app = Flask(__name__)
+app = Flask(__name__,static_folder='BCSJAFNKNDJFBIGEABUINKDSNFVSAUFYVASBWIBUFBYDBUISDBSUBFUSAFYUFVSAHFSBJSADBYIAFWY')
 app.config.from_object(__name__)
 
-'''
-########## TODO: Finish proxy implementation (if needed)
 
-#import sys
-#sys.path.append('../../FinancialAlgorithm')
-#sys.path.append('../../')
-from PaxFinancialAPI import PaxFinancialAPIClass
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/<path:u_path>', methods=['GET', 'POST'])
+def index(u_path="/"):
+    #return u_path
+    #print(repr(u_path))
+    #return u_path
+    #src = '/app/react-nft-boiler/website/build/' + u_path
+    #src = src.replace("//","/")
+    #file_arr = src.split("/")
+    #src= '/'.join(file_arr[:-1])
+    #file_name = src[-1]
+    #return (src,":",file_name)
+    return send_from_directory('/app/', u_path)
 
-#password_sha = hashlib.sha224(session_code.encode('utf-8')).hexdigest()
-#print(password_sha)
-
-#pq = paxdk.PaxFinancialAPI.PaxFinancialAPI(url_version='http://34.214.236.190:5000')
-pq = paxdk.PaxFinancialAPI.PaxFinancialAPIClass(url_version='dev.paxfinancial.ai')
-#############
-
-@app.route('/data/query/<path:path>')
-def api_proxy(path):
-    api_key = "pkey-a0f8540cacc41427ae251101ce1dc1f612068ffcbe9801f27294251a"
-    session_code = 'ses-d6ff065d-2fd3-44e7-bf96-158f90782786'
-    pq.purge_logs({'api_key':session_code},remote=False)
-    
-    return send_from_directory('/app/projects/', path)
-'''
-
-@app.route('/<path:path>')
-def send_report(path):
-    return send_from_directory('/app/projects/', path)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
