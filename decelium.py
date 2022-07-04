@@ -276,6 +276,7 @@ class paxqueryengine():
         #print('requests',show_url)
         if show_url:
             print(url)
+            print(query)
         data = {}
         data['qtype'] = source_id
         data['__encoded_query'] = paxqueryengine.do_encode(query)
