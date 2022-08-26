@@ -8,6 +8,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import hashlib, json
 import datetime
+import getpass
+
 class jsondateencode_crypto:
     def loads(dic):
         return json.loads(dic,object_hook=datetime_parser)
@@ -33,6 +35,20 @@ def datetime_parser(dct):
     return dct
 
 class crypto:
+    def getpass():
+        path = ''
+        password = None
+        while password == None and len(path)<=3*4: 
+            try:
+                with open(path+'.password','r') as f:
+                    password =  f.read()
+                    print(password)
+                    return password.strip()
+            except:
+                path = path + '../'
+                password = None
+        return getpass.getpass()
+
     def do_encode_string(obj):
         string = jsondateencode_crypto.dumps(obj,separators=(',', ':'))
         encoded = base64.b64encode(string.encode('ascii'))
@@ -48,7 +64,9 @@ class crypto:
         assert version == "python-ecdsa-0.1"
         sk = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256) 
         vk = sk.get_verifying_key()
-        user = {'api_key':vk.to_string().hex(),
+        pk = vk.to_string().hex()
+        user = {'api_key':pk,
+                'address':pk[-42],
                 'private_key':sk.to_string().hex(),
                 'version':"python-ecdsa-0.1"}
         return user
@@ -60,6 +78,7 @@ class crypto:
         sk = ecdsa.SigningKey.from_string(pk,hashfunc=hashlib.sha256,curve=ecdsa.SECP256k1)
         vk = sk.get_verifying_key()
         user = {'api_key':vk.to_string().hex(),
+                'address':vk.to_string().hex()[-42],
                 'private_key':sk.to_string().hex(),
                 'version':"python-ecdsa-0.1"}
         return user

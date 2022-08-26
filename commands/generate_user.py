@@ -1,4 +1,4 @@
-import sys
+import sys, getpass
 import pandas as pd
 import unittest    
 import uuid    
@@ -25,19 +25,27 @@ if __name__ == "__main__":
                             'version': 'python-ecdsa-0.1'},
             }
     '''
-    users = {
-
-    }
-    password = "A_STRONG_CMD_LINE_SAFE_PASS_HERE"
-    path = './new.wallet.dec'
+    #path = '../../.wallet.dec'
+    #path = '../../.wallet.dec'
+    path = sys.argv[1:][0]
+    user_id = sys.argv[1:][1]
+    password = getpass.getpass()
     dw = decelium.SimpleWallet()
     dw.load(path=path,password=password)
-    for user_id in users.keys():
-        user_data = users[user_id]
-        #print(users[user_id])
-        user = dw.create_account(label=user_id,user=user_data)
-    dw.save(path=path,password=password)
-    dw = decelium.SimpleWallet()
-    dw.load(path=path,password=password)
-    import pprint
-    pprint.pprint(dw.get_raw())
+    user_data = crypto.crypto.generate_user()
+    user = dw.create_account(label=user_id,user=user_data)
+    print("Are you sure you want to write this user? you should backup your wallet first!! (yes/no)")
+    print(user_id+":")
+    print(user)
+    yes = getpass.getpass()
+    if yes != "yes" and yes != "y":
+        print("aborted. exit..")
+        sys.exit(0)
+    else:
+        print("saving..")
+        #dw.set_secret(user_id, 'Example_secret_value', "some_password_123")
+        dw.save(path=path,password=password)
+        dw = decelium.SimpleWallet()
+        dw.load(path=path,password=password)
+        import pprint
+        pprint.pprint(dw.get_raw())
