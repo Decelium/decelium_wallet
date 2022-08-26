@@ -42,7 +42,6 @@ class crypto:
             try:
                 with open(path+'.password','r') as f:
                     password =  f.read()
-                    print(password)
                     return password.strip()
             except:
                 path = path + '../'
