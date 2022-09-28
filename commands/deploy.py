@@ -109,7 +109,7 @@ def run(*args):
     site_dir = args[2]    
     upload_dir = args[3]
     self_id = None
-    if len(sys.argv) >= 5:
+    if len(args) >= 5:
         self_id = args[4]
     password = crypto.getpass()
    
