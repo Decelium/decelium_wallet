@@ -2,8 +2,12 @@ import sys
  
 sys.path.append('../../')
 
+original_stdout = sys.stdout
+sys.stdout = open("/dev/null","w")
 from decelium.crypto import crypto
 from decelium import decelium
+sys.stdout = original_stdout
+
 import uuid
 import base64
 import pprint
@@ -57,18 +61,22 @@ def deploy_dns(pq,api_key,path,name,secret_passcode):
     assert 'obj-' in res_url
     return res_url
 
-def deploy_website(pq,api_key,path,name,source_path,self_id):
+def deploy_website(pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
     shutil.make_archive('temp_upload', 'zip', source_path)
     with open("temp_upload.zip",'rb') as f:
         bts = f.read()
         encoded = base64.b64encode(bts).decode("ascii")       
-    #print("encoded...  ", encoded[0:20])
+        
+    original_stdout = sys.stdout
+    if jsonOutputOnly:
+        sys.stdout = open("/dev/null","w")
+    print("encoded...  ", encoded[0:20])
     remote=True
     fil  = pq.delete_entity({'api_key':api_key, 
                             'path':path, 
                             'name':name, 
                             },remote=remote) # show_url=True to debug
-    #print(fil)                            
+    print(fil)                            
     assert fil == True or 'error' in fil
 
     
@@ -85,7 +93,9 @@ def deploy_website(pq,api_key,path,name,source_path,self_id):
     
     fil  = pq.create_entity(fil_args,remote=remote)
     #print(fil['traceback'])
-    #print("upload response...  ",fil)
+    print("upload response...  ",fil)
+    sys.stdout = original_stdout
+    
     assert 'obj-' in fil
     data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=remote)
     #import pprint
@@ -125,8 +135,14 @@ def run(*args):
     site_dir = args[2]    
     upload_dir = args[3]
     self_id = None
-    if len(args) >= 5:
-        self_id = args[4]
+    jsonOutputOnly = False
+    for i in (4,5):
+        if len(args) >= i+1:
+            if args[i] == 'json':
+                jsonOutputOnly = True
+            else:
+                if self_id == None:
+                    self_id = args[i]
             
     password = crypto.getpass()
     #password = get_password()
@@ -143,16 +159,22 @@ def run(*args):
     
     [pq,api_key,wallet] = load_pq(wallet_path,password,url_version)
     #secret_passcode = wallet.get_secret('admin', 'decelium_com_dns_code')
-    website_id = deploy_website(pq,api_key,root_path,site_name,website_path,self_id)
-    #print("deploy_website ..."+website_id)
+    website_id = deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
+    
+    original_stdout = sys.stdout
+    if jsonOutputOnly:
+        sys.stdout = open("/dev/null","w")
+        
+    print("deploy_website ..."+website_id)
     #print(website_id)
     
     #if selection == "dns":
     #    deploy_dns(pq,api_key,root_path,dns_name,website_id,secret_passcode)
     #    print("deploy_dns ...")
     
-    #for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
-    #    print("deployed... ", item['self_id'], ' as ', item['dir_name'])
+    for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
+        print("deployed... ", item['self_id'], ' as ', item['dir_name'])
+    sys.stdout = original_stdout    
     '''
         python3 deploy.py ../../.wallet.dec dev.paxfinancial.ai  dec_path01~
     '''
