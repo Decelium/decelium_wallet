@@ -1,3 +1,4 @@
+import os
 import sys
  
 sys.path.append('../../')
@@ -11,172 +12,212 @@ sys.stdout = original_stdout
 import uuid
 import base64
 import pprint
-import shutil
-import os 
+import shutil     
 import json
 
-target_user = 'sid' 
+target_user = 'sid'
 
-def load_pq(path,password,url_version):
-    global target_user
-    dw = decelium.SimpleWallet()
-    dw.load(path,password)
-    accts = dw.list_accounts()
-    
-    #print(accts)
-    #print(dw.get_user('admin'))
-    
-    assert target_user in accts
-    user = dw.get_user(target_user)
-    pq_raw = decelium.Decelium(url_version=url_version,api_key=user['api_key'])
-    pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
-    return pq, user['api_key'], dw
-
-
-def deploy_dns(pq,api_key,path,name,secret_passcode):
-    remote=True
-    for item in pq.list({'api_key':api_key, 'attrib':{'host':name}, },remote=True): 
-        print("REMOVING "+str(item))   
-        fil  = pq.delete_entity({'api_key':api_key, 
-                                'self_id':item['self_id'], 
-                                },remote=remote) # show_url=True to debug
+class Deploy():
+    def _load_pq(self,path,password,url_version):
+        global target_user
+        dw = decelium.SimpleWallet()
+        dw.load(path,password)
+        accts = dw.list_accounts()
         
-    fil  = pq.delete_entity({'api_key':api_key, 
-                            'path':path, 
-                            'name':name, 
-                            },remote=remote) # show_url=True to debug
-    try:
-        print("delete"+fil)             
-    except:
-        pass               
-    assert fil == True or 'error' in fil
-    res_url =pq.create_entity({'api_key':api_key,
-                            'path':path,
-                            'name':name,
-                            'file_type':'host',
-                            'attrib':{'host':name,
-                                        'secret_password':secret_passcode,
-                                        'target_id':target_self_id}
-                            },remote=remote)
-    assert 'obj-' in res_url
-    return res_url
-
-def deploy_website(pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
-    shutil.make_archive('temp_upload', 'zip', source_path)
-    with open("temp_upload.zip",'rb') as f:
-        bts = f.read()
-        encoded = base64.b64encode(bts).decode("ascii")       
+        #print(accts)
+        #print(dw.get_user('admin'))
         
-    original_stdout = sys.stdout
-    if jsonOutputOnly:
-        sys.stdout = open("/dev/null","w")
-    print("encoded...  ", encoded[0:20])
-    remote=True
-    fil  = pq.delete_entity({'api_key':api_key, 
-                            'path':path, 
-                            'name':name, 
-                            },remote=remote) # show_url=True to debug
-    print(fil)                            
-    assert fil == True or 'error' in fil
+        assert target_user in accts
+        user = dw.get_user(target_user)
+        pq_raw = decelium.Decelium(url_version=url_version,api_key=user['api_key'])
+        pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
+        return pq, user['api_key'], dw
 
-    
-    fil_args = {
-        'api_key':api_key,
-        'path':path,
-        'name':name,
-        'file_type':'ipfs',
-        'payload_type':'folder',
-        'payload':encoded}
-    if self_id != None:
-        fil_args['self_id'] = self_id    
-    #print(fil_args)
-    
-    fil  = pq.create_entity(fil_args,remote=remote)
-    #print(fil['traceback'])
-    print("upload response...  ",fil)
-    sys.stdout = original_stdout
-    
-    assert 'obj-' in fil
-    data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=remote)
-    #import pprint
-    #pprint.pprint(data)
-    print(json.dumps(data))
-    return fil
-    #print("Uploaded to "+fil)
-
-
-def explain():
-    return "wallet_path url_version site_dir dec_path"
-
-def get_password():
-    for prefix in ['./','../','../../']:
-        filename = prefix+".password"
-        print(filename)
-        if os.path.exists(filename):
-            f = open(filename, 'r')
-            password = f.read()
-            f.close()
-            break
-    else:
-        password = crypto.getpass()
-    print("password="+str(password))
-    return password
-
-def run(*args):    
-    dir_path = os.path.dirname(os.path.realpath(__file__))    
-    os.chdir(dir_path)
-    #url_version = 'test.paxfinancial.ai'
-    #print(type(args))
-    #print(args)
-    #print(type(args[0]))
-    #print(args[0])
-    wallet_path = args[0]
-    url_version = args[1]    
-    site_dir = args[2]    
-    upload_dir = args[3]
-    self_id = None
-    jsonOutputOnly = False
-    for i in (4,5):
-        if len(args) >= i+1:
-            if args[i] == 'json':
-                jsonOutputOnly = True
-            else:
-                if self_id == None:
-                    self_id = args[i]
+    def _deploy_dns(self,pq,api_key,path,name,secret_passcode):
+        remote=True
+        for item in pq.list({'api_key':api_key, 'attrib':{'host':name}, },remote=True): 
+            print("REMOVING "+str(item))   
+            fil  = pq.delete_entity({'api_key':api_key, 
+                                    'self_id':item['self_id'], 
+                                    },remote=remote) # show_url=True to debug
             
-    password = crypto.getpass()
-    #password = get_password()
-   
-    #---- begin
-    root_path='/'.join(site_dir.split("/")[:-1])
-    site_name = site_dir.split("/")[-1]
-    website_path = '/'.join(upload_dir.split("/")[:-1])
+        fil  = pq.delete_entity({'api_key':api_key, 
+                                'path':path, 
+                                'name':name, 
+                                },remote=remote) # show_url=True to debug
 
-    #print(root_path)
-    #print(site_name)
-    #print(website_path)
-    #return
+        try:
+            print("delete"+fil)             
+        except:
+            pass               
+        assert fil == True or 'error' in fil
+        res_url =pq.create_entity({'api_key':api_key,
+                                'path':path,
+                                'name':name,
+                                'file_type':'host',
+                                'attrib':{'host':name,
+                                            'secret_password':secret_passcode,
+                                            'target_id':target_self_id}
+                                },remote=remote)
+        assert 'obj-' in res_url
+        return res_url
+
+    def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
+        from decelium.chunk import Chunk
+        print(dir(Chunk))
+        from_path = source_path
+        chunk_path = "remote_test"
+        remote_path_ipfs = path
+     
+        remote=True
+        dir_fil = Chunk.upload(pq,api_key,remote,from_path,chunk_path)
+
+        print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
+        del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
+        print(del_fil)
+        print({
+            'api_key':api_key,
+            'path':remote_path_ipfs,
+            'name':name,
+            'file_type':'ipfs',
+            'payload_type':'chunk_directory',
+            'payload':dir_fil})
+        fil  = pq.create_entity({
+            'api_key':api_key,
+            'path':remote_path_ipfs,
+            'name':name,
+            'file_type':'ipfs',
+            'payload_type':'chunk_directory',
+            'payload':dir_fil},remote=True)
+        #print(fil['traceback'])
+        print("upload response...  ",fil)
+        assert 'obj-' in fil
+        data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
+        #import pprint
+        #pprint.pprint(data)
+        print(json.dumps(data))
+        return fil
+        #print("Uploaded to "+fil)
     
-    [pq,api_key,wallet] = load_pq(wallet_path,password,url_version)
-    #secret_passcode = wallet.get_secret('admin', 'decelium_com_dns_code')
-    website_id = deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
+    def _deploy_small_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
+        shutil.make_archive('temp_upload', 'zip', source_path)
+        with open("temp_upload.zip",'rb') as f:
+            bts = f.read()
+            encoded = base64.b64encode(bts).decode("ascii") 
+            
+        original_stdout = sys.stdout
+        if jsonOutputOnly:
+            sys.stdout = open("/dev/null","w")
+            
+        print("encoded...  ", encoded[0:20])
+        remote=True
+        fil  = pq.delete_entity({'api_key':api_key, 
+                                'path':path, 
+                                'name':name, 
+                                },remote=remote) # show_url=True to debug
+        print(fil)                            
+        assert fil == True or 'error' in fil
+
+        fil_args = {
+            'api_key':api_key,
+            'path':path,
+            'name':name,
+            'file_type':'ipfs',
+            'payload_type':'folder',
+            'payload':encoded}
+        if self_id != None:
+            fil_args['self_id'] = self_id    
+
+        fil  = pq.create_entity(fil_args,remote=remote)
     
-    original_stdout = sys.stdout
-    if jsonOutputOnly:
-        sys.stdout = open("/dev/null","w")
+        #print(fil['traceback'])
+        print("upload response...  ",fil)
+        sys.stdout = original_stdout        
+        assert 'obj-' in fil
+        data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=remote)
+        #import pprint
+        #pprint.pprint(data)
+        print(json.dumps(data))
+        return fil
+        print("Uploaded to "+fil)
+
+    def get_password():
+        for prefix in ['./','../','../../']:
+            filename = prefix+".password"
+            print(filename)
+            if os.path.exists(filename):
+                f = open(filename, 'r')
+                password = f.read()
+                f.close()
+                break
+        else:
+            password = crypto.getpass()
+        print("password="+str(password))
+        return password
+
+    def explain(self):
+        return "wallet_path url_version site_dir dec_path"
+
+    def run(self,*args):
+        dir_path = os.path.dirname(os.path.realpath(__file__))    
+        os.chdir(dir_path)
+        #url_version = 'test.paxfinancial.ai'
+        #print(type(args))
+        #print(args)
+        #print(type(args[0]))
+        #print(args[0])
+        wallet_path = args[0]
+        url_version = args[1]    
+        site_dir = args[2]    
+        upload_dir = args[3] 
+        self_id = None
+        jsonOutputOnly = False
+        for i in (4,5):
+            if len(args) >= i+1:
+                if args[i] == 'json':
+                    jsonOutputOnly = True
+                else:
+                    if self_id == None:
+                        self_id = args[i]
+        password = crypto.getpass()
+    
+        #---- begin
+        #root_path= site_dir
+        #site_name = upload_dir.split("/")[-1]
+        #website_path = '/'.join(upload_dir.split("/")[:-1])
+        root_path='/'.join(site_dir.split("/")[:-1])
+        site_name = site_dir.split("/")[-1]
+        website_path = '/'.join(upload_dir.split("/")[:-1])
         
-    print("deploy_website ..."+website_id)
-    #print(website_id)
-    
-    #if selection == "dns":
-    #    deploy_dns(pq,api_key,root_path,dns_name,website_id,secret_passcode)
-    #    print("deploy_dns ...")
-    
-    for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
-        print("deployed... ", item['self_id'], ' as ', item['dir_name'])
-    sys.stdout = original_stdout    
-    '''
-        python3 deploy.py ../../.wallet.dec dev.paxfinancial.ai  dec_path01~
-    '''
+        print(root_path)
+        print(site_name)
+        print(website_path)
+        #return
+        
+        [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version)
+        secret_passcode = wallet.get_secret('admin', 'decelium_com_dns_code')
+        website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
+
+        original_stdout = sys.stdout
+        if jsonOutputOnly:
+            sys.stdout = open("/dev/null","w")        
+        print("deploy_website ..."+website_id)
+            
+        #if selection == "dns":
+        #    deploy_dns(pq,api_key,root_path,dns_name,website_id,secret_passcode)
+        #    print("deploy_dns ...")
+        
+        for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
+            print("deployed... ", item['self_id'], ' as ', item['dir_name'])
+        sys.stdout = original_stdout  
+            
+            
 if __name__ == "__main__":
-    run(*sys.argv[1:])
+    # if you import as a library, then the importer is in charge of these imports
+    direc = '/'.join(__file__.split('/')[:-3]) +'/'
+    #os.chdir(direc)
+    #sys.path.append('./')
+    from decelium.crypto import crypto
+    from decelium import decelium
+    c = Deploy()
+    c.run(*sys.argv[1:])

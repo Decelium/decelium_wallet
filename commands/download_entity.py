@@ -44,7 +44,6 @@ if __name__ == "__main__":
  
     [pq,api_key,wallet] = load_pq(wallet_path,password,url_version)
     print({'api_key':api_key, 'path':root_directory, })
-    for item in pq.list({'api_key':api_key, 'path':root_directory, },remote=True):
-        #print(item['error'])
-        print("deployed... ", item['self_id'], ' as ', item['dir_name'])
+    result = pq.download_entity({'api_key':api_key, 'path':root_directory, 'attrib':True},remote=True)
+    print(result)
         
