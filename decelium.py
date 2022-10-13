@@ -23,11 +23,17 @@ import base64
 import json
 import datetime
 import urllib.parse
-from .crypto import crypto
+import sys 
+#from .crypto import crypto
+try:
+    from .crypto import crypto
+except:
+    import crypto
+    crypto = crypto.crypto
+    #from decelium.crypto import crypto
+
 import os
 
-import sys 
-sys.path.append('../')
 try:
     from processingNetwork.ProcessingNode import ProcessingNode
     from processingNetwork.ProcessingNetwork import ProcessingNetwork
@@ -182,7 +188,7 @@ class paxqueryengine():
             time_print_start(label)
             time_print_end(label)
             time_list_print()
-        
+         
         '''
         time_print_init("")
         time_print_start("query_local")
