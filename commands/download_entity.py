@@ -10,7 +10,7 @@ import shutil
 import getpass
 #from dotenv import load_dotenv
 
-def load_pq(path,password,url_version):
+def load_pq(path,password,url_version,target_user):
     dw = decelium.SimpleWallet()
     dw.load(path,password)
     accts = dw.list_accounts()
@@ -18,8 +18,8 @@ def load_pq(path,password,url_version):
     print(accts)
     #print(dw.get_user('admin'))
     
-    assert 'sid' in accts
-    user = dw.get_user('sid')
+    assert target_user in accts
+    user = dw.get_user(target_user)
     pq_raw = decelium.Decelium(url_version=url_version,api_key=user['api_key'])
     pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
     return pq, user['api_key'], dw
@@ -37,12 +37,14 @@ if __name__ == "__main__":
 
     
     wallet_path = sys.argv[1:][0]
-    url_version = sys.argv[1:][1]
-    root_directory = sys.argv[1:][2]
+    target_user = sys.argv[1:][1]
+    url_version = sys.argv[1:][2]
+    root_directory = sys.argv[1:][3]
+    
     
     password = crypto.getpass()
  
-    [pq,api_key,wallet] = load_pq(wallet_path,password,url_version)
+    [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,target_user)
     print({'api_key':api_key, 'path':root_directory, })
     result = pq.download_entity({'api_key':api_key, 'path':root_directory, 'attrib':True},remote=True)
     print(result)

@@ -3,8 +3,7 @@ sys.path.append("../../")
 from decelium.crypto import crypto
 from decelium import decelium
 
-def _load_pq(path,password,url_version):
-    target_user = 'sid'
+def _load_pq(path,password,url_version,target_user):
     dw = decelium.SimpleWallet()
     dw.load(path,password)
     accts = dw.list_accounts()
@@ -23,7 +22,7 @@ def main():
     wallet_path = sys.argv[1]
     password = crypto.getpass()
     
-    [pq,api_key,wallet] = _load_pq(wallet_path,password,sys.argv[3])
+    [pq,api_key,wallet] = _load_pq(wallet_path,password,sys.argv[3],sys.argv[2])
     
     print(api_key)
     
