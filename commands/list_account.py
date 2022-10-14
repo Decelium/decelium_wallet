@@ -43,7 +43,7 @@ if __name__ == "__main__":
     
     password = crypto.getpass()
  
-    [pq,api_key,wallet] = load_pq(wallet_path,password,url_version)
+    [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,target_user)
     print({'api_key':api_key, 'path':root_directory, })
     for item in pq.list({'api_key':api_key, 'path':root_directory, },remote=True):
         #print(item['error'])
