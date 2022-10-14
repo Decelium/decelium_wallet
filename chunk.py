@@ -114,6 +114,7 @@ class Chunk:
                 #print("DOING CREATE")
                 delay = (time.time() - t)
                 #print("END DOING CREATE "+str(delay))
+                #print("fil=")
                 #print(fil)
                 assert 'obj' in fil
         Chunk.obliterate(extract_path)

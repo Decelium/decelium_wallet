@@ -40,6 +40,7 @@ class crypto:
         password = None
         while password == None and len(path)<=3*4: 
             try:
+                #sys.stderr.write(os.path.abspath(path+'.password\n'))
                 with open(path+'.password','r') as f:
                     password =  f.read()
                     return password.strip()

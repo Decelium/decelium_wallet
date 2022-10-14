@@ -1,10 +1,10 @@
 import sys
 sys.path.append("../../")
+sys.path.append("../../../")
 from decelium.crypto import crypto
 from decelium import decelium
 
-def _load_pq(path,password,url_version):
-    target_user = 'sid'
+def load_pq(path,password,url_version,target_user):
     dw = decelium.SimpleWallet()
     dw.load(path,password)
     accts = dw.list_accounts()
@@ -22,8 +22,10 @@ def main():
 
     wallet_path = sys.argv[1]
     password = crypto.getpass()
+    wallet_user = sys.argv[2]
+    dec_username = sys.argv[3]
     
-    [pq,api_key,wallet] = _load_pq(wallet_path,password,sys.argv[3])
+    [pq,api_key,wallet] = load_pq(wallet_path,password,sys.argv[4],wallet_user)
     
     print(api_key)
     
@@ -31,16 +33,16 @@ def main():
     #dw.load(path=wallet_path,password=password)
     wallet_contents = wallet.get_raw()
     
-    access_keys = wallet_contents[sys.argv[2]]['user'].copy()
+    access_keys = wallet_contents[wallet_user]['user'].copy()
     access_keys['private_key'] = "deadbeef"
     print(access_keys)
     
-    feature = {'username': 'sid3000',
+    feature = {'username': dec_username,
                'api_key': api_key,
                'access_key':access_keys,
                'password': 'passtest',
                'password2':'passtest',}
-    result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':'sid3000',},remote=True)   
+    result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)   
     obj_id = pq.user_register(feature,remote=True)
     print(obj_id) 
 

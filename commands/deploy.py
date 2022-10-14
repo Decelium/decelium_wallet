@@ -2,6 +2,7 @@ import os
 import sys
  
 sys.path.append('../../')
+sys.path.append('../../../')
 
 original_stdout = sys.stdout
 sys.stdout = open("/dev/null","w")
@@ -15,11 +16,8 @@ import pprint
 import shutil     
 import json
 
-target_user = 'sid'
-
 class Deploy():
-    def _load_pq(self,path,password,url_version):
-        global target_user
+    def _load_pq(self,path,password,url_version,target_user):
         dw = decelium.SimpleWallet()
         dw.load(path,password)
         accts = dw.list_accounts()
@@ -64,7 +62,13 @@ class Deploy():
 
     def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
         from decelium.chunk import Chunk
+
+        original_stdout = sys.stdout
+        if jsonOutputOnly:
+            sys.stdout = open("/dev/null","w")
+            
         print(dir(Chunk))
+
         from_path = source_path
         chunk_path = "remote_test"
         remote_path_ipfs = path
@@ -91,6 +95,7 @@ class Deploy():
             'payload':dir_fil},remote=True)
         #print(fil['traceback'])
         print("upload response...  ",fil)
+        sys.stdout = original_stdout 
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
         #import pprint
@@ -167,12 +172,13 @@ class Deploy():
         #print(type(args[0]))
         #print(args[0])
         wallet_path = args[0]
-        url_version = args[1]    
-        site_dir = args[2]    
-        upload_dir = args[3] 
+        target_user = args[1]
+        url_version = args[2]    
+        site_dir = args[3]    
+        upload_dir = args[4] 
         self_id = None
         jsonOutputOnly = False
-        for i in (4,5):
+        for i in (5,6):
             if len(args) >= i+1:
                 if args[i] == 'json':
                     jsonOutputOnly = True
@@ -188,19 +194,25 @@ class Deploy():
         root_path='/'.join(site_dir.split("/")[:-1])
         site_name = site_dir.split("/")[-1]
         website_path = '/'.join(upload_dir.split("/")[:-1])
-        
+ 
+        original_stdout = sys.stdout
+        if jsonOutputOnly:
+            sys.stdout = open("/dev/null","w")
+
         print(root_path)
         print(site_name)
         print(website_path)
         #return
         
-        [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version)
+        [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
         secret_passcode = wallet.get_secret('admin', 'decelium_com_dns_code')
+        
+        sys.stdout = original_stdout
         website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
-
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open("/dev/null","w")        
+        
         print("deploy_website ..."+website_id)
             
         #if selection == "dns":
