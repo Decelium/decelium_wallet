@@ -15,6 +15,7 @@ import base64
 import pprint
 import shutil     
 import json
+import time
 
 class Deploy():
     def _load_pq(self,path,password,url_version,target_user):
@@ -86,23 +87,32 @@ class Deploy():
             'file_type':'ipfs',
             'payload_type':'chunk_directory',
             'payload':dir_fil})
-        fil  = pq.create_entity({
+        
+        q = {
             'api_key':api_key,
             'path':remote_path_ipfs,
             'name':name,
             'file_type':'ipfs',
             'payload_type':'chunk_directory',
-            'payload':dir_fil},remote=True)
+            'payload':dir_fil}
+        fil  = pq.create_entity(q,remote=True)
         #print(fil['traceback'])
-        print("upload response...  ",fil)
-        sys.stdout = original_stdout 
+        print("early upload response...  ",fil)
+        if 'message' in fil and fil['message']=='Endpoint request timed out':
+            time.sleep(5)
+            for i in range (1,5):
+                data_test  = pq.download_entity({'api_key':api_key,'path':remote_path_ipfs+"/"+name , 'attrib':True},remote=True)
+                if not 'self_id' in data_test: 
+                    time.sleep(i)
+                else:
+                    fil = data_test['self_id']
+                    break
+        print("later upload response...  ",fil)
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
-        #import pprint
-        #pprint.pprint(data)
+        sys.stdout = original_stdout 
         print(json.dumps(data))
         return fil
-        #print("Uploaded to "+fil)
     
     def _deploy_small_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
         shutil.make_archive('temp_upload', 'zip', source_path)
