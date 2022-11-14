@@ -15,6 +15,7 @@ import base64
 import pprint
 import shutil     
 import json
+import time
 
 class Deploy():
     def _load_pq(self,path,password,url_version,target_user):
@@ -31,7 +32,7 @@ class Deploy():
         pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
         return pq, user['api_key'], dw
 
-    def _deploy_dns(self,pq,api_key,path,name,secret_passcode):
+    def _deploy_dns(self,pq,api_key,path,name,website_id,secret_passcode):
         remote=True
         for item in pq.list({'api_key':api_key, 'attrib':{'host':name}, },remote=True): 
             print("REMOVING "+str(item))   
@@ -55,7 +56,7 @@ class Deploy():
                                 'file_type':'host',
                                 'attrib':{'host':name,
                                             'secret_password':secret_passcode,
-                                            'target_id':target_self_id}
+                                            'target_id':website_id}
                                 },remote=remote)
         assert 'obj-' in res_url
         return res_url
@@ -86,23 +87,33 @@ class Deploy():
             'file_type':'ipfs',
             'payload_type':'chunk_directory',
             'payload':dir_fil})
-        fil  = pq.create_entity({
+        
+        q = {
             'api_key':api_key,
             'path':remote_path_ipfs,
             'name':name,
             'file_type':'ipfs',
             'payload_type':'chunk_directory',
-            'payload':dir_fil},remote=True)
+            'payload':dir_fil}
+        
+        fil  = pq.create_entity(q,remote=True)
         #print(fil['traceback'])
-        print("upload response...  ",fil)
-        sys.stdout = original_stdout 
+        print("early upload response...  ",fil)
+        if 'message' in fil and fil['message']=='Endpoint request timed out':
+            time.sleep(5)
+            for i in range (1,5):
+                data_test  = pq.download_entity({'api_key':api_key,'path':remote_path_ipfs+"/"+name , 'attrib':True},remote=True)
+                if not 'self_id' in data_test: 
+                    time.sleep(i)
+                else:
+                    fil = data_test['self_id']
+                    break
+        print("later upload response...  ",fil)
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
-        #import pprint
-        #pprint.pprint(data)
+        sys.stdout = original_stdout 
         print(json.dumps(data))
         return fil
-        #print("Uploaded to "+fil)
     
     def _deploy_small_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
         shutil.make_archive('temp_upload', 'zip', source_path)
@@ -164,6 +175,7 @@ class Deploy():
         return "wallet_path url_version site_dir dec_path"
 
     def run(self,*args):
+        #print("RUNNING")
         dir_path = os.path.dirname(os.path.realpath(__file__))    
         os.chdir(dir_path)
         #url_version = 'test.paxfinancial.ai'
@@ -176,9 +188,18 @@ class Deploy():
         url_version = args[2]    
         site_dir = args[3]    
         upload_dir = args[4] 
+        dns_host = None
+        dns_secret_location = None
+        if len(args) >= 6 and len(args[5]) > 5:
+            dns_host = args[5]
+        if len(args) >= 7 and len(args[6]) > 4:
+            dns_secret_location = args[6]
+        if not dns_host and dns_secret_location:
+            print("If you provide a dns_host you need to specify where the secret is located within your wallet as well")
+        print("dns_host",args)
         self_id = None
         jsonOutputOnly = False
-        for i in (5,6):
+        for i in (5,6,7,8):
             if len(args) >= i+1:
                 if args[i] == 'json':
                     jsonOutputOnly = True
@@ -205,7 +226,7 @@ class Deploy():
         #return
         
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
-        secret_passcode = wallet.get_secret('admin', 'decelium_com_dns_code')
+        secret_passcode = wallet.get_secret(target_user, dns_secret_location)
         
         sys.stdout = original_stdout
         website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
@@ -214,10 +235,11 @@ class Deploy():
             sys.stdout = open("/dev/null","w")        
         
         print("deploy_website ..."+website_id)
-            
-        #if selection == "dns":
-        #    deploy_dns(pq,api_key,root_path,dns_name,website_id,secret_passcode)
-        #    print("deploy_dns ...")
+        if dns_host: #(self,       pq,api_key,path,    name,    secret_passcode):
+            dns = self._deploy_dns(pq,api_key,'/_dns/',dns_host,website_id,secret_passcode)
+            print("deploy_dns ..."+ str(dns))
+        else:        
+            print("skip_dns ...")
         
         for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
             print("deployed... ", item['self_id'], ' as ', item['dir_name'])
