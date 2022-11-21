@@ -56,9 +56,13 @@ class Deploy():
                                 'file_type':'host',
                                 'attrib':{'host':name,
                                             'secret_password':secret_passcode,
-                                            'target_id':website_id}
-                                },remote=remote)
-        assert 'obj-' in res_url
+                                            'target_id':website_id}        
+                                  },remote=remote)
+        try:
+            assert 'obj-' in res_url
+        except:
+            print("Could not set up dns")
+            print(res_url)
         return res_url
 
     def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
