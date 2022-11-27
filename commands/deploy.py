@@ -79,6 +79,7 @@ class Deploy():
         remote_path_ipfs = path
      
         remote=True
+
         dir_fil = Chunk.upload(pq,api_key,remote,from_path,chunk_path)
 
         print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
