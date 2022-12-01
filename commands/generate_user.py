@@ -29,7 +29,7 @@ if __name__ == "__main__":
     #path = '../../.wallet.dec'
     path = sys.argv[1:][0]
     user_id = sys.argv[1:][1]
-    password = crypto.getpass()
+    password = getpass.getpass()
     dw = decelium.SimpleWallet()
     dw.load(path=path,password=password)
     user_data = crypto.crypto.generate_user()
