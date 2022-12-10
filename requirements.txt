@@ -2,5 +2,5 @@ ecdsa
 cryptography
 flask
 pandas
-zipfile
+zipfile36
 pickle
