@@ -104,6 +104,10 @@ class Chunk:
             with open(extract_path+"/"+filename,'r') as f:
                 t = time.time()
                 #print("DOING CREATE")
+<<<<<<< HEAD
+=======
+                #return
+>>>>>>> 12984a5c24616226aea256b2efe7f5445a48b7bb
                 fil  = pq.create_entity({
                     'api_key':api_key,
                     'path':remote_path,
@@ -114,6 +118,10 @@ class Chunk:
                 #print("DOING CREATE")
                 delay = (time.time() - t)
                 #print("END DOING CREATE "+str(delay))
+<<<<<<< HEAD
+=======
+                #print("fil=")
+>>>>>>> 12984a5c24616226aea256b2efe7f5445a48b7bb
                 #print(fil)
                 assert 'obj' in fil
         Chunk.obliterate(extract_path)

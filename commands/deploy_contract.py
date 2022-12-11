@@ -79,7 +79,6 @@ class Deploy():
         remote_path_ipfs = path
      
         remote=True
-
         dir_fil = Chunk.upload(pq,api_key,remote,from_path,chunk_path)
 
         print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
@@ -176,50 +175,70 @@ class Deploy():
         print("password="+str(password))
         return password
 
-    def explain(self):
-        return "wallet_path url_version site_dir dec_path"
+    def __deploy_contract(self,pq,api_key,path,name,target_contract_id,target_contract_path):    
+        with open(target_contract_path,'r') as contract_py:
+            func_data= contract_py.read()
+        
+        
+        remote=True
+        full_path =path+name 
+        #print(api_key)
+        fil  = pq.delete_entity({'api_key':api_key, 
+                                'path':path, 
+                                'name':name, 
+                                },remote=remote) # show_url=True to debug
+        assert fil == True or 'error' in fil
+        if target_contract_id:
+            fil  = pq.delete_entity({'api_key':api_key, 
+                                    'self_id':target_contract_id, 
+                                    },remote=remote) # show_url=True to debug
+        assert fil == True or 'error' in fil
+        
+        fil  = pq.create_entity({'api_key':api_key, 
+                                'path':path, 
+                                'name':name, 
+                                'self_id':target_contract_id, 
+                                'file_type':'file',
+                                'payload':func_data
+                                },remote=remote) # show_url=True to debug
+        if 'traceback' in fil:
+            pprint.pprint(fil['traceback'])
+        if 'error' in fil:
+            pprint.pprint(fil['error'])
 
+        assert 'obj-' in fil
+        print("launched "+fil)
+        return fil
+
+
+    def explain(self):
+        return "wallet_path target_user url_version site_dir upload_dir target_contract_id"
+         
     def run(self,*args):
-        #print("RUNNING")
         dir_path = os.path.dirname(os.path.realpath(__file__))    
         os.chdir(dir_path)
-        #url_version = 'test.paxfinancial.ai'
-        #print(type(args))
-        #print(args)
-        #print(type(args[0]))
-        #print(args[0])
         wallet_path = args[0]
         target_user = args[1]
         url_version = args[2]    
         site_dir = args[3]    
         upload_dir = args[4] 
-        dns_host = None
-        dns_secret_location = None
-        if len(args) >= 6 and len(args[5]) > 5:
-            dns_host = args[5]
-        if len(args) >= 7 and len(args[6]) > 4:
-            dns_secret_location = args[6]
-        if not dns_host and dns_secret_location:
-            print("If you provide a dns_host you need to specify where the secret is located within your wallet as well")
-        print("dns_host",args)
-        self_id = None
+        if len(args) > 5:
+            target_contract_id = args[5] 
+        else:
+            target_contract_id = None
         jsonOutputOnly = False
+
         for i in (5,6,7,8):
             if len(args) >= i+1:
                 if args[i] == 'json':
                     jsonOutputOnly = True
-                else:
-                    if self_id == None:
-                        self_id = args[i]
+        
         password = crypto.getpass()
     
-        #---- begin
-        #root_path= site_dir
-        #site_name = upload_dir.split("/")[-1]
-        #website_path = '/'.join(upload_dir.split("/")[:-1])
         root_path='/'.join(site_dir.split("/")[:-1])
         site_name = site_dir.split("/")[-1]
-        website_path = '/'.join(upload_dir.split("/")[:-1])
+        #target_contract_path = '/'.join(upload_dir.split("/")[:-1])
+        target_contract_path = upload_dir
  
         original_stdout = sys.stdout
         if jsonOutputOnly:
@@ -227,29 +246,21 @@ class Deploy():
 
         print(root_path)
         print(site_name)
-        print(website_path)
-        #return
-        
+        print(target_contract_path)
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
-        secret_passcode = wallet.get_secret(target_user, dns_secret_location)
-        
+
         sys.stdout = original_stdout
-        website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
+        # _deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
+        contract_id = self.__deploy_contract(pq,api_key,root_path,site_name,target_contract_id,target_contract_path)
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open("/dev/null","w")        
         
-        print("deploy_website ..."+website_id)
-        if dns_host: #(self,       pq,api_key,path,    name,    secret_passcode):
-            dns = self._deploy_dns(pq,api_key,'/_dns/',dns_host,website_id,secret_passcode)
-            print("deploy_dns ..."+ str(dns))
-        else:        
-            print("skip_dns ...")
+        print("deploy_contract ..."+contract_id)
         
         for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
             print("deployed... ", item['self_id'], ' as ', item['dir_name'])
-        sys.stdout = original_stdout  
-            
+        sys.stdout = original_stdout 
             
 if __name__ == "__main__":
     # if you import as a library, then the importer is in charge of these imports
