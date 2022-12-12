@@ -6,8 +6,19 @@ sys.path.append('../../../')
 
 original_stdout = sys.stdout
 sys.stdout = open("/dev/null","w")
-from decelium.crypto import crypto
-from decelium import decelium
+try:
+    # Default to the locally installed wallet
+    import decelium_wallet.decelium as decelium
+    from decelium_wallet.crypto import crypto
+    from decelium_wallet.chunk import Chunk
+
+except:        
+    # Otherwise use the pip package
+    from decelium.crypto import crypto
+    from decelium.chunk import Chunk
+    import decelium.decelium as decelium
+
+
 sys.stdout = original_stdout
 
 import uuid
@@ -66,7 +77,6 @@ class Deploy():
         return res_url
 
     def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
-        from decelium.chunk import Chunk
 
         original_stdout = sys.stdout
         if jsonOutputOnly:
@@ -256,7 +266,6 @@ if __name__ == "__main__":
     direc = '/'.join(__file__.split('/')[:-3]) +'/'
     #os.chdir(direc)
     #sys.path.append('./')
-    from decelium.crypto import crypto
-    from decelium import decelium
+
     c = Deploy()
     c.run(*sys.argv[1:])

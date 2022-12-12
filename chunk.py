@@ -76,7 +76,7 @@ class Chunk:
     def extract_zip(from_file,to_path):
         with ZipFile(from_file, 'r') as zipObj:
             zipObj.extractall(to_path)     
-            
+        
             
     def upload(pq,api_key,remote,from_path,remote_path,extract_path = "chunk_test"):        
         Chunk.build(from_path,extract_path)    
@@ -94,20 +94,19 @@ class Chunk:
         chunks = [name for name in os.listdir(extract_path)]
         for filename in chunks:
             t = time.time()
-            #print("DOING DELETE")
+            print("DOING DELETE")
             fil  = pq.delete_entity({'api_key':api_key, 
                                     'path':remote_path, 
                                     'name':filename, 
                                     },remote=remote) # show_url=True to debug
+            print(fil)
+            
             delay = (time.time() - t)
             #print("END DOING DELETE"+ str(delay))
             with open(extract_path+"/"+filename,'r') as f:
                 t = time.time()
-                #print("DOING CREATE")
-<<<<<<< HEAD
-=======
-                #return
->>>>>>> 12984a5c24616226aea256b2efe7f5445a48b7bb
+                print("DOING CREATE")
+
                 fil  = pq.create_entity({
                     'api_key':api_key,
                     'path':remote_path,
@@ -117,12 +116,9 @@ class Chunk:
                 #t = time.time()
                 #print("DOING CREATE")
                 delay = (time.time() - t)
-                #print("END DOING CREATE "+str(delay))
-<<<<<<< HEAD
-=======
-                #print("fil=")
->>>>>>> 12984a5c24616226aea256b2efe7f5445a48b7bb
-                #print(fil)
+                print("END DOING CREATE "+str(delay))
+
+                print(fil)
                 assert 'obj' in fil
         Chunk.obliterate(extract_path)
         return dir_obj_id
