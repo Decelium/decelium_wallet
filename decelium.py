@@ -759,6 +759,11 @@ class SimpleWallet():
             return {'error':'secret not saved'}
         return self.wallet[label]['secrets'][sid] 
 
+    def list_secrets(self,label):
+        if not label in self.wallet:
+            return {'error':'User is not registered'}
+        return list(self.wallet[label]['secrets'].keys()) 
+
     def get_raw(self):
         return self.wallet
 
