@@ -67,7 +67,7 @@ test('Run nodejs tests', async () => {
     pkg1 = pyodide.pyimport("cryptography");
     console.log(pyodide.runPython("import cryptography"));
     
-    await pyodide.runPythonAsync(`
+    await pyodide.runPythonAsync(` 
         with open("/mnt/crypto.py", "rb") as f1:
             with open("crypto.py", "wb") as f2:
                 s = f1.read()
