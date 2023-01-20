@@ -91,9 +91,12 @@ class Deploy():
         remote=True
 
         dir_fil = Chunk.upload(pq,api_key,remote,from_path,chunk_path)
+        print(dir_fil) # node index.js .env.test file_browser deploy-test
+        assert 'obj-' in dir_fil or 'dir-' in dir_fil
 
         print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
         del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
+        print("_deploy_website DEBUG 2") # node index.js .env.test file_browser deploy-test
         print(del_fil)
         print({
             'api_key':api_key,
@@ -102,7 +105,7 @@ class Deploy():
             'file_type':'ipfs',
             'payload_type':'chunk_directory',
             'payload':dir_fil})
-        
+        # node index.js .env.test file_browser deploy-test
         q = {
             'api_key':api_key,
             'path':remote_path_ipfs,
@@ -110,6 +113,7 @@ class Deploy():
             'file_type':'ipfs',
             'payload_type':'chunk_directory',
             'payload':dir_fil}
+        
         
         fil  = pq.create_entity(q,remote=True)
         #print(fil['traceback'])

@@ -1,0 +1,26 @@
+{
+  "name": "decelium_wallet",
+  "version": "1.0.0",
+  "description": "> Experimental: This code will change in the future, including function names. Please keep up to date with the repository! # Decelium Protocol ### Decentralizing web hosting and containers",
+  "main": "decelium.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest nodewallet.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://justin.girard: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@github.com/Decelium/decelium_wallet.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Decelium/decelium_wallet/issues"
+  },
+  "homepage": "https://github.com/Decelium/decelium_wallet#readme",
+  "dependencies": {
+    "jest": "^29.3.1",
+    "pyodide": "^0.22.0"
+  }
+}
