@@ -31,6 +31,7 @@ import time
 class Deploy():
     def _load_pq(self,path,password,url_version,target_user):
         dw = decelium.SimpleWallet()
+
         dw.load(path,password)
         accts = dw.list_accounts()
         
@@ -191,8 +192,8 @@ class Deploy():
 
     def run(self,*args):
         #print("RUNNING")
-        dir_path = os.path.dirname(os.path.realpath(__file__))    
-        os.chdir(dir_path)
+        #dir_path = os.path.dirname(os.path.realpath(__file__))    
+        #os.chdir(dir_path)
         #url_version = 'test.paxfinancial.ai'
         #print(type(args))
         #print(args)
