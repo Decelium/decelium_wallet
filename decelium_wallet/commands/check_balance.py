@@ -18,12 +18,14 @@ def load_pq(path,password,url_version,target_user):
     pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
     return pq, user['api_key'], dw
 
-def main():
+def run(*args):
 
-    wallet_path = sys.argv[1]
+    wallet_path = args[0]
+    target_user = args[1]
+    url_version = args[2]
     password = crypto.getpass()
     
-    [pq,api_key,wallet] = load_pq(wallet_path,password,sys.argv[3],sys.argv[2])
+    [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,target_user)
     
     print(api_key)
     
@@ -36,4 +38,4 @@ def main():
     
 if __name__ == "__main__":
 
-    main()
+    run(*sys.argv[1:])
