@@ -1,8 +1,8 @@
 import sys
 sys.path.append("../../")
 sys.path.append("../../../")
-from decelium.crypto import crypto
-from decelium import decelium
+from decelium_wallet.crypto import crypto
+from decelium_wallet import decelium
 
 def load_pq(path,password,url_version,target_user):
     dw = decelium.SimpleWallet()
@@ -18,18 +18,21 @@ def load_pq(path,password,url_version,target_user):
     pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
     return pq, user['api_key'], dw
 
-def main():
+def run(*args):
 
-    wallet_path = sys.argv[1]
+    wallet_path = args[0]
     password = crypto.getpass()
+    wallet_user = args[1]
+    dec_username = args[2]
+    url_version = args[3]
     
-    [pq,api_key,wallet] = load_pq(wallet_path,password,sys.argv[4],sys.argv[2])
+    [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,wallet_user)
     
     print(api_key)
         
-    result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':sys.argv[3],},remote=True)
+    result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)
     print(result)
     
 if __name__ == "__main__":
 
-    main()
+    run(*sys.argv[1:])
