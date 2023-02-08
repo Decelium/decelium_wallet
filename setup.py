@@ -7,7 +7,7 @@ setup(
     url='https://github.com/Decelium/decelium_wallet.git',
     author='Justin Girard',
     author_email='justin.girard@justingirard.com',
-    packages=['decelium_wallet'],
+    packages=['decelium_wallet','decelium_wallet.commands', 'decelium_wallet.tests'],
     install_requires=[ 'ecdsa',
                         'cryptography',
                         'flask',
