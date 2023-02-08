@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../../")
-from decelium.crypto import crypto
-from decelium import decelium
+from decelium_wallet.crypto import crypto
+from decelium_wallet import decelium
 
 def load_pq(path,password,url_version,target_user):
     dw = decelium.SimpleWallet()
@@ -9,7 +9,8 @@ def load_pq(path,password,url_version,target_user):
     accts = dw.list_accounts()
 
     #print(accts)
-    #print(dw.get_user('admin'))
+    #print(target_user)
+    #print(dw.get_user(target_user))
 
     assert target_user in accts
     user = dw.get_user(target_user)
