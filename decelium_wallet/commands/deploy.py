@@ -14,10 +14,9 @@ try:
 
 except:        
     # Otherwise use the pip package
-    from decelium.crypto import crypto
-    from decelium.chunk import Chunk
-    import decelium.decelium as decelium
-
+    from decelium_wallet.crypto import crypto
+    from decelium_wallet.chunk import Chunk
+    import decelium_wallet.decelium as decelium
 
 sys.stdout = original_stdout
 
