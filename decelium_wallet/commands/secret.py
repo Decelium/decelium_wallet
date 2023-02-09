@@ -51,6 +51,7 @@ class Deploy():
         wallet = decelium.SimpleWallet()
         wallet.load(wallet_path,password)
         accts = wallet.list_accounts()
+        print(accts)
         #print(wallet.wallet)
         assert target_user in accts   
         if command == "list":
