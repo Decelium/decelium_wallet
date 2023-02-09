@@ -36,8 +36,8 @@ def run(*args):
     user_data = crypto.crypto.generate_user()
     user = dw.create_account(label=user_id,user=user_data)
     print("Are you sure you want to write this user? you should backup your wallet first!! (yes/no)")
-    print(user_id+":")
-    print(user)
+    #print(user_id+":")
+    #print(user)
     yes = getpass.getpass()
     if yes != "yes" and yes != "y":
         print("aborted. exit..")
