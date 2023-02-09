@@ -9,11 +9,12 @@ import requests
 import datetime,time
 import unittest
 import uuid
-import decelium.decelium as decelium
-import decelium.crypto as crypto
+import decelium_wallet.decelium as decelium
+import decelium_wallet.crypto as crypto
 from sys import getsizeof
 from os.path import exists
-if __name__ == "__main__":
+
+def run(*args):
     '''
     This example shows, if you have the api_key and public key of an account, how to generate a wallet. This is 
     a very rare circumstance, and usually only comes up if you have just a private key to work with.
@@ -27,8 +28,8 @@ if __name__ == "__main__":
     '''
     #path = '../../.wallet.dec'
     #path = '../../.wallet.dec'
-    path = sys.argv[1:][0]
-    user_id = sys.argv[1:][1]
+    path = args[0:][0]
+    user_id = args[0:][1]
     password = getpass.getpass()
     dw = decelium.SimpleWallet()
     dw.load(path=path,password=password)
@@ -49,3 +50,6 @@ if __name__ == "__main__":
         dw.load(path=path,password=password)
         import pprint
         pprint.pprint(dw.get_raw())
+        
+if __name__ == "__main__": 
+    run(*sys.argv[1:])
