@@ -1,0 +1,20 @@
+{
+  "name": "@decelium/decelium_wallet",
+  "version": "0.1.0",
+  "description": "> Experimental: This code will change in the future, including function names. Please keep up to date with the repository! # Decelium Protocol ### Decentralizing web hosting and containers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Decelium/decelium_wallet.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Decelium/decelium_wallet/issues"
+  },
+  "homepage": "https://github.com/Decelium/decelium_wallet#readme"
+}
