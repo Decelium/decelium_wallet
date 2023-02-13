@@ -8,6 +8,9 @@ setup(
     author='Justin Girard',
     author_email='justin.girard@justingirard.com',
     packages=['decelium_wallet','decelium_wallet.commands', 'decelium_wallet.tests'],
+    entry_points = {
+        'console_scripts': ['decw=decelium_wallet.commands.decw:run'],
+    }
     install_requires=[ 'ecdsa',
                         'cryptography',
                         'flask',
