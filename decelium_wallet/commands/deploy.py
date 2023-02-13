@@ -5,7 +5,7 @@ sys.path.append('../../')
 sys.path.append('../../../')
 
 original_stdout = sys.stdout
-sys.stdout = open("/dev/null","w")
+sys.stdout = open(os.devnull,"w")
 try:
     # Default to the locally installed wallet
     import decelium_wallet.decelium as decelium
@@ -80,7 +80,7 @@ class Deploy():
 
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")
+            sys.stdout = open(os.devnull,"w")
             
         print(dir(Chunk))
 
@@ -138,7 +138,7 @@ class Deploy():
             
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")
+            sys.stdout = open(os.devnull,"w")
             
         print("encoded...  ", encoded[0:20])
         remote=True
@@ -233,7 +233,7 @@ class Deploy():
  
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")
+            sys.stdout = open(os.devnull,"w")
 
         print(root_path)
         print(site_name)
@@ -247,7 +247,7 @@ class Deploy():
         website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")        
+            sys.stdout = open(os.devnull,"w")        
         
         print("deploy_website ..."+website_id)
         if dns_host: #(self,       pq,api_key,path,    name,    secret_passcode):
