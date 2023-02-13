@@ -6,7 +6,7 @@ sys.path.append('../../')
 sys.path.append('../../../')
 
 original_stdout = sys.stdout
-sys.stdout = open("/dev/null","w")
+sys.stdout = open(os.devnull,"w")
 try:
     # Default to the locally installed wallet
     import decelium_wallet.decelium as decelium
@@ -29,7 +29,6 @@ import shutil
 import json
 import time
 
-class Deploy():
 
     def explain(self):
         return "wallet_path target_user command secret_id secret_value secret_value"
