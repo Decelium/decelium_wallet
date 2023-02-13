@@ -6,8 +6,8 @@ sys.path.append('../../../')
 
 original_stdout = sys.stdout
 sys.stdout = open("/dev/null","w")
-from decelium.crypto import crypto
-from decelium import decelium
+from decelium_wallet.crypto import crypto
+from decelium_wallet import decelium
 sys.stdout = original_stdout
 
 import uuid
@@ -41,7 +41,7 @@ class Deploy():
                                     },remote=remote) # show_url=True to debug
             
         fil  = pq.delete_entity({'api_key':api_key, 
-                                'path':'/_dns/'+name,, 
+                                'path':'/_dns/'+name,
                                 'name':name, 
                                 },remote=remote) # show_url=True to debug
 
@@ -80,6 +80,7 @@ class Deploy():
         return "wallet_path target_user url_version target_id domain"
 
     def run(self,*args):
+        raise Exception("not supported, please use deploy.py")
         dir_path = os.path.dirname(os.path.realpath(__file__))    
         os.chdir(dir_path)
         #url_version = 'test.paxfinancial.ai'
@@ -122,7 +123,7 @@ class Deploy():
         #return
         
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
-        secret_passcode = wallet.get_secret('admin', 'decelium_com_dns_code')
+        secret_passcode = wallet.get_secret(target_user, 'decelium_com_dns_code')
         
         sys.stdout = original_stdout
         dns_id = deploy_dns(pq,api_key,dns_name,target_id,secret_passcode)
@@ -137,7 +138,7 @@ if __name__ == "__main__":
     direc = '/'.join(__file__.split('/')[:-3]) +'/'
     #os.chdir(direc)
     #sys.path.append('./')
-    from decelium.crypto import crypto
-    from decelium import decelium
+    from decelium_wallet.crypto import crypto
+    from decelium_wallet import decelium
     c = Deploy()
     c.run(*sys.argv[1:])

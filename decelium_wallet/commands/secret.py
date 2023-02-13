@@ -6,7 +6,7 @@ sys.path.append('../../')
 sys.path.append('../../../')
 
 original_stdout = sys.stdout
-sys.stdout = open("/dev/null","w")
+sys.stdout = open(os.devnull,"w")
 try:
     # Default to the locally installed wallet
     import decelium_wallet.decelium as decelium
@@ -35,8 +35,6 @@ class Deploy():
         return "wallet_path target_user command secret_id secret_value secret_value"
 
     def run(self,*args):
-        dir_path = os.path.dirname(os.path.realpath(__file__))    
-        os.chdir(dir_path)
         wallet_path = args[0]
         target_user = args[1]
         command = args[2]    
@@ -47,11 +45,13 @@ class Deploy():
         if len(args) > 4:
             secret_value = args[4]
 
-        password = self.get_password()        
-
+        password = crypto.getpass()
+        #print(password)
+        #print(wallet_path)
         wallet = decelium.SimpleWallet()
         wallet.load(wallet_path,password)
         accts = wallet.list_accounts()
+        #print(accts)
         #print(wallet.wallet)
         assert target_user in accts   
         if command == "list":

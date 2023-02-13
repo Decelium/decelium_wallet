@@ -1,8 +1,8 @@
 import sys
 sys.path.append('../../')
 sys.path.append('../../../')
-from decelium.crypto import crypto
-from decelium import decelium
+from decelium_wallet.crypto import crypto
+from decelium_wallet import decelium
 import uuid
 import base64
 import pprint
@@ -33,20 +33,22 @@ def get_env_data_as_dict(path: str) -> dict:
             print(path)
             print(f.read())
             raise e
-if __name__ == "__main__":
-
-    
-    wallet_path = sys.argv[1:][0]
-    target_user = sys.argv[1:][1]
-    url_version = sys.argv[1:][2]
-    root_directory = sys.argv[1:][3]
-    
+            
+def run(*args):
+    wallet_path = args[0]
+    target_user = args[1]
+    url_version = args[2]
+    root_directory = args[3]
+        
     password = crypto.getpass()
  
     [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,target_user)
-    q={'api_key':api_key, 'path':root_directory, }
-    print(q)
-    for item in pq.list(q,remote=True):
-        #print(item['error'])
-        print("deployed... ", item['self_id'], ' as ', item['dir_name'])
+    print({'api_key':api_key, 'path':root_directory, })
+    result = pq.download_entity({'api_key':api_key, 'path':root_directory, 'attrib':True},remote=True)
+    print(result)
+    
+if __name__ == "__main__":
+    run(*sys.argv[1:])
+    
+
         

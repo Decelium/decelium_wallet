@@ -5,7 +5,7 @@ sys.path.append('../../')
 sys.path.append('../../../')
 
 original_stdout = sys.stdout
-sys.stdout = open("/dev/null","w")
+sys.stdout = open(os.devnull,"w")
 try:
     # Default to the locally installed wallet
     import decelium_wallet.decelium as decelium
@@ -14,10 +14,9 @@ try:
 
 except:        
     # Otherwise use the pip package
-    from decelium.crypto import crypto
-    from decelium.chunk import Chunk
-    import decelium.decelium as decelium
-
+    from decelium_wallet.crypto import crypto
+    from decelium_wallet.chunk import Chunk
+    import decelium_wallet.decelium as decelium
 
 sys.stdout = original_stdout
 
@@ -31,6 +30,7 @@ import time
 class Deploy():
     def _load_pq(self,path,password,url_version,target_user):
         dw = decelium.SimpleWallet()
+
         dw.load(path,password)
         accts = dw.list_accounts()
         
@@ -80,7 +80,7 @@ class Deploy():
 
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")
+            sys.stdout = open(os.devnull,"w")
             
         print(dir(Chunk))
 
@@ -142,7 +142,7 @@ class Deploy():
             
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")
+            sys.stdout = open(os.devnull,"w")
             
         print("encoded...  ", encoded[0:20])
         remote=True
@@ -195,8 +195,8 @@ class Deploy():
 
     def run(self,*args):
         #print("RUNNING")
-        dir_path = os.path.dirname(os.path.realpath(__file__))    
-        os.chdir(dir_path)
+        #dir_path = os.path.dirname(os.path.realpath(__file__))    
+        #os.chdir(dir_path)
         #url_version = 'test.paxfinancial.ai'
         #print(type(args))
         #print(args)
@@ -237,7 +237,7 @@ class Deploy():
  
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")
+            sys.stdout = open(os.devnull,"w")
 
         print(root_path)
         print(site_name)
@@ -251,7 +251,7 @@ class Deploy():
         website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
         original_stdout = sys.stdout
         if jsonOutputOnly:
-            sys.stdout = open("/dev/null","w")        
+            sys.stdout = open(os.devnull,"w")        
         
         print("deploy_website ..."+website_id)
         if dns_host: #(self,       pq,api_key,path,    name,    secret_passcode):
