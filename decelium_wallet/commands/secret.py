@@ -29,6 +29,7 @@ import shutil
 import json
 import time
 
+class Deploy():
 
     def explain(self):
         return "wallet_path target_user command secret_id secret_value secret_value"

@@ -37,6 +37,8 @@ On Linux:
 On Windows:
 
     pip install "git+https://github.com/Decelium/decelium_wallet.git@stage" --user
+    
+You will have to make sure that the directory containing the script `decw.exe` is added to your path.
 
 #### Git Clone Install
 
