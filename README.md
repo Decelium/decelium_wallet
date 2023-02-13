@@ -28,6 +28,19 @@ If you are interested in creating systems on the Decelium Network, please visit 
 # Getting Started
 ### Install
 
+#### PIP Install
+
+On Linux:
+
+    pip install "git+https://github.com/Decelium/decelium_wallet.git@stage"
+
+On Windows:
+
+    pip install "git+https://github.com/Decelium/decelium_wallet.git@stage" --user
+
+#### Git Clone Install
+
+
 Clone the wallet to get started. 
 > git clone https://github.com/Decelium/decelium_wallet
 
