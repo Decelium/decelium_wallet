@@ -1,19 +1,19 @@
 import sys
 import importlib
 
-def run(*args):
-    command = args[0]
+def run():
+    command = sys.argv[1]
     name = "decelium_wallet.commands."+command
     mod = importlib.import_module(name)
     class_commands = ["deploy","secret","deploy_dns"]
     if command in class_commands:
         c=mod.Deploy()
-        c.run(*args[1:])
+        c.run(*sys.argv[2:])
     else:
-        mod.run(*args[1:])
+        mod.run(*sys.argv[2:])
 
 if __name__ == "__main__":
     
-    run(*sys.argv[1:])
+    run()
     
     
