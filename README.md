@@ -42,9 +42,9 @@ On Linux:
 
 On Windows:
 
-If you want to use the `decw` command-line tool, you will need to install using Command Prompt as an administrator.
-<img src="./run_as_administrator.png">
-Otherwise you will have to [use the Decelium wallet through Python](./PY_USAGE_EXAMPLES.md). 
+<img src="./run_as_administrator.png" alt="How to run as administrator" width="250" height="250">
+
+If you want to use the `decw` command-line tool, you will need to install using Command Prompt as an administrator (see image). Otherwise you will have to [use the Decelium wallet through Python](./PY_USAGE_EXAMPLES.md). 
 
     pip install "git+https://github.com/Decelium/decelium_wallet.git" 
     
