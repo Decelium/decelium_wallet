@@ -71,6 +71,8 @@ The general usage is
 
     decw COMMAND ARGUMENTS
     
+For further examples of the usage of `decw` please see [here](./CLI_USAGE_EXAMPLES.md).    
+    
 #### Creating the wallet
 
 From the command line run
@@ -105,60 +107,14 @@ You can view the wallet info at any time by executing
    
 where `WALLET` is the path of the wallet file.
 
-
-### Create a wallet (Local)
-```
-    #Create
-    path = './test-'+str(uuid.uuid4())+'.wallet.dec'
-    dw = decelium.SimpleWallet()
-    dw.load(path)
-    user = dw.create_account()
-    dw.save(path,"Test_a_strong_password_here")
-    
-    # Load
-    dw = decelium.SimpleWallet()
-    dw.load(path,"Test_a_strong_password_here")
-    print(dw.get_raw())
-    
-    # Create Network Connection to the Testnet
-    url_version = 'test.paxfinancial.ai'   
-    pq_raw = decelium.Decelium(url_version=url_version,api_key=user['api_key'])
-    pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
-``` 
 > Note: It would be hard to crack your wallet, but it is absolutely possible for a trained professional to brute force your wallet.
 > Save it somewhere secure. We will be releasing a full air-gapped cold wallet solution as soon as possible, 
 > and if you are a volunteer interested in this part of the project get in touch!
 
-### IPFS Based Website
-```
-    website = '''<!DOCTYPE html><html><body><h1>Generic Heading</h1></p></body></html>'''
-    # Push file online
-    res_obj =pq.create_entity({'api_key':user['api_key'],  
-                                'path':'/html_files/', 
-                                'name':'index.html',
-                                'file_type':'ipfs', 
-                                'payload':website,},remote=True)
+### Using the Decelium Wallet in Python Programs
 
-    # Visit 'http://dev.paxfinancial.ai/obj/'+res_obj to see the website!
-    cid_information =pq.download_entity({'api_key':user['api_key'],  
-                                         'path':'index.html',
-                                         'attrib':True})
-    data =pq.download_entity({'api_key':user['api_key'],  
-                                         'path':'index.html'})
-``` 
+There are examples of the use of the Decelium wallet in Python programs [here](./PY_USAGE_EXAMPLES.md).
 
-### Custom Domain Name
-``` 
-    # Register a domain (you must own the DNS and will get instructions from this method)
-    res_url =pq.create_entity({'api_key':user['api_key'],
-                                    'path':'/apps/'+app_dir+'/domains/',
-                                    'name':"my_test_domain.com",
-                                    'file_type':'host',
-                                    'attrib':{'host':my_test_domain.com,
-                                                'secret_password':"CHOOSE_A_PASSWORD_HERE",
-                                                'target_id':res_obj}
-                                },remote=True)
-```
 ### Final Notes
 1. The Decelium Network hosts have over 192 avaliable functions!
 2. Over the coming months, we are working on documentation.
