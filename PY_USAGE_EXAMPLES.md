@@ -1,6 +1,4 @@
----
-Title: Python Usage of the Decelium Wallet
----
+
 
 # Python Usage of the Decelium Wallet
 

@@ -1,6 +1,4 @@
----
-Title: Decelium Wallet Command-line Usage
----
+ 
 
 # Decelium Wallet Command Line Usage
 
