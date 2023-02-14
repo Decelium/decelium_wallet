@@ -42,9 +42,12 @@ On Linux:
 
 On Windows:
 
-    pip install "git+https://github.com/Decelium/decelium_wallet.git" --user
+If you want to use the `decw` command-line tool, you will need to install using Command Prompt as an administrator.
+<img src="./run_as_administrator.png">
+Otherwise you will have to [use the Decelium wallet through Python](./PY_USAGE_EXAMPLES.md). 
+
+    pip install "git+https://github.com/Decelium/decelium_wallet.git" 
     
-You may need to add the directory containing the `decw.exe` executable to your path. You can find out (or at least get a hint) where this file is located by running `pip show decelium_wallet`. In the output, the "Location:" line will say where the `decelium_wallet` package has been installed, which is probably at a path ending in `\site-packages`. Changing `\site-packages` to `\Scripts` in this path is likely to give you the path to the directory containing `decw.exe`. 
 
 #### NPM Install 
 
