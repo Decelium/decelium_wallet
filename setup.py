@@ -4,8 +4,8 @@ import os
 import sys
 import subprocess
 
-path = os.path.dirname(os.path.abspath(sys.argv[0]))
-subprocess.run(["setx", "PATH", "%PATH%;"+path], shell=True)
+#path = os.path.dirname(os.path.abspath(sys.argv[0]))
+#subprocess.run(["setx", "PATH", "%PATH%;"+path], shell=True)
 
 setup(
     name='decelium_wallet',
