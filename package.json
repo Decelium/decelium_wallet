@@ -6,6 +6,10 @@
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules npx jest nodewallet.js"
   },
+  "exports": {
+    "import": "./decelium.js",
+    "require": ".decelium.js"
+  },  
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Decelium/decelium_wallet.git"
