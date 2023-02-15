@@ -9,7 +9,7 @@ Note Please make sure to import the relevant command before using
 Example Import:
 import decelium_wallet.commmands.generate_a_wallet as generate_a_wallet
 
-
+```
 # Generate a wallet
 generate_a_wallet.run("test_wallet1.dec")
 # This line generates a new wallet file with the name "test_wallet1.dec"
@@ -50,3 +50,4 @@ list_account.run("test_wallet.dec", "test_user", "test.paxfinancial.ai", "/")
 # Download entity
 download_entity.run("test_wallet.dec", "test_user", "test.paxfinancial.ai", "/")
 # This line downloads the entities for the user "test_user" 
+```
