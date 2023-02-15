@@ -138,3 +138,5 @@ var Base64 = {
     }
 
 }
+
+export default Decelium;

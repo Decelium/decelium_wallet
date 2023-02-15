@@ -72,9 +72,7 @@ Install any dependencies locally
 If you have pip-installed the Decelium wallet Python package, then you can use the `decw` command-line tool.  
 The general usage is
 
-    decw COMMAND ARGUMENTS
-    
-For further examples of the usage of `decw` please see [here](./CLI_USAGE_EXAMPLES.md).    
+    decw COMMAND ARGUMENTS   
     
 #### Creating the wallet
 
@@ -109,6 +107,10 @@ You can view the wallet info at any time by executing
     decw display_wallet WALLET
    
 where `WALLET` is the path of the wallet file.
+
+#### Further examples
+
+For further examples of the usage of `decw` please see [here](./CLI_USAGE_EXAMPLES.md).
 
 > Note: It would be hard to crack your wallet, but it is absolutely possible for a trained professional to brute force your wallet.
 > Save it somewhere secure. We will be releasing a full air-gapped cold wallet solution as soon as possible, 
