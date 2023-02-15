@@ -4,8 +4,7 @@
 
 ## Examples
 
-The following are the Python equivalents of the Decelium wallet [command-line usage examples](./CLI_USAGE_EXAMPLES.md). Note that `deploy` and `secret` have a different interface from the others, breaking the pattern that the rest follow.
-Note Please make sure to import the relevant command before using
+The following are the Python equivalents of the Decelium wallet [command-line usage examples](./CLI_USAGE_EXAMPLES.md).
 Example Import:
 import decelium_wallet.commmands.generate_a_wallet as generate_a_wallet
 
