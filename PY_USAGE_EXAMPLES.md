@@ -5,52 +5,48 @@
 ## Examples
 
 The following are the Python equivalents of the Decelium wallet [command-line usage examples](./CLI_USAGE_EXAMPLES.md). Note that `deploy` and `secret` have a different interface from the others, breaking the pattern that the rest follow.
+Note Please make sure to import the relevant command before using
+Example Import:
+import decelium_wallet.commmands.generate_a_wallet as generate_a_wallet
 
-```python
-import decelium_wallet.commands.generate_a_wallet
-decelium_wallet.commands.generate_a_wallet.run("test_wallet1.dec")
 
-import decelium_wallet.commands.display_wallet
-decelium_wallet.commands.display_wallet.run("test_wallet1.dec")
+# Generate a wallet
+generate_a_wallet.run("test_wallet1.dec")
+# This line generates a new wallet file with the name "test_wallet1.dec"
 
-import decelium_wallet.commands.generate_user
-decelium_wallet.commands.generate_user.run("test_wallet1.dec", "test_user")
+# Display wallet
+display_wallet.run("test_wallet1.dec")
+# This line displays the content of the wallet file "test_wallet1.dec"
 
-import decelium_wallet.commands.display_wallet
-decelium_wallet.commands.display_wallet.run("test_wallet1.dec")
+# Generate user
+generate_user.run("test_wallet1.dec", "test_user")
+# This line generates a new user for the wallet file "test_wallet1.dec" with the username "test_user"
 
-import decelium_wallet.commands.create_user
-decelium_wallet.commands.create_user.run("test_wallet.dec", "test_user", "test_user1", "test.paxfinancial.ai")
+# Display wallet
+display_wallet.run("test_wallet1.dec")
+# This line displays the content of the wallet file "test_wallet1.dec"
 
-import decelium_wallet.commands.deploy
-c = decelium_wallet.commands.deploy.Deploy()
+# Create user
+create_user.run("test_wallet.dec", "test_user", "test_user1", "test.paxfinancial.ai")
+# This line creates a new user "test_user1" for the wallet file "test_wallet.dec" with the username "test_user" 
+
+# Deploy
+c = deploy.Deploy()
 c.run("test_wallet.dec", "test_user", "test.paxfinancial.ai", "test/test_upload/example_small_website.ipfs", "./example_small_website/", "test.testdecelium.com", "decelium_com_dns_code")
+# This block deploys a website located at "test/test_upload/example_small_website.ipfs" 
 
-import decelium_wallet.commands.delete_user
-decelium_wallet.commands.delete_user.run("test_wallet.dec", "test_user", "test_user", "test.paxfinancial.ai")
+# Delete user
+delete_user.run("test_wallet.dec", "test_user", "test_user", "test.paxfinancial.ai")
+# This line deletes the user "test_user" for the wallet file "test_wallet.dec" 
 
-import decelium_wallet.commands.check_balance
-decelium_wallet.commands.check_balance.run("test_wallet.dec", "test_user", "test.paxfinancial.ai")
+# Check balance
+check_balance.run("test_wallet.dec", "test_user", "test.paxfinancial.ai")
+# This line checks the balance of the user "test_user" for the wallet file "test_wallet.dec" on the host "test.paxfinancial.ai"
 
-import decelium_wallet.commands.list_account
-decelium_wallet.commands.list_account.run("test_wallet.dec", "test_user", "test.paxfinancial.ai", "/")
+# List account
+list_account.run("test_wallet.dec", "test_user", "test.paxfinancial.ai", "/")
+# This line lists the accounts for the user "test_user" for the wallet file "test_wallet.dec" on the host "test.paxfinancial.ai" starting from the root directory "/"
 
-import decelium_wallet.commands.download_entity
-decelium_wallet.commands.download_entity.run("test_wallet.dec", "test_user", "test.paxfinancial.ai", "/")
-
-import decelium_wallet.commands.secret
-c = decelium_wallet.commands.secret.Deploy()
-c.run("test_wallet1.dec", "test_user", "list")
-
-import decelium_wallet.commands.secret
-c = decelium_wallet.commands.secret.Deploy()
-c.run("test_wallet1.dec", "test_user", "add", "my_secret", "my_secret_value")
-
-import decelium_wallet.commands.secret
-c = decelium_wallet.commands.secret.Deploy()
-c.run("test_wallet1.dec", "test_user", "list")
-
-import decelium_wallet.commands.secret
-c = decelium_wallet.commands.secret.Deploy()
-c.run("test_wallet1.dec", "test_user", "view", "my_secret")
-```
+# Download entity
+download_entity.run("test_wallet.dec", "test_user", "test.paxfinancial.ai", "/")
+# This line downloads the entities for the user "test_user" 
