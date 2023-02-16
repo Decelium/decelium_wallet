@@ -3,6 +3,7 @@ sys.path.append("../../")
 sys.path.append("../../../")
 from decelium_wallet.crypto import crypto
 from decelium_wallet import decelium
+import getpass
 
 def load_pq(path,password,url_version,target_user):
     dw = decelium.SimpleWallet()
@@ -36,13 +37,20 @@ def run(*args):
     
     access_keys = wallet_contents[wallet_user]['user'].copy()
     access_keys['private_key'] = "deadbeef"
-    print(access_keys)
+    
+    print("Enter the password for the user on Decelium:")
+    password = getpass.getpass()
+    print("Reenter the password for the user on Decelium:")
+    password2 = getpass.getpass()
+    if password != password2:
+        print("The passwords don't match.")
+        sys.exit()
     
     feature = {'username': dec_username,
                'api_key': api_key,
                'access_key':access_keys,
-               'password': 'passtest',
-               'password2':'passtest',}
+               'password': password,
+               'password2': password2,}
     result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)   
     obj_id = pq.user_register(feature,remote=True)
     print(obj_id) 
