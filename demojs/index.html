@@ -1,0 +1,19 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
+</head>
+<body>
+<script type="module">
+    import {decelium_wallet,SimpleWallet} from '../decelium_wallet/decelium.mjs';
+    //const decelium_wallet = require('../decelium_wallet/decelium.mjs').decelium_wallet;
+    let dw = new decelium_wallet(); 
+    dw.init().then(()=>{
+      console.log(dw.crypto.generate_user());
+      console.log(dw.crypto.do_encode_string({obj:"abcd"}));
+      console.log(dw.crypto.do_decode_string({data_packet:"ImFiY2Qi"}));  
+    });   
+    let sw = new SimpleWallet();
+    sw.init();
+</script>
+
+Hello there.
+</body>    
