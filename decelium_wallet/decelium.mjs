@@ -143,13 +143,40 @@ var Base64 = {
 
 }
 
-class decelium_wallet {
-    constructor() {           
-        this.crypto = {};
+
+
+class wallet {
+    //constructor() {}
+    constructor() {
+        const wi = "test123";
+        wallet.pyodide.runPython(wi+`= wallet.wallet()`);        
+        const wallet_methods = ['create_account','load','get_raw'];
+        wallet_methods.forEach(method=>
+                this[method] = (args) => {
+                            if (!args)
+                                args={};
+                            let argString = '('; 
+                            for ( const key in args ) {
+                                argString=argString+key+'="'+args[key]+'",';
+                            }
+                            argString=argString+'format="json")';
+                            console.log(argString);
+                            let result = wallet.pyodide.runPython(wi+`.`+method+argString);
+                            return JSON.parse(result); 
+                          } 
+            );
+        
     }
+}
+
+
+class decelium_wallet {
     
-    async init() {
+    static async init() {
+        this.crypto = {};
+        this.wallet = wallet;
         this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
+        this.wallet.pyodide = this.pyodide;
         console.log(this.pyodide);
         await this.pyodide.runPythonAsync(`
         from pyodide.http import pyfetch
@@ -157,6 +184,10 @@ class decelium_wallet {
         with open("crypto.py", "wb") as f:
             f.write(await response.bytes())
             print("Wrote crypto.py")
+        response = await pyfetch("./wallet.py")
+        with open("wallet.py", "wb") as f:
+            f.write(await response.bytes())
+            print("Wrote wallet.py")
         `);
         await this.pyodide.loadPackage("micropip");
         const micropip = this.pyodide.pyimport("micropip");
@@ -164,11 +195,13 @@ class decelium_wallet {
         await micropip.install('cryptography');
         this.pyodide.runPython(`
             import crypto
+            import wallet
         `); 
-        const methods = ['getpass','do_encode_string','do_decode_string','generate_user','generate_user_from_string',
-                            'sign_request','verify_request','decode','encode','encode_key','decode_key'
-        ];
-        methods.forEach(method=>
+        const crypto_methods = ['getpass','do_encode_string','do_decode_string',
+            'generate_user','generate_user_from_string',
+            'sign_request','verify_request',
+            'decode','encode','encode_key','decode_key'];
+        crypto_methods.forEach(method=>
                 this.crypto[method] = (args) => {
                             if (!args)
                                 args={};
@@ -182,6 +215,9 @@ class decelium_wallet {
                             return JSON.parse(result); 
                           } 
             );
+            
+            
+            
     } 
         
     async fetching() {
@@ -229,30 +265,6 @@ json.dumps({
     }
 }
 
-class SimpleWallet {
-    constructor() {
-        this.wallet = {};
-    }
-    async init() {
-        this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
-        console.log(this.pyodide);
-        await this.pyodide.runPythonAsync(`
-        from pyodide.http import pyfetch
-        response = await pyfetch("./decelium.py")
-        with open("decelium.py", "wb") as f:
-            f.write(await response.bytes())
-            print("Wrote decelium.py")
-        `);
-        await this.pyodide.loadPackage("micropip");
-        const micropip = this.pyodide.pyimport("micropip");
-        await micropip.install('ecdsa');
-        await micropip.install('cryptography');
-        this.pyodide.runPython(`
-            import decelium
-            print(dir(decelium.SimpleWallet))
-        `); 
-    }
-}
 
 
 /*
@@ -291,7 +303,6 @@ class SimpleWallet()
 
 
 
-export { SimpleWallet };
 export { decelium_wallet };
 
 export default Decelium;

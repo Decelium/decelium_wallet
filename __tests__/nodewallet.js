@@ -75,7 +75,7 @@ test('Run nodejs tests', async () => {
         `)
     crypto = pyodide.pyimport("crypto");    
 
-    //console.log(crypto.calculate())
+    //console.log(crypto.calculate()) 
     //console.log("DATA");
     //console.log(JSON.stringify(crypto.crypto.generate_user(format="json")))
     await pyodide.runPythonAsync(`import crypto`)

@@ -3,16 +3,19 @@
 </head>
 <body>
 <script type="module">
-    import {decelium_wallet,SimpleWallet} from '../decelium_wallet/decelium.mjs';
+    import {decelium_wallet} from '../decelium_wallet/decelium.mjs';
     //const decelium_wallet = require('../decelium_wallet/decelium.mjs').decelium_wallet;
-    let dw = new decelium_wallet(); 
+    let dw = decelium_wallet; 
     dw.init().then(()=>{
-      console.log(dw.crypto.generate_user());
-      console.log(dw.crypto.do_encode_string({obj:"abcd"}));
-      console.log(dw.crypto.do_decode_string({data_packet:"ImFiY2Qi"}));  
+      //console.log(dw.crypto.generate_user());
+      //console.log(dw.crypto.do_encode_string({obj:"abcd"}));
+      let wi = new dw.wallet();
+      console.log(wi.load());
+      console.log(wi.create_account());
+      console.log(wi.get_raw());
+      //console.log(dw.crypto.do_decode_string({data_packet:"ImFiY2Qi"}));  
+  
     });   
-    let sw = new SimpleWallet();
-    sw.init();
 </script>
 
 Hello there.
