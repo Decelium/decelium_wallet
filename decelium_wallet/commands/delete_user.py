@@ -1,9 +1,15 @@
 import sys
 sys.path.append("../../")
 sys.path.append("../../../")
-from decelium_wallet.crypto import crypto
-from decelium_wallet import decelium
-
+try:
+    from decelium_wallet.crypto import crypto
+except:
+    from crypto import crypto
+try:    
+    from decelium_wallet import decelium
+except:
+    import decelium
+    
 def load_pq(path,password,url_version,target_user):
     dw = decelium.SimpleWallet()
     dw.load(path,password)

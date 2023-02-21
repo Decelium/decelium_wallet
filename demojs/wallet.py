@@ -7,7 +7,7 @@ except:
 import json
 
 class wallet():
-
+    """ 
     def load(self,password=None,data=None,wallet=None,format=None):
         if wallet and type(data) == dict:
             self.wallet = wallet
@@ -34,7 +34,59 @@ class wallet():
         if password != None:
             dumpstr = crypto.encode(dumpstr,password,version='python-ecdsa-0.1')
         return dumpstr
+    """
+    def __init__(self,mode="fs",fs=None):
+        self.mode=mode
+    
+    def load(self,path=None,password=None,data=None):
+        if self.mode=="fs":
+            self.load_fs(path,password,data)
+        else:
+            self.load_js(path,password,data)
+        
+    def save(self,path,password=None):
+        if self.mode=="fs":
+            self.save_fs(path,password)
+        else:
+            self.save_js(path,password)        
+                
+    def load_js(self,path=None,password=None,data=None):
+        self.wallet={};
+    
+    def save_js(self,path,password=None):
+        print(self.wallet);
+    
+    def load_fs(self,path=None,password=None,data=None):
+        self.wallet = {}
+        if path != None or data !=None:
+            if data == None:
+                if not exists(path):
+                    return
+                with open(path,'r') as f:
+                    astr = f.read()
+            elif type(data) == dict:
+                # Force validation via encoding
+                astr = crypto.do_encode_string(data)
+            else:
+                astr = crypto.do_encode_string(json.loads(data))
+            if password != None:
+                astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
+            self.wallet= crypto.do_decode_string(astr )
 
+    def save_fs(self,path,password=None):
+        if exists(path):
+            os.remove(path)
+
+        with open(path,'w') as f:
+            dumpstr = crypto.do_encode_string(self.wallet)
+            if password != None:
+                dumpstr = crypto.encode(dumpstr,password,version='python-ecdsa-0.1')
+
+            f.write(dumpstr)
+        with open(path,'r') as f:
+            savedstr = f.read()
+            assert dumpstr == savedstr
+    
     def request_sign(self,message,format=None):
         '''
             Request a signature on a message from the user.

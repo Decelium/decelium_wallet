@@ -9,13 +9,28 @@
     dw.init().then(()=>{
       //console.log(dw.crypto.generate_user());
       //console.log(dw.crypto.do_encode_string({obj:"abcd"}));
-      let wi = new dw.wallet();
-      console.log(wi.load());
-      console.log(wi.create_account());
-      console.log(wi.get_raw());
-      //console.log(dw.crypto.do_decode_string({data_packet:"ImFiY2Qi"}));  
-  
-    });   
+      //let wi = new dw.wallet();
+      //console.log(wi.load());
+      //console.log(wi.create_account());
+      //console.log(wi.get_raw());
+      //console.log(dw.crypto.do_decode_string({data_packet:"ImFiY2Qi"}));
+      //dw.commands.generate_a_wallet.run({wallet_path:"wallet1.dec"});
+      let wallet = {};  
+      console.log(dw.commands);  
+      //let result = dw.commands.generate_a_wallet.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec"});
+      //console.log(result);
+      console.log(wallet.string);
+      //let result1 =dw.commands.generate_user.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user"});
+      //console.log(result1);
+      //dw.commands.check_balance.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai"});
+      //dw.commands.create_user.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", dec_username: "test_user1", url_version: "test.paxfinancial.ai"});
+      //dw.commands.delete_user.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", dec_username: "test_user1", url_version: "test.paxfinancial.ai"});  
+      //dw.commands.display_wallet.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec"});
+      //dw.commands.download_entity.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai",root_directory: "/"});  
+      dw.commands.list_account.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai",root_directory: "/"});
+    });
+    
+    
 </script>
 
 Hello there.

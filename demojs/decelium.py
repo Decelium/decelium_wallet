@@ -12,9 +12,7 @@ Licence: MIT Licence. Free to expand on the work and distribute freely.
 '''
 
 import datetime
-import pandas as pd
-pd.df = pd.DataFrame
-import datetime, uuid, psutil, sys,os
+import datetime, uuid, sys,os
 import zipfile
 from os import listdir
 from os.path import isfile, join
@@ -32,6 +30,11 @@ except:
     crypto = crypto.crypto
     #from decelium.crypto import crypto
 
+try:    
+    from .wallet import wallet
+except:
+    import wallet
+    wallet = wallet.wallet
 import os
 
 try:
@@ -271,7 +274,6 @@ class paxqueryengine():
     
     def query_remote(source_id,query,url_version='dev',show_url=False):
         import requests
-        import pandas as pd
         #url = 'https://g46w1ege85.execute-api.us-west-2.amazonaws.com/alpha/'+url_version+'/data/query'
         if 'http' in url_version:
             url = url_version+'/data/query'
@@ -301,7 +303,6 @@ class paxqueryengine():
     def query_prepare(source_id,query,url_version='dev'):
         #print('REMOTE' + url_version)
         import requests
-        import pandas as pd
         #url = 'https://g46w1ege85.execute-api.us-west-2.amazonaws.com/alpha/'+url_version+'/data/query'
         url = 'https://'+url_version+'.paxfinancial.ai/data/query'
         data = {}
@@ -653,7 +654,7 @@ class SimpleCryptoRequester():
 from sys import getsizeof
 from os.path import exists
 
-class SimpleWallet():
+class SimpleWallet(wallet):
     '''
     A simple wallet for holding decelium network artifacts. This wallet is a code level
     wallet only, and does not have a GUI for user interaction. Volunteers are presently working on
@@ -664,7 +665,9 @@ class SimpleWallet():
     - store accounts and addresses
     - store generic secrets, keeping them encrypted too
     '''
-
+    pass
+    
+    """
     def load(self,path=None,password=None,data=None):
         self.wallet = {}
         if path != None or data !=None:
@@ -775,3 +778,4 @@ class SimpleWallet():
 
     def recover_user(self,private_key):
         return crypto.generate_user_from_string(private_key,version='python-ecdsa-0.1')
+    """
