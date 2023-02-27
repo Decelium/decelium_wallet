@@ -27,6 +27,10 @@ import shutil
 import json
 import time
 
+def run(*args):
+    c = Deploy()
+    c.run(*args) 
+
 class Deploy():
     def _load_pq(self,path,password,url_version,target_user):
         dw = decelium.SimpleWallet()
@@ -263,13 +267,11 @@ class Deploy():
         for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
             print("deployed... ", item['self_id'], ' as ', item['dir_name'])
         sys.stdout = original_stdout  
-            
-            
+    
 if __name__ == "__main__":
     # if you import as a library, then the importer is in charge of these imports
     direc = '/'.join(__file__.split('/')[:-3]) +'/'
     #os.chdir(direc)
     #sys.path.append('./')
 
-    c = Deploy()
-    c.run(*sys.argv[1:])
+    run(*sys.argv[1:])

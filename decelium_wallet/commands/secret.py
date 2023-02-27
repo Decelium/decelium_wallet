@@ -29,6 +29,10 @@ import shutil
 import json
 import time
 
+def run(*args):
+    c = Deploy()
+    c.run(*args)    
+
 class Deploy():
 
     def explain(self):
@@ -83,8 +87,7 @@ class Deploy():
         return password        
 if __name__ == "__main__":
     direc = '/'.join(__file__.split('/')[:-3]) +'/'
-    c = Deploy()
-    c.run(*sys.argv[1:])
+    run(*sys.argv[1:])
 # python3 secret.py ../../../.wallet.dec admin view decelium_com_dns_code 
 # python3 secret.py ../../../.wallet.dec admin list 
 # python3 secret.py ../../../.wallet.dec admin add testdecelium_com_dns_code "NEW VAL"

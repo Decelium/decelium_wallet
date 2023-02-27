@@ -193,13 +193,6 @@ class decelium_wallet {
         with open("wallet.py", "wb") as f:
             f.write(await response.bytes())
             print("Wrote wallet.py")
-        commands = ["generate_a_wallet","generate_user","check_balance","create_user","delete_user",
-                    "display_wallet","download_entity","list_account"]
-        for command in commands:
-            response = await pyfetch("../decelium_wallet/commands/"+command+".py")
-            with open(command+".py", "wb") as f:
-                f.write(await response.bytes())
-                print("Wrote "+command+".py")
         `);        
         await this.pyodide.loadPackage("micropip");
         const micropip = this.pyodide.pyimport("micropip");
@@ -252,7 +245,14 @@ class decelium_wallet {
             name: "list_account",
             argList: ["wallet_path","wallet_user","url_version","root_directory"] 
         }];
-        commands.forEach(command=>{
+        
+        for (const command of commands) {
+            await this.pyodide.runPythonAsync(`
+                response = await pyfetch("../decelium_wallet/commands/${command.name}.py")
+                with open("${command.name}.py", "wb") as f:
+                    f.write(await response.bytes())
+                    print("Wrote ${command.name}.py")
+            `);
             this.commands[command.name] = {}
             this.commands[command.name]["run"] = (args) => {
                 if (!args)
@@ -272,7 +272,7 @@ class decelium_wallet {
                 if (result!=undefined)
                     return JSON.parse(result);
             }
-        });
+        }
         /*
         const class_commands = [
             { name: "secret",
