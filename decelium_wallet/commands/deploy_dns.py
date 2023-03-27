@@ -32,9 +32,11 @@ class Deploy():
         pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
         return pq, user['api_key'], dw
 
-    def deploy_dns(self,pq,api_key,name,secret_passcode):
+    def deploy_dns(self,pq,api_key,name,target_id,secret_passcode):
         remote=True
-        for item in pq.list({'api_key':api_key, 'attrib':{'host':name}, },remote=True): 
+        l = pq.list({'api_key':api_key, 'attrib':{'host':name}, },remote=True)
+        print(l)
+        for item in l:
             print("REMOVING "+str(item))   
             fil  = pq.delete_entity({'api_key':api_key, 
                                     'self_id':item['self_id'], 
@@ -56,8 +58,9 @@ class Deploy():
                                 'file_type':'host',
                                 'attrib':{'host':name,
                                             'secret_password':secret_passcode,
-                                            'target_id':target_self_id}
+                                            'target_id':target_id}
                                 },remote=remote)
+        print(res_url)
         assert 'obj-' in res_url
         return res_url
 
@@ -80,7 +83,7 @@ class Deploy():
         return "wallet_path target_user url_version target_id domain"
 
     def run(self,*args):
-        raise Exception("not supported, please use deploy.py")
+        #raise Exception("not supported, please use deploy.py")
         dir_path = os.path.dirname(os.path.realpath(__file__))    
         os.chdir(dir_path)
         #url_version = 'test.paxfinancial.ai'
@@ -109,24 +112,24 @@ class Deploy():
         #root_path= site_dir
         #site_name = upload_dir.split("/")[-1]
         #website_path = '/'.join(upload_dir.split("/")[:-1])
-        root_path='/'.join(site_dir.split("/")[:-1])
-        site_name = site_dir.split("/")[-1]
-        website_path = '/'.join(upload_dir.split("/")[:-1])
+        #root_path='/'.join(site_dir.split("/")[:-1])
+        #site_name = site_dir.split("/")[-1]
+        #website_path = '/'.join(upload_dir.split("/")[:-1])
  
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open("/dev/null","w")
 
-        print(root_path)
-        print(site_name)
-        print(website_path)
+        #print(root_path)
+        #print(site_name)
+        #print(website_path)
         #return
         
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
         secret_passcode = wallet.get_secret(target_user, 'decelium_com_dns_code')
         
         sys.stdout = original_stdout
-        dns_id = deploy_dns(pq,api_key,dns_name,target_id,secret_passcode)
+        dns_id = self.deploy_dns(pq,api_key,domain,target_id,secret_passcode)
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open("/dev/null","w")        
