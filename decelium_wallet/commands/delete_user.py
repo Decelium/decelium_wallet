@@ -38,6 +38,7 @@ def run(*args):
         
     result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)
     print(result)
+    return result
     
 if __name__ == "__main__":
 
