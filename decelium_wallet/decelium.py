@@ -726,7 +726,7 @@ class SimpleWallet():
 
     def list_accounts(self,format=None):
         ret = list(self.wallet.keys())
-        if format = 'json':
+        if format == 'json':
             ret = json.dumps(ret)
         return ret
     
