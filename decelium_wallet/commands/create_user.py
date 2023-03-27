@@ -44,10 +44,16 @@ def run(*args):
     access_keys = wallet_contents[wallet_user]['user'].copy()
     access_keys['private_key'] = "deadbeef"
     
-    print("Enter the password for the user on Decelium:")
-    password = getpass.getpass()
-    print("Reenter the password for the user on Decelium:")
-    password2 = getpass.getpass()
+    password = None
+    password2 = None
+    if len(args)>4:
+        password = args[4]
+        password2 = password
+    else:
+        print("Enter the password for the user on Decelium:")
+        password = getpass.getpass()
+        print("Reenter the password for the user on Decelium:")
+        password2 = getpass.getpass()
     if password != password2:
         print("The passwords don't match.")
         sys.exit()
