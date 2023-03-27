@@ -29,8 +29,9 @@ import time
 
 def run(*args):
     c = Deploy()
-    c.run(*args) 
-
+    result=c.run(*args) 
+    return result
+    
 class Deploy():
     def _load_pq(self,path,password,url_version,target_user):
         dw = decelium.SimpleWallet()
