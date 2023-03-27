@@ -174,21 +174,26 @@ class decelium_wallet {
     
     static async init() {
         this.crypto = {};
+        this.commands = {};
         this.wallet = wallet;
         this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
         this.wallet.pyodide = this.pyodide;
         console.log(this.pyodide);
         await this.pyodide.runPythonAsync(`
         from pyodide.http import pyfetch
-        response = await pyfetch("./crypto.py")
+        response = await pyfetch("../decelium_wallet/crypto.py")
         with open("crypto.py", "wb") as f:
             f.write(await response.bytes())
             print("Wrote crypto.py")
-        response = await pyfetch("./wallet.py")
+        response = await pyfetch("../decelium_wallet/decelium.py")
+        with open("decelium.py", "wb") as f:
+            f.write(await response.bytes())
+            print("Wrote decelium.py")            
+        response = await pyfetch("../decelium_wallet/wallet.py")
         with open("wallet.py", "wb") as f:
             f.write(await response.bytes())
             print("Wrote wallet.py")
-        `);
+        `);        
         await this.pyodide.loadPackage("micropip");
         const micropip = this.pyodide.pyimport("micropip");
         await micropip.install('ecdsa');
@@ -215,7 +220,95 @@ class decelium_wallet {
                             return JSON.parse(result); 
                           } 
             );
-            
+        const commands = [{
+            name: "generate_a_wallet",
+            argList: ["wallet_path"]
+        },{
+            name: "generate_user",
+            argList: ["wallet_path", "wallet_user"]
+        },{
+            name: "check_balance",
+            argList: ["wallet_path","wallet_user","url_version"]
+        },{
+            name: "create_user",
+            argList: ["wallet_path","wallet_user","dec_username","url_version"]
+        },{
+            name: "delete_user",
+            argList: ["wallet_path","wallet_user","dec_username","url_version"]  
+        },{
+            name: "display_wallet",
+            argList: ["wallet_path"]
+        },{
+            name: "download_entity",
+            argList: ["wallet_path","wallet_user","url_version","root_directory"]        
+        },{
+            name: "list_account",
+            argList: ["wallet_path","wallet_user","url_version","root_directory"] 
+        }];
+        
+        for (const command of commands) {
+            await this.pyodide.runPythonAsync(`
+                response = await pyfetch("../decelium_wallet/commands/${command.name}.py")
+                with open("${command.name}.py", "wb") as f:
+                    f.write(await response.bytes())
+                    print("Wrote ${command.name}.py")
+            `);
+            this.commands[command.name] = {}
+            this.commands[command.name]["run"] = (args) => {
+                if (!args)
+                    args={};
+                let argString = '(';
+                command.argList.forEach(arg=>{
+                    if (arg in args) {
+                        argString = argString +'"'+args[arg]+'",';
+                    } else {
+                        argString = argString + 'None,'; 
+                    }
+                });                
+                argString = argString+')';
+                console.log(argString);
+                this.pyodide.runPython("import "+command.name);
+                let result = this.pyodide.runPython(command.name+".run"+argString);
+                if (result!=undefined)
+                    return JSON.parse(result);
+            }
+        }
+        /*
+        const class_commands = [
+            { name: "secret",
+              argList: ["wallet_path","wallet_user","command"],
+              optionalArgList: ["secret_id","secret_value"]
+            }
+        ];
+        class_commands.forEach(command=>{
+            this.commands[command.name] = {};
+            this.commands[command.name]["Deploy"] = () => {
+                let self = {};
+                self.run = (args) => {
+                    if (!args)
+                        args = {};
+                    let argString='(';
+                    command.argList.forEach(arg=>{
+                        if (arg in args) {
+                            argString = argString +'"'+args[arg]+'",';
+                        } else {
+                            argString = argString + 'None,'; 
+                        }
+                    });
+                    command.optionalArgList.forEach(arg=>{
+                        if (arg in args) {
+                            argString = argString +'"'+args[arg]+'",';
+                        }
+                    });
+                    argString = argString+')';
+                    console.log(argString);
+                    this.pyodide.runPython("import "+command.name);
+                
+                }
+            }        
+        });
+        */
+        
             
             
     } 

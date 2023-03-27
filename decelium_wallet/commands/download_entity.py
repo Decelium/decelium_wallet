@@ -1,8 +1,14 @@
 import sys
 sys.path.append('../../')
 sys.path.append('../../../')
-from decelium_wallet.crypto import crypto
-from decelium_wallet import decelium
+try:
+    from decelium_wallet.crypto import crypto
+except:
+    from crypto import crypto
+try:    
+    from decelium_wallet import decelium
+except:
+    import decelium
 import uuid
 import base64
 import pprint

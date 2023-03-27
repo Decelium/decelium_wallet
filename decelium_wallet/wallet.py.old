@@ -7,25 +7,27 @@ except:
 import json
 
 class wallet():
+    '''
+    A simple wallet for holding decelium network artifacts. This wallet is a code level
+    wallet only, and does not have a GUI for user interaction. Volunteers are presently working on
+    hardware, javascript, and GUI wallet implementations! 
+
+    Why? We had a lot of problems in web 3.0 with three issues:
+    - sign transactions
+    - store accounts and addresses
+    - store generic secrets, keeping them encrypted too
+    '''
 
     def load(self,password=None,data=None,wallet=None,format=None):
+        self.wallet = {}
         if wallet and type(data) == dict:
             self.wallet = wallet
-            if format == 'json':
-                return json.dumps(True)
-            return True
-        if data == None:
-            self.wallet = {}
-            if format == 'json':
-                return json.dumps(True)
-            return True
+            return
         if password != None:
             astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
         else:
             astr = data
         self.wallet= crypto.do_decode_string(astr )
-        if format == 'json':
-            return json.dumps(True)
 
     def export(self,password=None,wallet=False,format=None):
         if wallet == True:
@@ -59,14 +61,13 @@ class wallet():
         if label == None:
             label = user['api_key']
         self.wallet[label] = account_data
-        user["some_data"] = "return"
         if format == 'json':
             user = json.dumps(user)
         return user
 
     def list_accounts(self,format=None):
         ret = list(self.wallet.keys())
-        if format == 'json':
+        if format = 'json':
             ret = json.dumps(ret)
         return ret
     
@@ -111,8 +112,6 @@ class wallet():
         return list(self.wallet[label]['secrets'].keys()) 
 
     def get_raw(self,format=None):
-        if format == 'json':
-            return json.dumps(self.wallet)
         return self.wallet
 
     def recover_user(self,private_key,format=None):

@@ -1,17 +1,20 @@
 import sys
 import getpass
-import pandas as pd
 import unittest    
 import uuid    
 import json
 sys.path.append('../../')
-import pandas as pd
-import requests
 import datetime,time
 import unittest
 import uuid
-import decelium_wallet.decelium as decelium
-from decelium_wallet.crypto import crypto
+try:
+    import decelium_wallet.decelium as decelium
+except:
+    import decelium
+try:    
+    from decelium_wallet.crypto import crypto
+except:
+    from crypto import crypto
 from sys import getsizeof
 from os.path import exists
 

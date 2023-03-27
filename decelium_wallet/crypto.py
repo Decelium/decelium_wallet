@@ -35,7 +35,7 @@ def datetime_parser(dct):
     return dct
 
 class crypto:
-    def getpass():
+    def getpass(format=None):
         path = ''
         password = None
         while password == None and len(path)<=3*4: 
@@ -47,16 +47,23 @@ class crypto:
             except:
                 path = path + '../'
                 password = None
-        return getpass.getpass()
+        ret = getpass.getpass()
+        if format == 'json':
+            ret = json.dumps(ret)
+        return ret
 
-    def do_encode_string(obj):
+    def do_encode_string(obj,format=None):
         string = jsondateencode_crypto.dumps(obj,separators=(',', ':'))
         encoded = base64.b64encode(string.encode('ascii'))
+        if format == 'json':
+            return json.dumps(encoded.decode('ascii'))
         return encoded.decode('ascii') 
 
-    def do_decode_string(data_packet):
+    def do_decode_string(data_packet,format=None):
         user_data_dev = base64.b64decode(data_packet) 
         data2 = jsondateencode_crypto.loads(user_data_dev.decode("ascii"))
+        if format == 'json':
+            data2 = json.dumps(data2)
         return data2
     
     # TODO break into crypto modules and support various versions
@@ -83,9 +90,11 @@ class crypto:
                 'address':vk.to_string().hex()[-42],
                 'private_key':sk.to_string().hex(),
                 'version':"python-ecdsa-0.1"}
+        if format == 'json':
+            user = json.dumps(user)
         return user
 
-    def sign_request(msg,signers,version='python-ecdsa-0.1'):
+    def sign_request(msg,signers,version='python-ecdsa-0.1',format=None):
         assert version == "python-ecdsa-0.1"
         q = crypto.do_encode_string(msg)
         msg = msg.copy()
@@ -95,9 +104,11 @@ class crypto:
             sk = ecdsa.SigningKey.from_string(pk,hashfunc=hashlib.sha256,curve=ecdsa.SECP256k1)
             sigs[signer['api_key']] = sk.sign(q.encode()).hex()
         msg['__sigs'] = sigs
+        if format == 'json':
+            msg = json.dumps(msg)        
         return msg
 
-    def verify_request(msg,version='python-ecdsa-0.1'):
+    def verify_request(msg,version='python-ecdsa-0.1',format=None):
         assert version == "python-ecdsa-0.1"
         verified = {}
         msg = msg.copy()
@@ -118,26 +129,33 @@ class crypto:
             msg['api_key_verified'] = verified[msg['api_key']]
         except:
             msg['api_key_verified'] = False
-            
+        if format == 'json':
+            msg = json.dumps(msg)              
         return msg   
 
 
-    def decode(payload,password,version='python-ecdsa-0.1'): 
+    def decode(payload,password,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         q= hashlib.sha224(password.encode('utf-8')).hexdigest()[:32]
         key = base64.urlsafe_b64encode(str.encode(q))
         f = Fernet(key)
-        return f.decrypt(str.encode(payload)).decode()
+        dec = f.decrypt(str.encode(payload)).decode()
+        if format == 'json':
+            dec = json.dumps(dec)          
+        return dec
 
-    def encode(content,password,version='python-ecdsa-0.1'): 
+    def encode(content,password,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         q= hashlib.sha224(password.encode('utf-8')).hexdigest()[:32]
         key = base64.urlsafe_b64encode(str.encode(q))
         f = Fernet(key)
         token = f.encrypt(str.encode(content))
-        return token.decode()
+        enc = token.decode()
+        if format == 'json':
+            enc = json.dumps(enc)        
+        return enc
     
-    def encode_key(content,password,version='python-ecdsa-0.1'): 
+    def encode_key(content,password,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         password = password.encode('utf-8')
         salt = os.urandom(16)
@@ -149,13 +167,19 @@ class crypto:
         )
         key = base64.urlsafe_b64encode(kdf.derive(password))
         f = Fernet(key)
-        token = f.encrypt(content.encode('utf-8'))
-        return token.decode(),key.decode()    
+        token = f.encrypt(content.encode('utf-8'))    
+        ret = (token.decode(),key.decode())
+        if format == 'json':
+            ret = json.dumps(ret)
+        return ret
     
-    def decode_key(payload,password,key,version='python-ecdsa-0.1'): 
+    def decode_key(payload,password,key,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         password = password.encode('utf-8')
         key = key.encode('utf-8')
         f = Fernet(key)
         data = f.decrypt(str.encode(payload))
-        return data.decode()           
+        dec = data.decode()
+        if format == 'json':
+            dec = json.dumps(dec)
+        return dec

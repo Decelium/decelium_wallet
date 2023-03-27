@@ -726,15 +726,15 @@ class SimpleWallet():
 
     def list_accounts(self,format=None):
         ret = list(self.wallet.keys())
-        if format == 'json':
+        if format = 'json':
             ret = json.dumps(ret)
         return ret
     
-    def rename_account(self,old_label,new_label,format=None):
+    def rename_account(self,old_label,new_label):
         self.wallet[new_label] = self.wallet[old_label]
         del(self.wallet[old_label])
         
-    def get_account(self,label,format=None):
+    def get_account(self,label):
         if not label in self.wallet:
             return {'error':'User is not in wallet manager'}
         return self.wallet[label] 
