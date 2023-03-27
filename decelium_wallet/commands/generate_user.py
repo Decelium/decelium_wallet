@@ -33,6 +33,9 @@ def run(*args):
     #path = '../../.wallet.dec'
     path = args[0:][0]
     user_id = args[0:][1]
+    confirm = None
+    if len(args)>2:
+        confirm = args[0:][2]
     password = crypto.getpass()
     dw = decelium.SimpleWallet()
     dw.load(path=path,password=password)
@@ -41,18 +44,18 @@ def run(*args):
     print("Are you sure you want to write this user? you should backup your wallet first!! (yes/no)")
     #print(user_id+":")
     #print(user)
-    yes = getpass.getpass()
-    if yes != "yes" and yes != "y":
-        print("aborted. exit..")
-        sys.exit(0)
-    else:
-        print("saving..")
-        #dw.set_secret(user_id, 'Example_secret_value', "some_password_123")
-        dw.save(path=path,password=password)
-        dw = decelium.SimpleWallet()
-        dw.load(path=path,password=password)
-        import pprint
-        pprint.pprint(dw.get_raw())
+    if confirm != "confirm":
+        yes = getpass.getpass()
+        if yes != "yes" and yes != "y":
+            print("aborted. exit..")
+            sys.exit(0)
+    print("saving..")
+    #dw.set_secret(user_id, 'Example_secret_value', "some_password_123")
+    dw.save(path=path,password=password)
+    dw = decelium.SimpleWallet()
+    dw.load(path=path,password=password)
+    import pprint
+    pprint.pprint(dw.get_raw())
         
 if __name__ == "__main__": 
     run(*sys.argv[1:])
