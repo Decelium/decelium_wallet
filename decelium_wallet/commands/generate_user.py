@@ -11,9 +11,9 @@ try:
 except:
     import decelium
 try:    
-    import decelium_wallet.crypto as crypto
+    from decelium_wallet.crypto import crypto
 except:
-    import crypto
+    from crypto import crypt
 from sys import getsizeof
 from os.path import exists
 
@@ -33,10 +33,10 @@ def run(*args):
     #path = '../../.wallet.dec'
     path = args[0:][0]
     user_id = args[0:][1]
-    password = getpass.getpass()
+    password = crypto.getpass()
     dw = decelium.SimpleWallet()
     dw.load(path=path,password=password)
-    user_data = crypto.crypto.generate_user()
+    user_data = crypto.generate_user()
     user = dw.create_account(label=user_id,user=user_data)
     print("Are you sure you want to write this user? you should backup your wallet first!! (yes/no)")
     #print(user_id+":")
