@@ -32,9 +32,9 @@ def run(*args):
 
     }
     print("Enter a password:")
-    password1 = getpass.getpass()
+    password1 = crypto.getpass()
     print("Enter password again:")
-    password2 = getpass.getpass()
+    password2 = crypto.getpass()
     if password1 != password2:
         print("The passwords don't match")
         sys.exit()    
