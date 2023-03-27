@@ -266,7 +266,8 @@ class Deploy():
         
         for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
             print("deployed... ", item['self_id'], ' as ', item['dir_name'])
-        sys.stdout = original_stdout  
+        sys.stdout = original_stdout
+        return website_id
     
 if __name__ == "__main__":
     # if you import as a library, then the importer is in charge of these imports
