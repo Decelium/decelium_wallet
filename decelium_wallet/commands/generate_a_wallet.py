@@ -11,7 +11,7 @@ import datetime,time
 import unittest
 import uuid
 import decelium_wallet.decelium as decelium
-import decelium_wallet.crypto as crypto
+from decelium_wallet.crypto import crypto
 from sys import getsizeof
 from os.path import exists
 
