@@ -39,8 +39,8 @@ def run(*args):
     cpu_symbol = "CPU"
 
     mbalance  = pq.balance({'api_key':api_key ,'self_id':api_key,'symbol':cpu_symbol ,'contract_id':cpu_contract_id},remote=True)
-    print(mbalance)   
-    
+    print(mbalance)
+    return mbalance    
     
 if __name__ == "__main__":
 
