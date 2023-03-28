@@ -40,7 +40,7 @@ def run(*args):
 
     response  = pq.execute_entity({'api_key':api_key ,'self_id':faucet_contract_id,'func':'send','args':{'dst_id': api_key}},remote=True)
     print(response)   
-    
+    return response
     
 if __name__ == "__main__":
 
