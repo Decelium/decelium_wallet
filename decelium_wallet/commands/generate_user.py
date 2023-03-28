@@ -13,7 +13,7 @@ except:
 try:    
     from decelium_wallet.crypto import crypto
 except:
-    from crypto import crypt
+    from crypto import crypto
 from sys import getsizeof
 from os.path import exists
 
