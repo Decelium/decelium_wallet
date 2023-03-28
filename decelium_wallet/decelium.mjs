@@ -181,21 +181,22 @@ class decelium_wallet {
         console.log(this.pyodide);
         await this.pyodide.runPythonAsync(`
         from pyodide.http import pyfetch
-        response = await pyfetch("../decelium_wallet/crypto.py")
+        response = await pyfetch("../../decelium_wallet/crypto.py")
         with open("crypto.py", "wb") as f:
             f.write(await response.bytes())
             print("Wrote crypto.py")
-        response = await pyfetch("../decelium_wallet/decelium.py")
+        response = await pyfetch("../../decelium_wallet/decelium.py")
         with open("decelium.py", "wb") as f:
             f.write(await response.bytes())
             print("Wrote decelium.py")            
-        response = await pyfetch("../decelium_wallet/wallet.py")
+        response = await pyfetch("../../decelium_wallet/wallet.py")
         with open("wallet.py", "wb") as f:
             f.write(await response.bytes())
             print("Wrote wallet.py")
         `);        
         await this.pyodide.loadPackage("micropip");
         const micropip = this.pyodide.pyimport("micropip");
+        await micropip.install('requests');
         await micropip.install('ecdsa');
         await micropip.install('cryptography');
         this.pyodide.runPython(`
@@ -222,33 +223,55 @@ class decelium_wallet {
             );
         const commands = [{
             name: "generate_a_wallet",
-            argList: ["wallet_path"]
+            argList: ["wallet_path"],
+            optionalArgList: []
         },{
             name: "generate_user",
-            argList: ["wallet_path", "wallet_user"]
+            argList: ["wallet_path", "wallet_user"],
+            optionalArgList: ["confirm"]
         },{
             name: "check_balance",
-            argList: ["wallet_path","wallet_user","url_version"]
+            argList: ["wallet_path","wallet_user","url_version"],
+            optionalArgList: []
         },{
             name: "create_user",
-            argList: ["wallet_path","wallet_user","dec_username","url_version"]
+            argList: ["wallet_path","wallet_user","dec_username","url_version"],
+            optionalArgList: ["password"]
         },{
             name: "delete_user",
-            argList: ["wallet_path","wallet_user","dec_username","url_version"]  
+            argList: ["wallet_path","wallet_user","dec_username","url_version"],
+            optionalArgList: []
         },{
             name: "display_wallet",
-            argList: ["wallet_path"]
+            argList: ["wallet_path"],
+            optionalArgList: []
         },{
             name: "download_entity",
-            argList: ["wallet_path","wallet_user","url_version","root_directory"]        
+            argList: ["wallet_path","wallet_user","url_version","root_directory"],
+            optionalArgList: []
         },{
             name: "list_account",
-            argList: ["wallet_path","wallet_user","url_version","root_directory"] 
-        }];
+            argList: ["wallet_path","wallet_user","url_version","root_directory"],
+            optionalArgList: []
+        },{
+            name: "fund",
+            argList: ["wallet_path","wallet_user","url_version"],
+            optionalArgList: []
+        },{ name: "secret",
+            argList: ["wallet_path","wallet_user","command"],
+            optionalArgList: ["secret_id","secret_value"]
+        },{ name: "deploy",
+            argList: ["wallet_path", "wallet_user", "url_version", "source_dir", "dest_path"],
+            optionalArgList: ["dns_host", "dns_secret_location"] 
+        },{
+            name: "deploy_dns",
+            argList: ["wallet_path", "wallet_user", "url_version", "target_id", "dns_host"],
+            optionalArgList: []
+        } ];
         
         for (const command of commands) {
             await this.pyodide.runPythonAsync(`
-                response = await pyfetch("../decelium_wallet/commands/${command.name}.py")
+                response = await pyfetch("../../decelium_wallet/commands/${command.name}.py")
                 with open("${command.name}.py", "wb") as f:
                     f.write(await response.bytes())
                     print("Wrote ${command.name}.py")
@@ -263,6 +286,11 @@ class decelium_wallet {
                         argString = argString +'"'+args[arg]+'",';
                     } else {
                         argString = argString + 'None,'; 
+                    }
+                });   
+                command.optionalArgList.forEach(arg=>{
+                    if (arg in args) {
+                        argString = argString +'"'+args[arg]+'",';
                     }
                 });                
                 argString = argString+')';

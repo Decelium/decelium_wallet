@@ -1,0 +1,54 @@
+<head>
+    
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
+
+</head>
+<body>
+<script type="module">
+    import {decelium_wallet} from '../../decelium_wallet/decelium.mjs';
+    //import {decelium_wallet} from "https://cdn.jsdelivr.net/gh/Decelium/decelium_wallet/decelium_wallet/decelium.mjs"    
+    //const decelium_wallet = require('../decelium_wallet/decelium.mjs').decelium_wallet;
+    let dw = decelium_wallet; 
+    dw.init().then(()=>{  
+
+        let wallet = dw.commands.generate_a_wallet.run({ wallet_path: ".wallet1.dec"});
+        if (Object.keys(wallet).length !== 0) throw new Error('Test failed: wallet is not empty');
+         
+        wallet = dw.commands.generate_user.run({wallet_path: ".wallet1.dec", wallet_user: "test_user", confirm:"confirm"});
+        if (!('test_user' in wallet)) throw new Error('Test failed: test_user not in wallet');
+        if (!('description' in wallet['test_user'])) throw new Error('Test failed: description not in wallet.test_user');
+        if (!('image' in wallet['test_user'])) throw new Error('Test failed: image not in wallet.test_user');
+        if (!('secrets' in wallet['test_user'])) throw new Error('Test failed: secrets not in wallet.test_user');
+        if (!('title' in wallet['test_user'])) throw new Error('Test failed: title not in wallet.test_user');
+        if (!('user' in wallet['test_user'])) throw new Error('Test failed: user not in wallet.test_user');
+        if (!('api_key' in wallet['test_user']['user'])) throw new Error('Test failed: api_key not in wallet.test_user.user');
+        if (!('private_key' in wallet['test_user']['user'])) throw new Error('Test failed: private_key not in wallet.test_user.user');
+        if (!('version' in wallet['test_user']['user'])) throw new Error('Test failed: version not in wallet.test_user.user');
+
+        let test_username = 'test_user' + String(Math.random());
+        let user_id = dw.commands.create_user.run({wallet_path:'.wallet1.dec', wallet_user: 'test_user', dec_username: test_username, url_version: 'test.paxfinancial.ai', password:'passtest'});
+        if (!user_id.startsWith('obj-')) throw new Error('Test failed: user_id does not start with obj-');
+
+        let fund_result=dw.commands.fund.run({wallet_path: "./test_wallet.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai"});
+        if (fund_result!==true) throw new Error('Test failed: fund_result is not true');
+        
+        let balance=dw.commands.check_balance.run({wallet_path: "./test_wallet.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai"})
+        if (balance!=200) throw new Error('Test failed: balance!=200');
+        
+        
+        
+        
+      //let balance=dw.commands.check_balance.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai"});
+      //console.log(balance);
+      //dw.commands.create_user.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", dec_username: "test_user1", url_version: "test.paxfinancial.ai"});
+      //dw.commands.delete_user.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", dec_username: "test_user1", url_version: "test.paxfinancial.ai"});  
+      //dw.commands.display_wallet.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec"});
+      //dw.commands.download_entity.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai",root_directory: "/"});  
+      //dw.commands.list_account.run({wallet_file_system: wallet, wallet_path: ".wallet1.dec", wallet_user: "test_user", url_version: "test.paxfinancial.ai",root_directory: "/"});
+    });
+    
+    
+</script>
+
+Hello there.
+</body>    
