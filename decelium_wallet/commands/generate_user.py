@@ -55,7 +55,9 @@ def run(*args):
     dw = decelium.SimpleWallet()
     dw.load(path=path,password=password)
     import pprint
-    pprint.pprint(dw.get_raw())
-        
+    raw = dw.get_raw()
+    pprint.pprint(raw)
+    return raw
+    
 if __name__ == "__main__": 
     run(*sys.argv[1:])
