@@ -267,10 +267,13 @@ class decelium_wallet {
                 });                
                 argString = argString+')';
                 console.log(argString);
+                this.pyodide.runPython("import json");
                 this.pyodide.runPython("import "+command.name);
-                let result = this.pyodide.runPython(command.name+".run"+argString);
-                if (result!=undefined)
-                    return JSON.parse(result);
+                let runString = "json.dumps("+command.name+".run"+argString+")";
+                let result = this.pyodide.runPython(runString);
+                if (result!=undefined) 
+                     return JSON.parse(result);
+                    
             }
         }
         /*
