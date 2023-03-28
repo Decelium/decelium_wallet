@@ -66,6 +66,7 @@ def run(*args):
     result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)   
     obj_id = pq.user_register(feature,remote=True)
     print(obj_id) 
+    return obj_id
 
 if __name__ == "__main__":
 
