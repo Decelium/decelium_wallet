@@ -1,18 +1,76 @@
-import decelium_wallet
-import decelium_wallet.commands.generate_a_wallet as generate_a_wallet
-import decelium_wallet.commands.generate_user as generate_user
-import decelium_wallet.commands.create_user as create_user
-import decelium_wallet.commands.fund as fund
-import decelium_wallet.commands.check_balance as check_balance
-import decelium_wallet.commands.deploy as deploy
-import decelium_wallet.commands.delete_user as delete_user
 import uuid
 import requests
 import sys
 import pprint
 import traceback
+import subprocess
+import os
+
+def capture_output():
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+
+    sys.stdout = open("data.out", "w")
+    sys.stderr = sys.stdout
+
+    return original_stdout, original_stderr
+
+def restore_output(original_stdout, original_stderr):
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    sys.stdout = original_stdout
+    sys.stderr = original_stderr
 
 try:
+    original_stdout, original_stderr = capture_output()
+    
+    cmdStr = "rm .password"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    cmdStr = "rm test_wallet.dec"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    cmdStr = "rm -rf website"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    cmdStr = "mkdir website"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    with open("website/index.html","w") as f:
+        f.write(
+'''<!DOCTYPE html>
+<html>
+<body>
+
+<p>This text is normal.</p>
+
+<p><em>This text is emphasized.</em></p>
+
+</body>
+</html>                
+''')
+    
+    cmdStr="yes | pip uninstall decelium_wallet"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    cmdStr = 'pip install "git+https://github.com/Decelium/decelium_wallet.git"'
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    import decelium_wallet.commands.generate_a_wallet as generate_a_wallet
+    import decelium_wallet.commands.generate_user as generate_user
+    import decelium_wallet.commands.create_user as create_user
+    import decelium_wallet.commands.fund as fund
+    import decelium_wallet.commands.check_balance as check_balance
+    import decelium_wallet.commands.deploy as deploy
+    import decelium_wallet.commands.delete_user as delete_user    
+        
+    with open(".password","w") as f:
+        f.write("passtest")
+    
     wallet=generate_a_wallet.run("./test_wallet.dec")
     assert len(wallet)==0
     
@@ -46,11 +104,23 @@ try:
     
     del_result=delete_user.run("./test_wallet.dec","test_user",test_username,"test.paxfinancial.ai")
     assert del_result==True
+    
+    cmdStr = "rm .password"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    cmdStr = "rm test_wallet.dec"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    cmdStr = "rm -rf website"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    restore_output(original_stdout, original_stderr)
+
+    print("1")
+    sys.exit(0)   
 
 except Exception as e:
+    restore_output(original_stdout, original_stderr)
     traceback.print_exc()
-    print("Exiting with status 1")
     sys.exit(1)
 
-print("Exiting with status 0")
-sys.exit(0)

@@ -1,1 +1,1 @@
-echo "testing js"
+echo "1"

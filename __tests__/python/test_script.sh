@@ -1,1 +1,1 @@
-echo "testing python"
+python3 ./test_python.py

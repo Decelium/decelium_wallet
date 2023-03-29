@@ -1,1 +1,1 @@
-echo "cli testing"
+echo "1"
