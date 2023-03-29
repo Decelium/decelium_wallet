@@ -1,5 +1,3 @@
- 
-
 # Decelium Wallet Command Line Usage
 
 ## Examples

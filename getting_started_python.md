@@ -52,3 +52,7 @@ To run the unit tests, `cd` to the `__tests__/python` directory and run
 #### Visiting the Uploaded Website
 
 The uploaded website will be available at `https://test.paxfinancial.ai/obj/[website_id]/` where `[website_id]` is the value returned upon uploading the website in the previous step.
+
+### Further Examples of Use of the Decelium Wallet in Python Programs
+
+There are examples of the use of the Decelium wallet in Python programs [here](./PY_USAGE_EXAMPLES.md).

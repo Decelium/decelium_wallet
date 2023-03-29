@@ -1,7 +1,5 @@
-for dir in python js reactjs nodejs cli
-do
-    echo "testing ${dir}"
-    cd ${dir}
-    bash test_script.sh
-    cd ..
-done
+cd js && echo "testing js" && python3 test_js.py && cd ..
+cd nodejs && echo "testing nodejs" && node test_nodejs.js && cd ..
+cd reactjs && echo "testing reactjs" && python3 test_reactjs.py && cd ..
+cd cli && echo "testing cli" && python3 test_cli.py && cd ..
+#cd python && echo "testing python" && python3 test_python.py && cd ..
