@@ -6,11 +6,11 @@ const { exec } = require('child_process');
   await new Promise((resolve, reject) => {
     exec('npm install', (err, stdout, stderr) => {
       if (err) {
-        console.error(npm install error: ${err});
+        console.error(`npm install error: ${err}`);
         reject(err);
       } else {
-        console.log(npm install stdout: ${stdout});
-        console.error(npm install stderr: ${stderr});
+        console.log(`npm install stdout: ${stdout}`);
+        console.error(`npm install stderr: ${stderr}`);
         resolve();
       }
     });
@@ -26,7 +26,7 @@ const { exec } = require('child_process');
       }
     });
     child.stderr.on('data', (data) => {
-      console.error(React app error: ${data});
+      console.error(`React app error: ${data}`);
       reject(data);
     });
   });
@@ -42,9 +42,9 @@ const { exec } = require('child_process');
   // Assert some information about the body
   const expectedText = 'Hello, world!';
   if (text.includes(expectedText)) {
-    console.log(Body contains "${expectedText}");
+    console.log(`Body contains "${expectedText}"`);
   } else {
-    console.error(Body does not contain "${expectedText}");
+    console.error(`Body does not contain "${expectedText}"`);
   }
 
   // Close down the React app
