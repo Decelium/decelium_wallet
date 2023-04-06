@@ -7,7 +7,7 @@ async def main():
 
     # Open a new page and navigate to the local Flask server
     page = await browser.newPage()
-    await page.goto('http://localhost:5000/')
+    await page.goto('http://localhost:5000/decelium_wallet1/__tests__/js/index.html')
     await page.waitForSelector('body')
 
     # Get the body of the root

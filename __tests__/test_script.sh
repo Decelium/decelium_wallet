@@ -10,7 +10,7 @@ cd ..
 
 cd reactjs
 echo "testing reactjs"
-python3 test_reactjs.py
+nodejs test_reactjs.js
 cd ..
 
 cd cli
