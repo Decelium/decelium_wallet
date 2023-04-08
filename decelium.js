@@ -10,9 +10,9 @@ Decelium.prototype.query = async function(query_name,query_in,callback)  {
     encodedString  = encodeURIComponent(encodedString);
     // ret_dat = {error:'jquery request failed'}
     req['__str_encoded_query'] = encodedString;
-    ret = {};
+    let ret = {};
 
-    dat = await fetch(url +"?" + new URLSearchParams(req), {
+    let dat = await fetch(url +"?" + new URLSearchParams(req), {
     method: 'GET',
     headers: {
         'Content-Type': 'application/json'
@@ -138,6 +138,299 @@ var Base64 = {
     }
 
 }
+
+
+
+
+class wallet {
+    //constructor() {}
+    constructor() {
+        const wi = "test123";
+        wallet.pyodide.runPython(wi+`= wallet.wallet()`);        
+        const wallet_methods = ['create_account','load','get_raw'];
+        wallet_methods.forEach(method=>
+                this[method] = (args) => {
+                            if (!args)
+                                args={};
+                            let argString = '('; 
+                            for ( const key in args ) {
+                                argString=argString+key+'="'+args[key]+'",';
+                            }
+                            argString=argString+'format="json")';
+                            console.log(argString);
+                            let result = wallet.pyodide.runPython(wi+`.`+method+argString);
+                            return JSON.parse(result); 
+                          } 
+            );
+        
+    }
+}
+
+const deceliumWalletPath = getDeceliumWalletPath();
+
+
+class decelium_wallet {
+    
+    static async init() {
+        this.crypto = {};
+        this.commands = {};
+        this.wallet = wallet;
+        this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
+        this.wallet.pyodide = this.pyodide;
+        console.log(this.pyodide);
+        await this.pyodide.runPythonAsync(`
+        from pyodide.http import pyfetch
+        response = await pyfetch("/decelium_wallet/crypto.py")
+        with open("crypto.py", "wb") as f:
+            f.write(await response.bytes())
+            print("Wrote crypto.py")
+        response = await pyfetch("/decelium_wallet/decelium.py")
+        with open("decelium.py", "wb") as f:
+            f.write(await response.bytes())
+            print("Wrote decelium.py")            
+        response = await pyfetch("/decelium_wallet/wallet.py")
+        with open("wallet.py", "wb") as f:
+            f.write(await response.bytes())
+            print("Wrote wallet.py")
+        `);        
+        await this.pyodide.loadPackage("micropip");
+        await this.pyodide.runPythonAsync(`
+        import micropip
+        micropip.INDEX_URL = 'https://pypi.org/simple'
+        `);        
+        const micropip = this.pyodide.pyimport("micropip");
+        await micropip.install('requests');
+        await micropip.install('ecdsa');
+        await micropip.install('cryptography');
+        this.pyodide.runPython(`
+            import crypto
+            import wallet
+        `); 
+        const crypto_methods = ['getpass','do_encode_string','do_decode_string',
+            'generate_user','generate_user_from_string',
+            'sign_request','verify_request',
+            'decode','encode','encode_key','decode_key'];
+        crypto_methods.forEach(method=>
+                this.crypto[method] = (args) => {
+                            if (!args)
+                                args={};
+                            let argString = '('; 
+                            for ( const key in args ) {
+                                argString=argString+key+'="'+args[key]+'",';
+                            }
+                            argString=argString+'format="json")';
+                            console.log(argString);
+                            let result = this.pyodide.runPython("crypto.crypto."+method+argString);
+                            return JSON.parse(result); 
+                          } 
+            );
+        const commands = [{
+            name: "generate_a_wallet",
+            argList: ["wallet_path"],
+            optionalArgList: []
+        },{
+            name: "generate_user",
+            argList: ["wallet_path", "wallet_user"],
+            optionalArgList: ["confirm"]
+        },{
+            name: "check_balance",
+            argList: ["wallet_path","wallet_user","url_version"],
+            optionalArgList: []
+        },{
+            name: "create_user",
+            argList: ["wallet_path","wallet_user","dec_username","url_version"],
+            optionalArgList: ["password"]
+        },{
+            name: "delete_user",
+            argList: ["wallet_path","wallet_user","dec_username","url_version"],
+            optionalArgList: []
+        },{
+            name: "display_wallet",
+            argList: ["wallet_path"],
+            optionalArgList: []
+        },{
+            name: "download_entity",
+            argList: ["wallet_path","wallet_user","url_version","root_directory"],
+            optionalArgList: []
+        },{
+            name: "list_account",
+            argList: ["wallet_path","wallet_user","url_version","root_directory"],
+            optionalArgList: []
+        },{
+            name: "fund",
+            argList: ["wallet_path","wallet_user","url_version"],
+            optionalArgList: []
+        },{ name: "secret",
+            argList: ["wallet_path","wallet_user","command"],
+            optionalArgList: ["secret_id","secret_value"]
+        },{ name: "deploy",
+            argList: ["wallet_path", "wallet_user", "url_version", "source_dir", "dest_path"],
+            optionalArgList: ["dns_host", "dns_secret_location"] 
+        },{
+            name: "deploy_dns",
+            argList: ["wallet_path", "wallet_user", "url_version", "target_id", "dns_host"],
+            optionalArgList: []
+        } ];
+        
+        for (const command of commands) {
+            await this.pyodide.runPythonAsync(`
+                response = await pyfetch("../../decelium_wallet/commands/${command.name}.py")
+                with open("${command.name}.py", "wb") as f:
+                    f.write(await response.bytes())
+                    print("Wrote ${command.name}.py")
+            `);
+            this.commands[command.name] = {}
+            this.commands[command.name]["run"] = (args) => {
+                if (!args)
+                    args={};
+                let argString = '(';
+                command.argList.forEach(arg=>{
+                    if (arg in args) {
+                        argString = argString +'"'+args[arg]+'",';
+                    } else {
+                        argString = argString + 'None,'; 
+                    }
+                });   
+                command.optionalArgList.forEach(arg=>{
+                    if (arg in args) {
+                        argString = argString +'"'+args[arg]+'",';
+                    }
+                });                
+                argString = argString+')';
+                console.log(argString);
+                this.pyodide.runPython("import json");
+                this.pyodide.runPython("import "+command.name);
+                let runString = "json.dumps("+command.name+".run"+argString+")";
+                let result = this.pyodide.runPython(runString);
+                if (result!=undefined) 
+                     return JSON.parse(result);
+                    
+            }
+        }
+        /*
+        const class_commands = [
+            { name: "secret",
+              argList: ["wallet_path","wallet_user","command"],
+              optionalArgList: ["secret_id","secret_value"]
+            }
+        ];
+        class_commands.forEach(command=>{
+            this.commands[command.name] = {};
+            this.commands[command.name]["Deploy"] = () => {
+                let self = {};
+                self.run = (args) => {
+                    if (!args)
+                        args = {};
+                    let argString='(';
+                    command.argList.forEach(arg=>{
+                        if (arg in args) {
+                            argString = argString +'"'+args[arg]+'",';
+                        } else {
+                            argString = argString + 'None,'; 
+                        }
+                    });
+                    command.optionalArgList.forEach(arg=>{
+                        if (arg in args) {
+                            argString = argString +'"'+args[arg]+'",';
+                        }
+                    });
+                    argString = argString+')';
+                    console.log(argString);
+                    this.pyodide.runPython("import "+command.name);
+                
+                }
+            }        
+        });
+        */
+        
+            
+            
+    } 
+        
+    async fetching() {
+        let encoded_string=this.pyodide.runPython(`
+            print(dir(crypto.crypto))
+            crypto.crypto.do_encode_string("abcd")
+        `);
+        console.log(encoded_string);
+        
+        let result_json=this.pyodide.runPython(`
+import json
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+private_key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=2048
+)
+public_key = private_key.public_key()
+json.dumps({
+      'private_key': private_key.private_bytes(
+          encoding=serialization.Encoding.PEM,
+          format=serialization.PrivateFormat.PKCS8,
+          encryption_algorithm=serialization.NoEncryption()
+      ).hex(),
+      'public_key': public_key.public_bytes(
+          encoding=serialization.Encoding.PEM,
+          format=serialization.PublicFormat.SubjectPublicKeyInfo
+      ).hex()
+  })`);
+        console.log(JSON.parse(result_json));  
+        
+        return this.pyodide.runPython(`dir(crypto)`);
+    }
+    
+    async calculate(){
+        let pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
+        ///await pyodide.loadPackage(['cryptography'])
+        //await pyodide.loadPackage(['json'])
+        ///let pkg1 = pyodide.pyimport("cryptography");
+        ///console.log(pyodide.runPython("import cryptography"));
+        console.log(pyodide.runPython("print('Hello world!!')"));
+        
+        console.log(pyodide.runPython("1 + 2"));
+        return pyodide.runPython("1+2");
+    }
+}
+
+
+
+/*
+PYTHON:
+class Self:
+    pass
+obj = Self() 
+obj.wallet = {IN_JAVASCRIPT_RENDER_YOUR_WALLET_STATE}
+result = SimpleWallet.create_account(self=obj,user = "user_test",label="test",version='python-ecdsa-0.1')
+
+[result,obj.wallet] 
+
+Javascript:
+
+class SimpleWallet()
+{
+        constructor(){
+                this.wallet = {}
+         }
+         run(){
+             let arr = ////PYTHON_{this.wallet }INVOKE///;
+             let result = arr[0]
+              this.wallet = arr[1]
+          }
+
+}
+
+*/
+
+
+
+
+
+
+
+
+
+
+export { decelium_wallet };
 
 export default Decelium;
 export { Decelium };
