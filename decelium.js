@@ -1,3 +1,7 @@
+import cryptoContent from './decelium_wallet/crypto.py.js';
+import deceliumContent from './decelium_wallet/decelium.py.js';
+import walletContent from './decelium_wallet/wallet.py.js';
+
 function Decelium(url_version,api_key_in) {
     this.url_version = url_version;
     this.api_key = api_key_in;
@@ -179,19 +183,12 @@ class decelium_wallet {
         this.wallet.pyodide = this.pyodide;
         console.log(this.pyodide);
         await this.pyodide.runPythonAsync(`
-        from pyodide.http import pyfetch
-        response = await pyfetch("/decelium_wallet/crypto.py")
         with open("crypto.py", "wb") as f:
-            f.write(await response.bytes())
-            print("Wrote crypto.py")
-        response = await pyfetch("/decelium_wallet/decelium.py")
+            f.write('''${cryptoContent}''')
         with open("decelium.py", "wb") as f:
-            f.write(await response.bytes())
-            print("Wrote decelium.py")            
-        response = await pyfetch("/decelium_wallet/wallet.py")
+            f.write('''${deceliumContent}''')
         with open("wallet.py", "wb") as f:
-            f.write(await response.bytes())
-            print("Wrote wallet.py")
+            f.write('''${walletContent}''')
         `);        
         await this.pyodide.loadPackage("micropip");
         await this.pyodide.runPythonAsync(`
