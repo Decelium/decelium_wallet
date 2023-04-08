@@ -170,26 +170,40 @@ class wallet {
     }
 }
 
-const deceliumWalletPath = getDeceliumWalletPath();
-
 
 class decelium_wallet {
     
     static async init() {
+        //console.log("cryptoContent");
+        //console.log(cryptoContent);
+        //console.log("cryptoContent2");
+        
         this.crypto = {};
         this.commands = {};
         this.wallet = wallet;
         this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
         this.wallet.pyodide = this.pyodide;
         console.log(this.pyodide);
+        this.pyodide.globals.set("cryptoContent", cryptoContent);
+        this.pyodide.globals.set("deceliumContent", deceliumContent);
+        this.pyodide.globals.set("walletContent", walletContent);        
         await this.pyodide.runPythonAsync(`
+        import codecs
+        crypto_bytes = codecs.encode(cryptoContent, 'utf-8')
+        decelium_bytes = codecs.encode(deceliumContent, 'utf-8')
+        wallet_bytes = codecs.encode(walletContent, 'utf-8')
+
         with open("crypto.py", "wb") as f:
-            f.write('''${cryptoContent}''')
+            f.write(crypto_bytes)
         with open("decelium.py", "wb") as f:
-            f.write('''${deceliumContent}''')
+            f.write(decelium_bytes)
         with open("wallet.py", "wb") as f:
-            f.write('''${walletContent}''')
-        `);        
+            f.write(wallet_bytes)
+            
+        with open("crypto.py", "r") as f:
+            content = f.read()
+        print(content)            
+        `);      
         await this.pyodide.loadPackage("micropip");
         await this.pyodide.runPythonAsync(`
         import micropip
@@ -200,8 +214,8 @@ class decelium_wallet {
         await micropip.install('ecdsa');
         await micropip.install('cryptography');
         this.pyodide.runPython(`
-            import crypto
-            import wallet
+        import crypto
+        import wallet
         `); 
         const crypto_methods = ['getpass','do_encode_string','do_decode_string',
             'generate_user','generate_user_from_string',
@@ -268,7 +282,7 @@ class decelium_wallet {
             argList: ["wallet_path", "wallet_user", "url_version", "target_id", "dns_host"],
             optionalArgList: []
         } ];
-        
+        /*
         for (const command of commands) {
             await this.pyodide.runPythonAsync(`
                 response = await pyfetch("../../decelium_wallet/commands/${command.name}.py")
@@ -303,7 +317,7 @@ class decelium_wallet {
                      return JSON.parse(result);
                     
             }
-        }
+        }*/
         /*
         const class_commands = [
             { name: "secret",
