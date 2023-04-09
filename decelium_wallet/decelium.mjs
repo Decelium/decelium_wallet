@@ -176,7 +176,7 @@ class decelium_wallet {
         this.crypto = {};
         this.commands = {};
         this.wallet = wallet;
-        this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
+        this.pyodide = await loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
         this.wallet.pyodide = this.pyodide;
         console.log(this.pyodide);
         await this.pyodide.runPythonAsync(`

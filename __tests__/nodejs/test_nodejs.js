@@ -25,9 +25,9 @@ function restoreOutput(originalStdout, originalStderr) {
   process.stderr = originalStderr;
 }
 
-try {
-  const { originalStdout, originalStderr } = captureOutput();
+const { originalStdout, originalStderr } = captureOutput();
 
+try {
   let cmdStr = 'rm .password';
   execSync(cmdStr);
 
@@ -98,7 +98,7 @@ try {
   const url = `https://test.paxfinancial.ai/obj/${websiteId}/`;
   assert(websiteId.startsWith('obj-'));
   
-  const response = await axios.get(url);
+  //const response = await axios.get(url);
   assert.strictEqual(response.status, 200);
   assert.strictEqual(response.data, `<!DOCTYPE html>\n<html>\n<body>\n\n<p>This text is normal.</p>\n\n<p><em>This text is emphasized.</em></p>\n\n</body>\n</html>\n`);
   
@@ -108,7 +108,8 @@ try {
   fs.unlinkSync('.password');
   fs.unlinkSync('test_wallet.dec');
   fs.rmdirSync('website', { recursive: true });
-
+    
+  restoreOutput(originalStdout, originalStderr);
   console.log('1');
   process.exit(0);
 } catch (e) {
