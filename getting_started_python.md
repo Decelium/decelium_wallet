@@ -8,11 +8,13 @@ You will need Python 3 and pip installed.
 
 ## Installation
 
+### Linux
+
 On Linux:
 
     pip install "git+https://github.com/Decelium/decelium_wallet.git"
 
-##### Windows
+### Windows
 
 On Windows:
 

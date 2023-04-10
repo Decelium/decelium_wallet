@@ -65,4 +65,4 @@ Now that we have created a wallet, generated a user ID for it, created a user on
 
 ## Further Examples of Use of the Decelium Wallet in Node.js
 
-For further examples you can consult the unit tests.
+You can consult the unit tests to see further examples.
