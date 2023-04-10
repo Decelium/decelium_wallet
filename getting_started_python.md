@@ -16,56 +16,36 @@ On Linux:
 
 On Windows:
 
-<img src="./run_as_administrator.png" alt="How to run as administrator" width="250" height="225">
-
-If you want to use the `decw` command-line tool, you will need to install using Command Prompt as an administrator (see image). Otherwise, you can still [use the Decelium wallet through Python](./PY_USAGE_EXAMPLES.md). 
-
     pip install "git+https://github.com/Decelium/decelium_wallet.git" 
     
     
 ## Using the Decelium Wallet in Python
 
-To use the Decelium wallet commands in a Python program, you will need to import them:
+Here is an example Python script that uses the Decelium wallet to generate a wallet, generate a user in the wallet, create a user on Decelium, and fund the user's account. Note that each command must be imported before it is used.
+
+A wallet contains user ID's and associated public/private key pairs.  A wallet and wallet user ID are needed for virtually every Decelium command, hence our first step is to create a wallet, which is created in an empty state.  The wallet requires a password; a password should be stored in a file called `.password` in, or up to three levels above, the working directory in which you are using your Python code.  If there is no `.password` file you will be prompted to enter a password at the keyboard. 
 ```python
 import decelium_wallet.commands.generate_a_wallet as generate_a_wallet
-import decelium_wallet.commands.generate_user as generate_user
-import decelium_wallet.commands.create_user as create_user
-import decelium_wallet.commands.fund as fund
-import decelium_wallet.commands.check_balance as check_balance
-import decelium_wallet.commands.deploy as deploy
-import decelium_wallet.commands.delete_user as delete_user  
-```
-
-Once you have imported the Decelium wallet, you can use it in your code. Here is an example script that uses the Decelium Wallet Node.js SDK to generate a wallet, generate a user in the wallet, create a user on Decelium, fund the user's account, deploy a website, and then delete the user from Decelium:
-
-```python
-import decelium_wallet.commands.generate_a_wallet as generate_a_wallet
-import decelium_wallet.commands.generate_user as generate_user
-import decelium_wallet.commands.create_user as create_user
-import decelium_wallet.commands.fund as fund
-import decelium_wallet.commands.check_balance as check_balance
-import decelium_wallet.commands.deploy as deploy
-import decelium_wallet.commands.delete_user as delete_user 
-import uuid
-
 gen_wallet=generate_a_wallet.run("./test_wallet.dec")
-    
-gen_user=generate_user.run("./test_wallet.dec","test_user","confirm")
-    
-test_username="test_user"+str(uuid.uuid4())
-user_id=create_user.run("./test_wallet.dec","test_user",test_username,"test.paxfinancial.ai","passtest")
-
-fund_result=fund.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
-
-balance=check_balance.run("./test_wallet.dec","test_user","test.paxfinancial.ai")    
-
-website_id = deploy.run("./test_wallet.dec","test_user","test.paxfinancial.ai","test/example_small_website.ipfs","./website/")
-
-del_result=delete_user.run("./test_wallet.dec","test_user",test_username,"test.paxfinancial.ai")
 ```
+Now that we have a wallet, we can generate a user ID in the wallet. This will create a public/private key pair associated with the user ID, stored in the wallet.  We will name the wallet user ID "test_user".
+```python
+import decelium_wallet.commands.generate_user as generate_user
+gen_user=generate_user.run("./test_wallet.dec","test_user","confirm")
+```
+In order to perform tasks such as uploading a website to Decelium, we have to also create a user on Decelium. This user is associated with a user ID, and hence public/private key pair, in the wallet.  We will create a user on Decelium with user name "test_user1" and password "passtest", which is associated with the "test_user" user ID in our wallet.
+```python
+import decelium_wallet.commands.create_user as create_user    
+user_id=create_user.run("./test_wallet.dec","test_user","test_user1","test.paxfinancial.ai","passtest")
+```
+Many tasks on Decelium, including uploading a website, require payment in Celium, the crytpocurrency Decelium runs on. We can fund our wallet with Celium with the `fund` command:
+```python
+import decelium_wallet.commands.fund as fund
+fund_result=fund.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
+```
+Now that we have created a wallet, generated a user ID for it, created a user on Decelium, and funded our wallet with Celium, we are ready to perform other tasks on Decelium, such as uploading websites.
 
-The uploaded website will be available at `https://test.paxfinancial.ai/obj/[website_id]/` where `[website_id]` is the value returned upon deploying the website, as in the script.
 
 ## Further Examples of Use of the Decelium Wallet in Python Programs
 
-There are examples of the use of the Decelium wallet in Python programs [here](./PY_USAGE_EXAMPLES.md).
+There are examples of the use of the Decelium wallet in Python programs [here](./PY_USAGE_EXAMPLES.md). You can also consult the unit tests to see further usage examples.

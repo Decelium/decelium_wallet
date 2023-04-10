@@ -4,7 +4,7 @@ The Decelium Wallet Node.js SDK allows developers to interact with the Decelium 
 
 ## Prerequisites
 
-Before you can use the Decelium Wallet Node.js SDK, you will need to have Node.js and npm installed on your machine. You can download Node.js from the official Node.js website, and npm is included with Node.js.
+Before you can use the Decelium Wallet Node.js SDK, you will need to have Node.js and npm installed on your machine.
 
 ## Installation
 
@@ -14,13 +14,20 @@ To install the Decelium Wallet for Node.js, run the following command in your pr
     
 ## Usage
 
+Here is an example script that uses the Decelium Wallet Node.js SDK to generate a wallet, generate a user in the wallet, create a user on Decelium, and fund the user's account.
+
 To use the Decelium Wallet Node.js SDK, you will need to import it:
 
 ```javascript
 const {decelium_wallet} = require('decelium-wallet').decelium;
 ```
 
-Once you have imported the Decelium wallet, you can use it in your code. Here is an example script that uses the Decelium Wallet Node.js SDK to generate a wallet, generate a user in the wallet, create a user on Decelium, fund the user's account, deploy a website, and then delete the user from Decelium:
+
+
+
+
+
+Putting the above all together in a script, we have:
 
 ```javascript
 const {decelium_wallet} = require('decelium-wallet').decelium;
@@ -37,12 +44,7 @@ async function runScript () {
     const userId = await dw.commands.create_user.run('./test_wallet.dec', 'test_user', testUsername, 'test.paxfinancial.ai', 'passtest');
 
     const fundResult = await dw.commands.fund.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai');
-
-    const balance = await dw.commands.check_balance.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai');
-
-    const websiteId = await dw.commands.deploy.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai', 'test/example_small_website.ipfs', './website/');
-
-  const delResult = await dw.commands.delete_user.run('./test_wallet.dec', 'test_user', testUsername, 'test.paxfinancial.ai');      
+     
 }                                                   
 
 runScript();
