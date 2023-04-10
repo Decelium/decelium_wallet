@@ -1,6 +1,6 @@
 # Getting Started in Python
 
-The Decelium wallet Python package allows you to use Decelium wallet modules in your Python programs.
+The Decelium wallet Python package allows you to use the Decelium wallet commands from within Python programs. This document will show you how to create a wallet, create a user ID in the wallet, and fund a user.
 
 ## Prerequisites
 
@@ -38,7 +38,7 @@ In order to perform tasks such as uploading a website to Decelium, we have to al
 import decelium_wallet.commands.create_user as create_user    
 user_id=create_user.run("./test_wallet.dec","test_user","test_user1","test.paxfinancial.ai","passtest")
 ```
-Many tasks on Decelium, including uploading a website, require payment in Celium, the crytpocurrency Decelium runs on. We can fund our wallet with Celium with the `fund` command:
+Many tasks on Decelium, including uploading a website, require a fee to be paid in Celium, the crytpocurrency Decelium runs on. We can fund our wallet with Celium with the `fund` command:
 ```python
 import decelium_wallet.commands.fund as fund
 fund_result=fund.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
