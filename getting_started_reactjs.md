@@ -1,3 +1,11 @@
+# Getting Started in React JS
+
+The Decelium wallet can be imported and used from within React JS applications.
+
+## Prerequisites
+
+To use React JS, and the Decelium wallet, you must have 
+
 
 #### NPM Install 
 

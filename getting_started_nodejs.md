@@ -1,13 +1,4 @@
-
-#### NPM Install 
-
-NPM installation of the [**Decelium wallet**](https://github.com/Decelium/decelium_wallet) is necessary if you want to write JavaScript programs or apps that interact with the Decelium server.
-
-The installation command is
-    
-    npm install https://github.com/Decelium/decelium_wallet
-
-# Getting Started with Decelium Wallet Node.js SDK
+# Getting Started in Node.js
 
 The Decelium Wallet Node.js SDK allows developers to interact with the Decelium Wallet platform from within Node.js applications.
 
@@ -15,63 +6,45 @@ The Decelium Wallet Node.js SDK allows developers to interact with the Decelium 
 
 Before you can use the Decelium Wallet Node.js SDK, you will need to have Node.js and npm installed on your machine. You can download Node.js from the official Node.js website, and npm is included with Node.js.
 
-You will also need a Decelium Wallet account. You can sign up for a Decelium Wallet account on the Decelium Wallet website.
-
 ## Installation
 
-To install the Decelium Wallet Node.js SDK, run the following command in your project directory:
+To install the Decelium Wallet for Node.js, run the following command in your project directory:
 
-    npm install decelium-wallet
+    npm install https://github.com/Decelium/decelium_wallet
     
 ## Usage
 
-To use the Decelium Wallet Node.js SDK, you will need to import the various commands provided by the SDK:
+To use the Decelium Wallet Node.js SDK, you will need to import it:
 
 ```javascript
-const generateAWallet = require('decelium-wallet').generateAWallet;
-const generateUser = require('decelium-wallet').generateUser;
-const createUser = require('decelium-wallet').createUser;
-const fund = require('decelium-wallet').fund;
-const checkBalance = require('decelium-wallet').checkBalance;
-const deploy = require('decelium-wallet').deploy;
-const deleteUser = require('decelium-wallet').deleteUser;
+const {decelium_wallet} = require('decelium-wallet').decelium;
 ```
 
-Once you have imported the commands, you can use them in your code. Here is an example script that uses the Decelium Wallet Node.js SDK to generate a wallet, create a user, fund the user's account, deploy a website, and then delete the user:
+Once you have imported the Decelium wallet, you can use it in your code. Here is an example script that uses the Decelium Wallet Node.js SDK to generate a wallet, generate a user in the wallet, create a user on Decelium, fund the user's account, deploy a website, and then delete the user from Decelium:
 
 ```javascript
-const generateAWallet = require('decelium-wallet').generateAWallet;
-const generateUser = require('decelium-wallet').generateUser;
-const createUser = require('decelium-wallet').createUser;
-const fund = require('decelium-wallet').fund;
-const checkBalance = require('decelium-wallet').checkBalance;
-const deploy = require('decelium-wallet').deploy;
-const deleteUser = require('decelium-wallet').deleteUser;
-const assert = require('assert');
+const {decelium_wallet} = require('decelium-wallet').decelium;
 
-(async () => {
-  try {
-    const wallet = await generateAWallet.run('./test_wallet.dec');
-    assert.strictEqual(wallet.length, 0);
+async function runScript () {
+  
+    const dw = decelium_wallet;  
+      
+    const wallet = await dw.commands.generate_a_wallet.run('./test_wallet.dec');
 
+    const user = await dw.commands.generate_user.run('./test_wallet.dec', 'test_user', 'confirm');
+      
     const testUsername = 'test_user' + Math.random().toString(36).substring(7);
-    const user = await generateUser.run('./test_wallet.dec', testUsername, 'confirm');
-    assert.strictEqual(user[testUsername].description, '');
-    assert.strictEqual(user[testUsername].image, '');
-    assert.strictEqual(user[testUsername].secrets.length, 0);
-    assert.strictEqual(user[testUsername].title, '');
-    assert.strictEqual(user[testUsername].user.api_key.length, 40);
-    assert.strictEqual(user[testUsername].user.private_key.length, 64);
-    assert.strictEqual(user[testUsername].user.version, 3);
+    const userId = await dw.commands.create_user.run('./test_wallet.dec', 'test_user', testUsername, 'test.paxfinancial.ai', 'passtest');
 
-    const userId = await createUser.run('./test_wallet.dec', 'test_user', testUsername, 'test.paxfinancial.ai', 'passtest');
-    assert.strictEqual(userId.substr(0, 4), 'obj-');
+    const fundResult = await dw.commands.fund.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai');
 
-    const fundResult = await fund.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai');
-    assert.strictEqual(fundResult, true);
+    const balance = await dw.commands.check_balance.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai');
 
-    const balance = await checkBalance.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai');
-    assert.strictEqual(balance, 200);
+    const websiteId = await dw.commands.deploy.run('./test_wallet.dec', 'test_user', 'test.paxfinancial.ai', 'test/example_small_website.ipfs', './website/');
 
-    const websiteId = await deploy.run('./test_wallet.dec', 'test_user', 'test.paxfinancial
+  const delResult = await dw.commands.delete_user.run('./test_wallet.dec', 'test_user', testUsername, 'test.paxfinancial.ai');      
+}                                                   
+
+runScript();
+
 ```
