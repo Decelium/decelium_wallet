@@ -4,7 +4,7 @@
   "description": "> Experimental: This code will change in the future, including function names. Please keep up to date with the repository! # Decelium Protocol ### Decentralizing web hosting and containers",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest nodewallet.js",
+    "test": "cd __tests__ && python3 test_script.py",
     "postinstall": "node post_install.js"      
   },
   "exports": {
