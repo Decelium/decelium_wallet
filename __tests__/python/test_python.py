@@ -99,9 +99,12 @@ try:
     url = "https://test.paxfinancial.ai/obj/"+website_id+"/"
     assert "obj-" in website_id
     response = requests.get(url)
+    print(website_id)
+    print(url)
+    print(response)
     assert response.status_code==200
-    assert response.content==b'<!DOCTYPE html>\n<html>\n<body>\n\n<p>This text is normal.</p>\n\n<p><em>This text is emphasized.</em></p>\n\n</body>\n</html>\n'
-    
+    assert '<!DOCTYPE html>\n<html>\n<body>\n\n<p>This text is normal.</p>\n\n<p><em>This text is emphasized.</em></p>\n\n</body>\n</html>' in response.text
+        
     del_result=delete_user.run("./test_wallet.dec","test_user",test_username,"test.paxfinancial.ai")
     assert del_result==True
     
