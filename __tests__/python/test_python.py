@@ -13,8 +13,8 @@ def capture_output():
     original_stdout = sys.stdout
     original_stderr = sys.stderr
 
-    sys.stdout = open("data.out", "w")
-    sys.stderr = sys.stdout
+    #sys.stdout = open("data.out", "w")
+    #sys.stderr = sys.stdout
 
     return original_stdout, original_stderr
 
@@ -59,7 +59,10 @@ try:
     
     cmdStr = 'pip install "git+https://github.com/Decelium/decelium_wallet.git"'
     subprocess.run(cmdStr,shell=True,capture_output=True)
+    #sys.path.append("../../")
     
+    import decelium_wallet.decelium as Decelium
+    import decelium_wallet.wallet as Wallet
     import decelium_wallet.commands.generate_a_wallet as generate_a_wallet
     import decelium_wallet.commands.generate_user as generate_user
     import decelium_wallet.commands.create_user as create_user
@@ -73,6 +76,10 @@ try:
     
     wallet=generate_a_wallet.run("./test_wallet.dec")
     assert len(wallet)==0
+    
+    
+    
+    
     
     wallet=generate_user.run("./test_wallet.dec","test_user","confirm")
     assert "test_user" in wallet
@@ -94,6 +101,33 @@ try:
     
     balance=check_balance.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
     assert balance==200    
+    
+    # Test Manual Query
+    # We load a wallet class, and manually sign a transaction.
+    # This is more secure, as it can control signatures on a message by message basis.
+    dw = Wallet.wallet()
+    dw.load(path="./test_wallet.dec",password="passtest")
+    print(dir(dw))
+    pq = Decelium.Decelium(url_version="test.paxfinancial.ai",api_key=dw.pubk("test_user"))
+    
+    
+    qUnsigned = {
+        'api_key':dw.pubk("test_user"),
+        'path':"/",
+        'name':"test_dict.json",
+        'file_type':'dict',
+        'payload':{"test":"val"}}
+    qSigned = dw.sign_request(qUnsigned, ["test_user"])    
+    assert "__sigs" in qSigned
+    fil  = pq.create_entity(qSigned)
+    assert "obj-" in fil
+    result  = pq.delete_entity(dw.sr({'api_key':dw.pubk("test_user"),
+                                      'self_id':fil},
+                                      ["test_user"]))
+    assert result == True
+    
+
+    
     
     website_id = deploy.run("./test_wallet.dec","test_user","test.paxfinancial.ai","test/example_small_website.ipfs","./website/")
     url = "https://test.paxfinancial.ai/obj/"+website_id+"/"
