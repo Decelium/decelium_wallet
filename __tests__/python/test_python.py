@@ -57,11 +57,11 @@ try:
     cmdStr="yes | pip uninstall decelium_wallet"
     subprocess.run(cmdStr,shell=True,capture_output=True)
     
-    cmdStr = 'pip install "git+https://github.com/Decelium/decelium_wallet.git"'
-    subprocess.run(cmdStr,shell=True,capture_output=True)
-    #sys.path.append("../../")
+    #cmdStr = 'pip install "git+https://github.com/Decelium/decelium_wallet.git"'
+    #subprocess.run(cmdStr,shell=True,capture_output=True)
+    sys.path.append("../../")
     
-    import decelium_wallet.decelium as Decelium
+    import decelium_wallet.network as network
     import decelium_wallet.wallet as Wallet
     import decelium_wallet.commands.generate_a_wallet as generate_a_wallet
     import decelium_wallet.commands.generate_user as generate_user
@@ -108,7 +108,7 @@ try:
     dw = Wallet.wallet()
     dw.load(path="./test_wallet.dec",password="passtest")
     print(dir(dw))
-    pq = Decelium.Decelium(url_version="test.paxfinancial.ai",api_key=dw.pubk("test_user"))
+    pq = network.network(url_version="https://test.paxfinancial.ai/data/query",api_key=dw.pubk("test_user"))
     
     
     qUnsigned = {
@@ -120,6 +120,7 @@ try:
     qSigned = dw.sign_request(qUnsigned, ["test_user"])    
     assert "__sigs" in qSigned
     fil  = pq.create_entity(qSigned)
+    print(fil)
     assert "obj-" in fil
     result  = pq.delete_entity(dw.sr({'api_key':dw.pubk("test_user"),
                                       'self_id':fil},

@@ -1,8 +1,9 @@
 import json
 import os
 from os.path import exists
-
-
+import datetime
+import pickle
+import base64
 class jsondateencode_local:
     def loads(dic):
         return json.loads(dic,object_hook=jsondateencode_local.datetime_parser)
@@ -27,31 +28,42 @@ class jsondateencode_local:
                     pass
         return dct
 
-class query():
-    def __init__(self):
-        pass
+class network():
+    def __init__(self,url_version=None,api_key=None):
+        self.url_version = url_version
+        self.api_key = api_key
+        
+    def __getattr__(self,attr):
+        self.current_attr = attr
+        return self.__run_query
     
-    def run_websocket(source_id,query,url_version='dev'):
+    def __run_query(self,q,remote=True,wait_seconds = 120,re_query_delay=5,show_url=False):        
+        if 'api_key' not in q or q['api_key']==None:
+            q['api_key'] = self.api_key            
+        return self.query(q,self.current_attr,remote=remote,url_version=self.url_version,wait_seconds = wait_seconds,re_query_delay=re_query_delay,show_url=show_url)
+    
+    
+    def query_websocket(self,source_id,query,url_version='dev'):
         from websocket import create_connection
         try:
-            paxqueryengine.ws
+            self.ws
         except:
-            paxqueryengine.ws = {}
-        if host not in paxqueryengine.ws:
-            paxqueryengine.ws[host] = create_connection("ws://"+host+'/data/query')
+            self.ws = {}
+        if host not in self.ws:
+            self.ws[host] = create_connection("ws://"+host+'/data/query')
         args = {}
         args['qtype'] = source_id
-        args['__encoded_query'] = paxqueryengine.do_encode(query)
+        args['__encoded_query'] = self.do_encode(query)
         args['host'] = host.split(':')[0]
         #args['url'] = '/data/query'
         try:
-            paxqueryengine.ws[host].send(json.dumps(args))
-            result =  paxqueryengine.ws[host].recv()
+            self.ws[host].send(json.dumps(args))
+            result =  self.ws[host].recv()
         except:
-            paxqueryengine.ws[host].close()
-            paxqueryengine.ws[host] = create_connection("ws://"+host+'/data/query')
-            paxqueryengine.ws[host].send(json.dumps(args))
-            result =  paxqueryengine.ws[host].recv()
+            self.ws[host].close()
+            self.ws[host] = create_connection("ws://"+host+'/data/query')
+            self.ws[host].send(json.dumps(args))
+            result =  self.ws[host].recv()
             result = r'{}'.format(result)
             
         try:
@@ -70,15 +82,15 @@ class query():
             dat = r.text        
         return dat
     
-    def run_remote(source_id,query,url_version='dev',show_url=False):
+    def query_remote(self,source_id,query,url_version='dev',show_url=False):
         import requests
         if show_url:
             print(url)
             print(query)
         data = {}
         data['qtype'] = source_id
-        data['__encoded_query'] = paxqueryengine.do_encode(query)
-        r = requests.post(url, data = data)        
+        data['__encoded_query'] = self.do_encode(query)
+        r = requests.post(url_version, data = data)        
         try:
             dat = jsondateencode_local.loads(r.text)
         except Exception as e :
@@ -86,31 +98,30 @@ class query():
             dat = r.text
         return dat
     
-    def run_prepare(source_id,query,url_version='dev'):
+    def query_prepare(self,source_id,query,url_version='dev'):
         import requests
-        url = 'https://'+url_version+'.paxfinancial.ai/data/query'
         data = {}
         data['qtype'] = source_id
-        data['__encoded_query'] = paxqueryengine.do_encode(query)
+        data['__encoded_query'] = self.do_encode(query)
         return data
 
-    def do_encode(request_obj):
+    def do_encode(self,request_obj):
         serial = pickle.dumps(request_obj)
         user_data_enc = base64.b64encode(serial).decode("ascii")                   
         return user_data_enc
     
-    def do_decode(data_packet):
+    def do_decode(self,data_packet):
         from urllib.parse import unquote
         user_data_dev = base64.b64decode(unquote(data_packet))   
         data2 = pickle.loads(user_data_dev)
         return data2
     
-    def do_encode_string(obj):
+    def do_encode_string(self,obj):
         string = json.dumps(obj,separators=(',', ':'))
         encoded = base64.b64encode(string.encode('ascii'))
         return encoded.decode('ascii') 
 
-    def do_decode_string(data_packet):
+    def do_decode_string(self,data_packet):
         user_data_dev = base64.b64decode(data_packet)                   
         data2 = json.loads(user_data_dev.decode("ascii"))
         return data2
@@ -134,13 +145,14 @@ class query():
         
     def query_wait(self,filter,source_id,remote=False,url_version='dev',show_url=False):
         if '__encoded_query' in filter:
-            dic = paxqueryengine.do_decode(filter['__encoded_query'])
+            dic = self.do_decode(filter['__encoded_query'])
             filter.update(dic)
             del(filter['__encoded_query'])
         
         if remote == 'ws':
-            return paxqueryengine.query_websocket(source_id,filter,url_version)
+            return self.query_websocket(source_id,filter,url_version)
         if remote  in [True,'http','https']:
-            return paxqueryengine.query_remote(source_id,filter,url_version,show_url)
+            return self.query_remote(source_id,filter,url_version,show_url)
         
         return None    
+    
