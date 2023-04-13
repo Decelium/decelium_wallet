@@ -1,6 +1,17 @@
 import cryptoContent from './decelium_wallet/crypto.py.js';
-import deceliumContent from './decelium_wallet/decelium.py.js';
+//import deceliumContent from './decelium_wallet/decelium.py.js';
 import walletContent from './decelium_wallet/wallet.py.js';
+import networkContent from './decelium_wallet/network.py.js';
+
+const variableNamesAndPaths = [
+  { name: "cryptoContent", path: "./decelium_wallet/crypto.py.js", mod:cryptoContent },
+  { name: "networkContent", path: "./decelium_wallet/network.py.js", mod:networkContent },
+  //{ name: "deceliumContent", path: "./decelium_wallet/decelium.py.js", mod:deceliumContent },
+  { name: "walletContent", path: "./decelium_wallet/wallet.py.js", mod:walletContent },
+    
+];
+
+//console.log(networkContent);
 
 function Decelium(url_version,api_key_in) {
     this.url_version = url_version;
@@ -119,7 +130,9 @@ var Base64 = {
     _utf8_decode : function (utftext) {
         var string = "";
         var i = 0;
-        var c = c1 = c2 = 0;
+        var c = 0;
+        var c1 = 0;
+        var c2 = 0;
         while ( i < utftext.length ) {
             c = utftext.charCodeAt(i);
             if (c < 128) {
@@ -133,7 +146,7 @@ var Base64 = {
             }
             else {
                 c2 = utftext.charCodeAt(i+1);
-                c3 = utftext.charCodeAt(i+2);
+                var c3 = utftext.charCodeAt(i+2);
                 string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
                 i += 3;
             }
@@ -172,11 +185,17 @@ class wallet {
 
 
 class decelium_wallet {
+
     
     static async init() {
-        //console.log("cryptoContent");
-        //console.log(cryptoContent);
-        //console.log("cryptoContent2");
+        this.importAndSetGlobals = async (pyodide) => {
+          for (let i = 0; i < variableNamesAndPaths.length; i++) {
+            const { name, path,mod } = variableNamesAndPaths[i];
+            //const module = await import(path);
+            //const variableValue = module[name];
+            pyodide.globals.set(name, mod);
+          }
+        }        
         
         this.crypto = {};
         this.commands = {};
@@ -184,43 +203,85 @@ class decelium_wallet {
         this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
         this.wallet.pyodide = this.pyodide;
         console.log(this.pyodide);
-        this.pyodide.globals.set("cryptoContent", cryptoContent);
-        this.pyodide.globals.set("deceliumContent", deceliumContent);
-        this.pyodide.globals.set("walletContent", walletContent);        
+        await this.importAndSetGlobals(this.pyodide);
+
         await this.pyodide.runPythonAsync(`
-        import codecs
-        crypto_bytes = codecs.encode(cryptoContent, 'utf-8')
+        import codecs`); 
+                /*
+        const pythonFileName = variableNamesAndPaths[0]['name'].replace('Content', '');
+
+        await this.pyodide.runPythonAsync(`
+        ${variableNamesAndPaths[0]['name']}_bytes = codecs.encode(${variableNamesAndPaths[0]['name']}, 'utf-8')
         decelium_bytes = codecs.encode(deceliumContent, 'utf-8')
         wallet_bytes = codecs.encode(walletContent, 'utf-8')
 
-        with open("crypto.py", "wb") as f:
-            f.write(crypto_bytes)
+        with open("${pythonFileName}.py", "wb") as f:
+            f.write(${variableNamesAndPaths[0]['name']}_bytes)
         with open("decelium.py", "wb") as f:
             f.write(decelium_bytes)
         with open("wallet.py", "wb") as f:
             f.write(wallet_bytes)
-            
-        with open("crypto.py", "r") as f:
-            content = f.read()
-        print(content)            
-        `);      
+        `); 
+        
+        */ 
+        
+
+        
+        
         await this.pyodide.loadPackage("micropip");
         await this.pyodide.runPythonAsync(`
         import micropip
         micropip.INDEX_URL = 'https://pypi.org/simple'
+        import os
+        import time
+
+        def wait_for_file(filename, timeout=5):
+            start_time = time.time()
+            while not os.path.exists(filename):
+                time.sleep(0.1)
+                elapsed_time = time.time() - start_time
+                if elapsed_time > timeout:
+                    raise FileNotFoundError(f"File {filename} not found within {timeout} seconds.")
+        
         `);        
         const micropip = this.pyodide.pyimport("micropip");
         await micropip.install('requests');
         await micropip.install('ecdsa');
         await micropip.install('cryptography');
-        this.pyodide.runPython(`
-        import crypto
-        import wallet
-        `); 
+        
+        //await micropip.install('json');
+        //await micropip.install('os');
+        //await micropip.install('datetime');
+        //await micropip.install('pickle');
+        //await micropip.install('base64');
+      
+        let pythonFileName = "";
+        let thepy = "";
+        
+        for (let i = 0; i < variableNamesAndPaths.length; i++) {
+            pythonFileName = variableNamesAndPaths[i]['name'].replace('Content', '');
+            await this.pyodide.runPythonAsync(`
+            ${variableNamesAndPaths[i]['name']}_bytes = codecs.encode(${variableNamesAndPaths[i]['name']}, 'utf-8')
+            print("writing ${pythonFileName}.py")
+            with open("${pythonFileName}.py", "wb") as f:
+                f.write(${variableNamesAndPaths[i]['name']}_bytes)
+                f.close()`);
+            
+
+
+        }
+
+        
         const crypto_methods = ['getpass','do_encode_string','do_decode_string',
             'generate_user','generate_user_from_string',
             'sign_request','verify_request',
             'decode','encode','encode_key','decode_key'];
+        
+        await this.pyodide.runPythonAsync(`
+        import crypto
+        import wallet
+        import network
+        `);        
         crypto_methods.forEach(method=>
                 this.crypto[method] = (args) => {
                             if (!args)

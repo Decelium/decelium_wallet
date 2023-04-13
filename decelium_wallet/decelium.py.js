@@ -469,7 +469,7 @@ class paxqueryengine():
         return res
         
         
-    def query(self,filter,source_id,remote=False,url_version='dev',  wait_seconds = 120,re_query_delay=5,show_url=False):
+    def query(self,filter,source_id,remote=True,url_version='dev',  wait_seconds = 120,re_query_delay=5,show_url=False):
         time_start = datetime.datetime.utcnow()
         while (datetime.datetime.utcnow() - time_start).total_seconds() < wait_seconds:
             #print('query_wait',show_url)
@@ -485,7 +485,7 @@ class paxqueryengine():
                 break
         return resp        
         
-    def query_wait(self,filter,source_id,remote=False,url_version='dev',show_url=False):
+    def query_wait(self,filter,source_id,remote=True,url_version='dev',show_url=False):
         if '__encoded_query' in filter:
             #time_print_start(label+"_decode")
             dic = paxqueryengine.do_decode(filter['__encoded_query'])
@@ -503,7 +503,6 @@ class paxqueryengine():
         if remote  in [True,'http','https']:
             #print('query_remote',show_url)
             return paxqueryengine.query_remote(source_id,filter,url_version,show_url)
-        
         #time_print_start(label+"_debug")
         if remote==False: 
             filter['__running_as_root'] = True
@@ -575,7 +574,7 @@ class PaxFinancialAPIClass:
         self.current_attr = attr
         return self.__run_query
     
-    def __run_query(self,q,remote=False,wait_seconds = 120,re_query_delay=5,show_url=False):        
+    def __run_query(self,q,remote=True,wait_seconds = 120,re_query_delay=5,show_url=False):        
         if 'api_key' not in q or q['api_key']==None:
             q['api_key'] = self.api_key            
         return self.pq.query(q,self.current_attr,remote=remote,url_version=self.url_version,wait_seconds = wait_seconds,re_query_delay=re_query_delay,show_url=show_url)

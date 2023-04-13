@@ -181,4 +181,5 @@ class crypto:
         dec = data.decode()
         if format == 'json':
             dec = json.dumps(dec)
-        return dec`;
+        return dec
+`;

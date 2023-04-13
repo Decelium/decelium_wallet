@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const pythonFiles = ['crypto.py', 'decelium.py', 'wallet.py'];
+const pythonFiles = ['crypto.py', 'decelium.py', 'wallet.py', 'network.py'];
 
 pythonFiles.forEach((file) => {
   const filePath = path.join(__dirname, file);

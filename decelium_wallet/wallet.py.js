@@ -9,34 +9,6 @@ import os
 from os.path import exists
 
 class wallet():
-    """ 
-    def load(self,password=None,data=None,wallet=None,format=None):
-        if wallet and type(data) == dict:
-            self.wallet = wallet
-            if format == 'json':
-                return json.dumps(True)
-            return True
-        if data == None:
-            self.wallet = {}
-            if format == 'json':
-                return json.dumps(True)
-            return True
-        if password != None:
-            astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
-        else:
-            astr = data
-        self.wallet= crypto.do_decode_string(astr )
-        if format == 'json':
-            return json.dumps(True)
-
-    def export(self,password=None,wallet=False,format=None):
-        if wallet == True:
-            return wallet.copy()
-        dumpstr = crypto.do_encode_string(self.wallet)
-        if password != None:
-            dumpstr = crypto.encode(dumpstr,password,version='python-ecdsa-0.1')
-        return dumpstr
-    """
     def __init__(self,mode="fs",fs=None):
         self.mode=mode
            
@@ -88,15 +60,36 @@ class wallet():
         with open(path,'r') as f:
             savedstr = f.read()
             assert dumpstr == savedstr
+    def sr(self,q,user_ids,format=None):
+        return self.sign_request(q,user_ids,format=format)
     
-    def request_sign(self,message,format=None):
+    def pubk(self,uid,format=None):
+        user = self.wallet[uid]
+        key_data = user['user']
+        if format == 'json':
+            res = json.dumps(key_data['api_key'])
+        else:
+            res = key_data['api_key']
+        return res
+    
+    
+    def sign_request(self,q,user_ids,format=None):
         '''
             Request a signature on a message from the user.
         '''
-        print("Authorizing message")
+        if not 'ses-' in q['api_key']:
+            signers = []
+            for uid in user_ids:
+                user = self.wallet[uid]
+                key_data = user['user']
+                signers.append(key_data)
+            qsig = crypto.sign_request(q,signers)
+        else:
+            qsig = q
         if format == 'json':
-            return json.dumps(True)
-        return True
+            qsig = json.dumps(qsig)
+        return qsig
+
 
     def create_account(self,user = None,label=None,version='python-ecdsa-0.1',format=None):
         if user == None:
