@@ -96,15 +96,27 @@ class PeerJSConnector:
     def check_received_messages(self):
         return [{"peerId": k, "messages": v.messages} for k, v in self.peers.items()]
 
-    def send_message(self, receiver_uuid, content):
+    '''
+    async def send_message(self, receiver_uuid, content):
         conn = self.peers.get(receiver_uuid)
         if not conn:
-            conn = self.peer.connect(receiver_uuid)
+            conn = await self.peer.connect(receiver_uuid)
             self.handle_connection(conn)
             conn.on('open', lambda: conn.send(content))
         else:
             conn.send(content)
-
+    '''
+    async def send_message(self, receiver_uuid, content):
+        conn = self.peers.get(receiver_uuid)
+        if not conn:
+            conn_coroutine = await self.peer.connect(receiver_uuid)
+            conn = conn_coroutine
+            # conn = await conn_coroutine
+            self.handle_connection(conn)
+            await conn.send(content)
+        else:
+            await conn.send(content)    
+            
     def disconnect(self):
         self.peer.destroy()
 
@@ -133,11 +145,12 @@ class PeerJSConnector:
         print(decoded_data)
 
     def handle_connection(self, conn):
-        conn.on('data', lambda data: self.on_data(conn, data))
-        conn.on('open', lambda: self.on_conn_open(conn))
-        conn.on('close', lambda: self.on_conn_close(conn))
-        conn.on('error', lambda error: self.on_conn_error(conn, error))
-                                                          
+        #conn.on('data', lambda data: self.on_data(conn, data))
+        #conn.on('open', lambda: self.on_conn_open(conn))
+        #conn.on('close', lambda: self.on_conn_close(conn))
+        #conn.on('error', lambda error: self.on_conn_error(conn, error))
+        pass
+    
     def on_data(self, conn, data):
         print('Received message:', data)
         if data.startswith('*exe*'):

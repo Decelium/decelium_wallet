@@ -361,7 +361,8 @@ class Peer(AsyncIOEventEmitter):
             )
             return
 
-        dataConnection = DataConnection(peer, self, options)
+        #dataConnection = DataConnection(peer, self, options)
+        dataConnection = DataConnection(peer, provider=self, **options)
         await dataConnection.start()
         self._addConnection(peer, dataConnection)
         return dataConnection
