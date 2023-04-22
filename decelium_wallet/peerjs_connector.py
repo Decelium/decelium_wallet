@@ -1,7 +1,9 @@
 import json
 import base64
-from peerjspython.src.peerjs import peer as Peer
-
+from peerjspython.src.peerjs.peer import Peer, PeerOptions
+from peerjspython.src.peerjs.enums import ConnectionEventType, PeerEventType
+from aiortc import RTCConfiguration, RTCIceServer
+import asyncio
 
 import requests
 from threading import Thread
@@ -28,19 +30,53 @@ class PeerJSConnector:
         self.request_handler = None
         self.peer = None
         self.peers = dict()
+        #self.connect()
 
-        self.connect()
+    #def connect(self):
+        #self.peer = Peer(id=None, host=SERVER_ADDR, port=SERVER_PORT, path='/myapp', secure=False)
+        #print('Connecting!')
+        
+        
 
-    def connect(self):
-        self.peer = Peer(id=None, host=SERVER_ADDR, port=SERVER_PORT, path='/myapp', secure=False)
+        #self.peer.on('open', lambda id: self.on_open(id))
+        #self.peer.on('disconnected', lambda: self.on_disconnected())
+        #self.peer.on('error', lambda error: self.on_error(error))
+        #print('Connecting 2!')
+    async def connect(self):
+        options = PeerOptions(
+            host=SERVER_ADDR,
+            port=SERVER_PORT,
+            secure=False,
+            path="/myapp",
+            config=RTCConfiguration(
+                iceServers=[
+                    # Add your RTCIceServer configurations here
+                ]
+            )
+        )
+        self.peer = Peer(id=None, peer_options=options)
+        self.id_assigned = asyncio.Event()
+        
+        await self.peer.start()
+        
+        @self.peer.on(PeerEventType.Open)
+        async def on_open(peer_id):
+            print('Connected with ID:', peer_id)
+            self.peer.on(PeerEventType.Connection, self.handle_connection)
+            self.id_assigned.set()
+        
+        @self.peer.on(PeerEventType.Disconnected)
+        async def on_disconnected():
+            print('Disconnected.')
+            await self.connect()
+
+        @self.peer.on(PeerEventType.Error)
+        async def on_error(error):
+            print('Peer error:', error)        
+        
         print('Connecting!')
-
-        self.peer.on('open', lambda id: self.on_open(id))
-        self.peer.on('disconnected', lambda: self.on_disconnected())
-        self.peer.on('error', lambda error: self.on_error(error))
-
-        print('Connecting 2!')
-
+        await self.id_assigned.wait()
+    
     def on_open(self, id):
         print('Connected with ID:', id)
         self.peer.on('connection', lambda conn: self.handle_connection(conn))
@@ -101,7 +137,6 @@ class PeerJSConnector:
         conn.on('open', lambda: self.on_conn_open(conn))
         conn.on('close', lambda: self.on_conn_close(conn))
         conn.on('error', lambda error: self.on_conn_error(conn, error))
-
                                                           
     def on_data(self, conn, data):
         print('Received message:', data)
