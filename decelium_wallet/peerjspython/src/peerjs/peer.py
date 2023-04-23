@@ -461,13 +461,15 @@ class Peer(AsyncIOEventEmitter):
             await self.disconnect()
 
     def emitError(self, type: PeerErrorType, err: str) -> None:
+        import traceback as tb
+        tb.print_exc()
         """Emit a typed error message."""
-        log.warning('Connection error: %s', err)
+        log.warning('1 Connection error: %s', err)
         if isinstance(err, str):
             err = RuntimeError(err)
         else:
             assert isinstance(err, Exception)
-        log.warning('Connection error: \n%s', err)
+        log.warning('2 Connection error: \n%s', err)
         err.type = type
         self.emit(PeerEventType.Error, err)
 

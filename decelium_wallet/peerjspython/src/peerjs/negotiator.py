@@ -205,13 +205,23 @@ class Negotiator:
         peerConnection = self.connection.peerConnection
         provider = self.connection.provider
         try:
-            offer = await peerConnection.createOffer(
-                self.connection.options.constraints)
+            log.info("Making offer.")
+            print("_makeOffer Making offer.")
+            print(self.connection)
+            print(peerConnection) # THIS IS aiortc.rtcpeerconnection.RTCPeerConnection
+            import pprint
+            pprint.pprint(self.connection.options)
+            #print(self.connection.options.constraints)
+            #offer = await peerConnection.createOffer(
+            #    self.connection.options.constraints)
+            offer = await peerConnection.createOffer()
+            
+            print("_makeOffer Created offer.")
             log.info("Created offer.")
 
-            if self.connection.options.sdpTransform and \
-               callable(self.connection.options.sdpTransform):
-                tSDP = self.connection.options.sdpTransform(offer.sdp)
+            if 'sdpTransform' in self.connection.options and \
+               callable(self.connection.options['sdpTransform']):
+                tSDP = self.connection.options['sdpTransform'](offer.sdp)
                 if tSDP:
                     offer.sdp = tSDP
             try:

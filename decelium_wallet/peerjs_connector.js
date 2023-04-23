@@ -162,3 +162,6 @@ class PeerJSConnector {
 }
 
 export default PeerJSConnector;
+
+// npm install node-peerjs-client
+// npm install peerjs-nodejs

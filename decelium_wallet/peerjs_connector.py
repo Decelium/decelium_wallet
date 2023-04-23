@@ -1,7 +1,7 @@
 import json
 import base64
 from peerjspython.src.peerjs.peer import Peer, PeerOptions
-from peerjspython.src.peerjs.enums import ConnectionEventType, PeerEventType
+from peerjspython.src.peerjs.enums import ConnectionType, ConnectionEventType, PeerEventType
 from aiortc import RTCConfiguration, RTCIceServer
 import asyncio
 
@@ -109,7 +109,18 @@ class PeerJSConnector:
     async def send_message(self, receiver_uuid, content):
         conn = self.peers.get(receiver_uuid)
         if not conn:
-            conn_coroutine = await self.peer.connect(receiver_uuid)
+            connection_options = {
+                'originator': True,
+                'reliable': True,
+                'constraints':None,
+                'type': ConnectionType.Data,  # Assuming you're using DataConnection
+                'constraints': None,  # You can provide constraints if needed
+                'metadata': None,  # You can provide metadata if needed
+                'sdpTransform': None,  # You can provide an SDP transform function if needed
+            }            
+            #connection_options.sdpTransform = None
+            conn_coroutine = await self.peer.connect(receiver_uuid,connection_options)
+            
             conn = conn_coroutine
             # conn = await conn_coroutine
             self.handle_connection(conn)
