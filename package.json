@@ -4,6 +4,8 @@
   "description": "> Experimental: This code will change in the future, including function names. Please keep up to date with the repository! # Decelium Protocol ### Decentralizing web hosting and containers",
   "main": "index.js",
   "scripts": {
+    "clean": "npm cache clean --force && rm -rf node_modules/.cache  && rm -rf build",
+    "test": "cd decelium_wallet && node ptests.js",
     "test": "cd __tests__ && python3 test_script.py",
     "postinstall": "node post_install.js"
   },
@@ -15,7 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/Decelium/decelium_wallet.git"
   },
-  "type":"module",
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -25,8 +27,11 @@
   "homepage": "https://github.com/Decelium/decelium_wallet#readme",
   "dependencies": {
     "jest": "^29.3.1",
+    "node-pre-gyp": "^0.17.0",
     "peer": "^1.0.0",
     "peerjs-nodejs": "^1.1.3",
-    "pyodide": "^0.22.0"
+    "pyodide": "^0.22.0",
+    "simple-peer": "^9.11.1",
+    "wrtc": "^0.4.7"
   }
 }

@@ -1,4 +1,79 @@
-import { Peer } from 'peerjs';
+/*
+import { XMLHttpRequest } from 'xmlhttprequest';
+//import { default as WebRTC } from 'electron-webrtc';
+import { WebSocket as WS } from 'ws';
+import wrtc from 'wrtc'; // Import 'wrtc' instead of 'electron-webrtc'
+
+global.window = global;  
+
+global.XMLHttpRequest = XMLHttpRequest;
+
+//const wrtc = WebRTC();
+//global.RTCPeerConnection = wrtc.RTCPeerConnection;
+//global.RTCSessionDescription = wrtc.RTCSessionDescription;
+//global.RTCIceCandidate = wrtc.RTCIceCandidate;
+
+global.RTCPeerConnection = wrtc.RTCPeerConnection;
+global.RTCSessionDescription = wrtc.RTCSessionDescription;
+global.RTCIceCandidate = wrtc.RTCIceCandidate;
+
+console.log(global.RTCPeerConnection);
+console.log(RTCPeerConnection);
+
+
+global.WebSocket = WS;
+global.location = {
+  protocol: 'http'
+};
+
+
+global.window.postMessage = (message, targetOrigin) => {
+  setImmediate(() => {
+    const event = new MessageEvent('message', { data: message, origin: targetOrigin });
+    global.window.dispatchEvent(event);
+  });
+};
+
+global.window.addEventListener = (type, listener) => {
+  global.window.on(type, listener);
+};
+
+global.window.removeEventListener = (type, listener) => {
+  global.window.off(type, listener);
+};
+
+global.window.dispatchEvent = (event) => {
+  const listeners = global.window.listeners.get(event.type) || [];
+  for (const listener of listeners) {
+    listener(event);
+  }
+};
+
+
+global.window.listeners = new Map();
+
+global.window.on = (type, listener) => {
+  let listeners = global.window.listeners.get(type);
+  if (!listeners) {
+    listeners = [];
+    global.window.listeners.set(type, listeners);
+  }
+  listeners.push(listener);
+};
+
+global.window.off = (type, listener) => {
+  const listeners = global.window.listeners.get(type);
+  if (listeners) {
+    const index = listeners.indexOf(listener);
+    if (index >= 0) {
+      listeners.splice(index, 1);
+    }
+  }
+};
+*/
+
+import  Peer  from 'peerjs';
+
 
 const SERVER_ADDR = '52.11.216.136';
 const SERVER_PORT = 8765;
@@ -24,21 +99,25 @@ class PeerJSConnector {
     this.peer = null;
     this.peers = new Map();
 
-    this.connect();
+   // this.connect();
   }
 
-  async connect() {
+async connect() {
+  return new Promise(async (resolve, reject) => {
     this.peer = new Peer(undefined, {
       host: SERVER_ADDR,
       port: SERVER_PORT,
-        path:"/myapp",
-      secure: false, // Add this line        
+      path: "/myapp",
+        debug:3,
+      secure: false,
     });
+
     console.log('Connecting!');
 
     this.peer.on('open', (id) => {
       console.log('Connected with ID:', id);
       this.peer.on('connection', this.handleConnection.bind(this));
+      resolve(); // Resolve the promise when the connection is open
     });
 
     this.peer.on('disconnected', () => {
@@ -48,18 +127,21 @@ class PeerJSConnector {
 
     this.peer.on('error', (error) => {
       console.error('Peer error:', error);
+      reject(error); // Reject the promise if there's an error
     });
+
     console.log('Connecting 2!');
-  }
+  });
+}
     
 
-      async discoverPeers() {
-        return new Promise(async (resolve) => {
-          const response = await fetch(`http://${SERVER_ADDR}:${SERVER_PORT}/peerjs/peers`);
-          const peers = await response.json();
-          resolve(peers);
-        });
-      }
+  async discoverPeers() {
+    return new Promise(async (resolve) => {
+      const response = await fetch(`http://${SERVER_ADDR}:${SERVER_PORT}/peerjs/peers`);
+      const peers = await response.json();
+      resolve(peers);
+    });
+  }
 
   async checkReceivedMessages() {
     return Array.from(this.peers.values()).map((conn) => {
@@ -70,23 +152,33 @@ class PeerJSConnector {
   }
     
   async sendMessage(receiverUuid, content) {
+    if (!this.peer || !this.peer.open)
+    {
+        console.error('sendMessage: Peer is not connected.');
+        return;
+    }
     let conn = this.peers.get(receiverUuid);
     console.log("1?");
     if (!conn) {
       conn = this.peer.connect(receiverUuid);
+     console.log("2?");
       this.handleConnection(conn);
-        conn.on('open', () => {
+      console.log("3?");
+        
+      conn.on('open', () => {
             console.log("3.1?");
           console.log('Sending message:',receiverUuid, content);
           conn.send(content);
         });
+      console.log("4?");
     }
       else
       {
             console.log("3.2?");
           conn.send(content);
-      
       }
+   console.log("5?");
+
   }
 
   async disconnect() {
