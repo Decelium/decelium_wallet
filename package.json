@@ -15,6 +15,7 @@
     "type": "git",
     "url": "git+https://github.com/Decelium/decelium_wallet.git"
   },
+  "type":"module",
   "keywords": [],
   "author": "",
   "license": "ISC",
