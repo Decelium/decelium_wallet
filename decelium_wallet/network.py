@@ -9,13 +9,13 @@ class Network:
         return True
     
     def list_nodes(self):
-        return True
+        return []
     
     def connect(self,node_id=None):
         return True
     
     def list_sessions(self):
-        return True
+        return []
     
     def store_variable(self,session_id=None,key=None,value=None):
         return True

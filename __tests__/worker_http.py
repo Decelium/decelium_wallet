@@ -5,7 +5,7 @@ from decelium_wallet.network import Network
 
 def init():
     try:
-        pq = Network()
+        state.pq = Network()
         return True
     except Exception as e:
         print(e)
@@ -13,7 +13,7 @@ def init():
     
 def register():
     try:
-        # Insert registration code here
+        state.pq.register([])
         return True
     except Exception as e:
         print(e)
@@ -21,7 +21,8 @@ def register():
     
 def list_nodes():
     try:
-        # Insert node listing code here
+        time.sleep(1)
+        state.nodes = state.pq.list_nodes()
         return True
     except Exception as e:
         print(e)
@@ -29,7 +30,9 @@ def list_nodes():
     
 def connect():
     try:
-        # Insert connection code here
+        state.sessions=[]
+        for node in state.nodes:
+            state.sessions.append(state.pq.connect(node))
         return True
     except Exception as e:
         print(e)
@@ -119,4 +122,5 @@ def run_all_tests():
 
 if __name__ == "__main__":
     worker_id = int(sys.argv[1])
+    state={}
     run_all_tests()
