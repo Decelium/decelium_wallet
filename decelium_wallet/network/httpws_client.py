@@ -28,7 +28,7 @@ class jsondateencode_local:
                     pass
         return dct
 
-class network():
+class httpws_client():
     def __init__(self,url_version=None,api_key=None):
         self.url_version = url_version
         self.api_key = api_key
