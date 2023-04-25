@@ -1,9 +1,11 @@
 import sys
 import time
 
+from decelium_wallet.network import Network
+
 def init():
     try:
-        # Insert initialization code here
+        pq = Network()
         return True
     except Exception as e:
         print(e)
