@@ -20,9 +20,13 @@ class network:
     def __init__(self, test_url, api_key):
         self.test_url = test_url
         self.api_key = api_key
-        self.session1=httpws_client(self.test_url,self.api_key)
+        self.session1=httpws_client(self.test_url,self.api_key, 5000,self.handle)
         
-    
+    def handle(args):
+        print("in handle")
+        
+        return "yes"
+        
     def register(self, node_def):
         result=self.session1.node_ping(node_def,remote=True)
 
@@ -56,7 +60,8 @@ class network:
         return True
     
     def disconnect(self,session_id):
-        return True
+        disconnect = self.session1.disconnect()
+        return disconnect
     
     def delete_variable(self,session_id,key):
         return True
@@ -65,6 +70,10 @@ class network:
         return True
     
     def listen(self):
+        listenResult = self.session1.listen()
+        
+        
+        
         return True
     
     def listening(self):

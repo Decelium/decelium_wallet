@@ -68,15 +68,23 @@ def register():
                   }
         qSigned = state['dw'].sign_request(message, ["admin"])
         resp = state['pq'].register(qSigned)
-        print("register result")
-        print(resp)
-        print(qSigned)
+        #print("register result")
+        #print(resp)
+        #print(qSigned)
         
         
         
+        print ("STARTING")
         state['pq'].listen()
+        time.sleep(3)
         assert state['pq'].listening()
+        print ("ALL DONE")
+        
+        state['pq'].disconnect(1)
+        
         return True
+    
+    
     except Exception as e:
         import traceback as tb
         tb.print_exc()

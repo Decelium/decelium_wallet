@@ -4,6 +4,9 @@ from os.path import exists
 import datetime
 import pickle
 import base64
+from flask import Flask, request
+from threading import Thread
+
 class jsondateencode_local:
     def loads(dic):
         return json.loads(dic,object_hook=jsondateencode_local.datetime_parser)
@@ -29,13 +32,44 @@ class jsondateencode_local:
         return dct
 
 class httpws_client():
-    def __init__(self,url_version=None,api_key=None):
+    def __init__(self,url_version=None,api_key=None,port=None, handle=None):
         self.url_version = url_version
         self.api_key = api_key
+        
+        #####
+        self.port = port
+        self.handle = handle
+        self.app = Flask(__name__)
+        self.shutdown_token = 'yyhhcthdjasif7'
+        
+        
+        
+        @self.app.route('/', methods=['GET', 'POST'])
+        @self.app.route('/<path:path>', methods=['GET', 'POST'])
+        def index(path='/'):
+            args = request.args if request.method == 'GET' else request.form
+            return self.handle(path, args)
+
+        @self.app.route('/disconnect', methods=['GET'])
+        def disconnect():
+            if self.shutdown_token is None:
+                return 'Shutdown endpoint is not secured'
+            if request.args.get('token') != self.shutdown_token:
+                return 'Unauthorized', 401
+            func = request.environ.get('werkzeug.server.shutdown')
+            if func is None:
+                raise RuntimeError('Not running with the Werkzeug Server')
+            func()
+            return 'Server shutting down...'
+        
+        self.server = None        
         
     def __getattr__(self,attr):
         self.current_attr = attr
         return self.__run_query
+    
+    
+    
     
     def __run_query(self,q,remote=True,wait_seconds = 120,re_query_delay=5,show_url=False):        
         if 'api_key' not in q or q['api_key']==None:
@@ -155,4 +189,21 @@ class httpws_client():
             return self.query_remote(source_id,filter,url_version,show_url)
         
         return None    
+
+
+    def listen(self):
+        self.thread = Thread(target=self.app.run, kwargs={'port': self.port})
+        self.thread.start()        
+        #self.server = self.app.run(port=self.port)
+        return True
+
+    def listening(self):
+        return self.server is not None
+
+    def disconnect(self):
+        func = request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        func()
+
     
