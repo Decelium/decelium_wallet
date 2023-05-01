@@ -5,7 +5,9 @@ import datetime
 import pickle
 import base64
 from flask import Flask, request
-from threading import Thread
+#from threading import Thread
+from multiprocessing import Process
+
 
 class jsondateencode_local:
     def loads(dic):
@@ -56,10 +58,9 @@ class httpws_client():
                 return 'Shutdown endpoint is not secured'
             if request.args.get('token') != self.shutdown_token:
                 return 'Unauthorized', 401
-            func = request.environ.get('werkzeug.server.shutdown')
-            if func is None:
-                raise RuntimeError('Not running with the Werkzeug Server')
-            func()
+            #self.app.stop()
+            raise Exception ("Time for me to die")
+            
             return 'Server shutting down...'
         
         self.server = None        
@@ -192,18 +193,29 @@ class httpws_client():
 
 
     def listen(self):
-        self.thread = Thread(target=self.app.run, kwargs={'port': self.port})
-        self.thread.start()        
+        #self.thread = Thread(target=self.app.run, kwargs={'port': self.port})
+        #self.thread.start()        
+        self.server_process = Process(target=self.app.run, kwargs={'port': self.port})
+        self.server_process.start()        
+        
         #self.server = self.app.run(port=self.port)
         return True
 
     def listening(self):
-        return self.server is not None
+        return self.server_process is not None and self.server_process.is_alive()
 
+
+    '''
     def disconnect(self):
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
 
-    
+        import requests
+        if self.shutdown_token is None:
+            return 'Shutdown endpoint is not secured'
+        response = requests.get(f'http://localhost:{self.port}/disconnect?token={self.shutdown_token}')
+        if response.status_code == 401:
+            return 'Unauthorized'
+        return response.text
+    '''
+    def disconnect(self):
+        self.server_process.terminate()
+        self.server_process.join()    
