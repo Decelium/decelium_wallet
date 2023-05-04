@@ -7,23 +7,6 @@ from decelium_wallet.network import network
     # Test Manual Query
     # We load a wallet class, and manually sign a transaction.
     # This is more secure, as it can control signatures on a message by message basis.
-'''    dw = Wallet.wallet()
-    dw.load(path="./test_wallet.dec",password="passtest")
-    print(dir(dw))
-    pq = network.network(url_version="https://test.paxfinancial.ai/data/query",api_key=dw.pubk("test_user"))
-    
-    
-    qUnsigned = {
-        'api_key':dw.pubk("test_user"),
-        'path':"/",
-        'name':"test_dict.json",
-        'file_type':'dict',
-        'payload':{"test":"val"}}
-    qSigned = dw.sign_request(qUnsigned, ["test_user"])    
-    assert "__sigs" in qSigned
-    fil  = pq.create_entity(qSigned)
-'''
-    
     
 def init():
     global state
@@ -61,13 +44,15 @@ def register():
                    'api_key':api_key,
                    'self_id':new_id,
 
-                   'connect_data':{"id":"node-session-test",
+                   'connect_data':{"id":"UNDEFINED",
                                     'services':{"id_download_data":{"id":"id_download_data",
                                                                     "name":"download_data",}},
                                      "type":"tcpip"}
                   }
         qSigned = state['dw'].sign_request(message, ["admin"])
         resp = state['pq'].register(qSigned)
+        state['self_id'] = resp['self_id']
+        
         #print("register result")
         #print(resp)
         #print(qSigned)
@@ -75,12 +60,6 @@ def register():
         
         
         print ("STARTING")
-        state['pq'].listen()
-        time.sleep(3)
-        assert state['pq'].listening()
-        print ("ALL DONE")
-        
-        state['pq'].disconnect(1)
         
         return True
     
@@ -90,6 +69,46 @@ def register():
         tb.print_exc()
         print(e)
         return False
+
+def listen():
+    try:
+        port = 5003 + int(worker_id)
+        api_key = state['dw'].pubk("admin")
+        new_id = None
+        name = "node-session-file-"+str(worker_id)+".node"
+        message = {'name': name, 
+                   'api_key':api_key,
+                   'self_id':state['self_id'],
+
+                   'connect_data':{"id":"http://localhost:"+str(port),
+                                    'services':{"id_download_data":{"id":"id_download_data",
+                                                                    "name":"download_data",}},
+                                     "type":"tcpip"}
+                  }
+        qSigned = state['dw'].sign_request(message, ["admin"])
+        resp = state['pq'].register(qSigned)
+        
+        state['pq'].listen(port)
+        assert state['pq'].listening()
+        time.sleep(3)
+        return True
+    except:
+        import traceback as tb
+        tb.print_exc()
+        print(e)
+        return False
+    
+def shutdown():
+    try:
+        state['pq'].disconnect(1)
+        return True
+    except:
+        import traceback as tb
+        tb.print_exc()
+        print(e)
+        return False
+
+    
     
 def list_nodes():
     global state
@@ -179,6 +198,7 @@ def run_all_tests():
     steps = [
         init,
         register,
+        listen,
         #list_nodes,
         #connect,
         #list_sessions,
@@ -187,6 +207,7 @@ def run_all_tests():
         #get_disconnect_requests,
         #reconnect,
         #retrieve_variable,
+        shutdown,
         #purge_network_data
     ]
 
