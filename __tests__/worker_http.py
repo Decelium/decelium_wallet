@@ -1,5 +1,5 @@
 import sys
-import time
+import time,datetime
 sys.path.append("../")
 import decelium_wallet.wallet as Wallet
 from decelium_wallet.network import network
@@ -10,196 +10,125 @@ from decelium_wallet.network import network
     
 def init():
     global state
-    try:
-        state['dw'] = Wallet.wallet()
-        password = ""
-        with open('/app/projects/.password','r') as f:
-            password = f.read().strip()
-            
-        state['dw'].load(path="/app/projects/wallet.dec", password=password)
-        
-        test_url = "https://dev.paxfinancial.ai/data/query"
+    state['dw'] = Wallet.wallet()
+    password = ""
+    with open('/app/projects/.password','r') as f:
+        password = f.read().strip()
 
-        state['pq'] = network(test_url,state['dw'].pubk("admin"))
-        assert state['pq'].connected() 
-        return True
-    except Exception as e:
-        import traceback as tb
-        tb.print_exc()
-        print(e)
-        return False
+    state['dw'].load(path="/app/projects/wallet.dec", password=password)
+    test_url = "https://dev.paxfinancial.ai/data/query"
+
+    #state['pq'] = network(test_url,state['dw'].pubk("admin"))
+
+    state['pq'] = network()
+    state['pq'].connect({'type':'tcpip',
+                         'url':test_url,
+                         'port':5000,
+                         'api_key':state['dw'].pubk("admin")})
+
+    assert state['pq'].connected() 
+    return True
     
 def register():
     global state
-    try:
-        #'connect_data':{"id":"node-session-test",
-        #                            'services':{"id_download_data":{"id":"id_download_data",
-        #                                                            "name":"download_data",}},
-        #                             "type":"tcpip"}
-        
-        api_key = state['dw'].pubk("admin")
-        new_id = None
-        name = "node-session-file-"+str(worker_id)+".node"
-        message = {'name': name, 
-                   'api_key':api_key,
-                   'self_id':new_id,
+    q = state['pq'].gen_node_ping({
+               'name': "node-session-file-"+str(worker_id)+".node", 
+               'api_key':state['dw'].pubk("admin"),
+               'self_id':None })
+    print ("preping message")
+    print (q)
 
-                   'connect_data':{"id":"UNDEFINED",
-                                    'services':{"id_download_data":{"id":"id_download_data",
-                                                                    "name":"download_data",}},
-                                     "type":"tcpip"}
-                  }
-        qSigned = state['dw'].sign_request(message, ["admin"])
-        resp = state['pq'].register(qSigned)
-        state['self_id'] = resp['self_id']
-        
-        #print("register result")
-        #print(resp)
-        #print(qSigned)
-        
-        
-        
-        print ("STARTING")
-        
-        return True
+
+    # Any user can inspect the message here, to ensure they are comfortable with it
+    qSigned = state['dw'].sign_request(q, ["admin"])
+    resp = state['pq'].node_ping(qSigned)
+    state['self_id'] = resp['self_id']        
+    print ("STARTING------------")
+    print (resp['self_id'])
+    return True
     
-    
-    except Exception as e:
-        import traceback as tb
-        tb.print_exc()
-        print(e)
-        return False
 
 def listen():
-    try:
-        port = 5003 + int(worker_id)
-        api_key = state['dw'].pubk("admin")
-        new_id = None
-        name = "node-session-file-"+str(worker_id)+".node"
-        message = {'name': name, 
-                   'api_key':api_key,
-                   'self_id':state['self_id'],
+    port = 5003 + int(worker_id)
+    api_key = state['dw'].pubk("admin")
+    new_id = None
+    name = "node-session-file-"+str(worker_id)+".node"
+    message = {'name': name, 
+               'api_key':api_key,
+               'self_id':state['self_id'],
 
-                   'connect_data':{"id":"http://localhost:"+str(port),
-                                    'services':{"id_download_data":{"id":"id_download_data",
-                                                                    "name":"download_data",}},
-                                     "type":"tcpip"}
-                  }
-        qSigned = state['dw'].sign_request(message, ["admin"])
-        resp = state['pq'].register(qSigned)
-        
-        state['pq'].listen(port)
-        assert state['pq'].listening()
-        time.sleep(3)
-        return True
-    except:
-        import traceback as tb
-        tb.print_exc()
-        print(e)
-        return False
+               'connect_data':{"id":"http://localhost:"+str(port),
+                                'services':{"id_download_data":{"id":"id_download_data",
+                                                                "name":"download_data",}},
+                                 "type":"tcpip"}
+              }
+    qSigned = state['dw'].sign_request(message, ["admin"])
+    resp = state['pq'].register(qSigned)
+
+    state['pq'].listen(port)
+    assert state['pq'].listening()
+    time.sleep(3)
+    return True
     
 def shutdown():
-    try:
-        state['pq'].disconnect(1)
-        return True
-    except:
-        import traceback as tb
-        tb.print_exc()
-        print(e)
-        return False
+    state['pq'].disconnect(0)
+    return True
 
-    
-    
 def list_nodes():
     global state
-    try:
-        time.sleep(0.5)
-        state['nodes'] = state['pq'].list_nodes()
-        assert len(state['nodes'])==5
-        return True
-    except Exception as e:
-        print(e)
-        return False
-    
+    time.sleep(0.5)
+    state['node_peers'] = []
+    state['nodes'] = state['pq'].node_list()
+    found = False
+    for n in state['nodes']:            
+        if n['self_id'] == state['self_id']:
+            found = True
+        else:
+            state['node_peers'].append(n['self_id'] )
+    print(state['node_peers'])
+
+    return found
+            
 def connect():
     global state
-    try:
-        state['sessions']=[]
-        for node in state['nodes']:
-            state['sessions'].append(state['pq'].connect(node))
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    state['sessions']=[]
+    for node in state['nodes']:
+        state['sessions'].append(state['pq'].connect(node))
+    return True
     
 def list_sessions():
     global state
-    try:
-        # Insert session listing code here
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    return True
     
 def store_variable():
-    try:
-        # Insert variable storing code here
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    return True
     
 def force_disconnect():
     global state
-    try:
-        # Insert force disconnect code here
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    return True
     
 def get_disconnect_requests():
     global state
-    try:
-        # Insert disconnect request retrieval code here
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    return True
     
 def reconnect():
     global state
-    try:
-        # Insert reconnect code here
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    return True
     
 def retrieve_variable():
     global state
-    try:
-        # Insert variable retrieval code here
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    return True
     
 def purge_network_data():
     global state
-    try:
-        # Insert network data purging code here
-        return True
-    except Exception as e:
-        print(e)
-        return False
+    return True
     
 def run_all_tests():
     steps = [
         init,
         register,
         listen,
-        #list_nodes,
+        list_nodes,
         #connect,
         #list_sessions,
         #store_variable,
@@ -214,7 +143,14 @@ def run_all_tests():
     results = []
     for i, step in enumerate(steps):
         #print(f"Worker {worker_id}: Running step {step.__name__}")
-        result = step()
+        result = False
+        try:
+            result = step()
+        except Exception as e:
+            import traceback as tb
+            tb.print_exc()
+            print(e)
+        
         results.append(result)
         if result == False:
             break

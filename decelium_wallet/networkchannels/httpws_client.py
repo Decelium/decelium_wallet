@@ -68,10 +68,7 @@ class httpws_client():
     def __getattr__(self,attr):
         self.current_attr = attr
         return self.__run_query
-    
-    
-    
-    
+
     def __run_query(self,q,remote=True,wait_seconds = 120,re_query_delay=5,show_url=False):        
         if 'api_key' not in q or q['api_key']==None:
             q['api_key'] = self.api_key            
@@ -192,10 +189,10 @@ class httpws_client():
         return None    
 
 
-    def listen(self):
+    def listen(self,port):
         #self.thread = Thread(target=self.app.run, kwargs={'port': self.port})
         #self.thread.start()        
-        self.server_process = Process(target=self.app.run, kwargs={'port': self.port})
+        self.server_process = Process(target=self.app.run, kwargs={'port': port})
         self.server_process.start()        
         
         #self.server = self.app.run(port=self.port)
