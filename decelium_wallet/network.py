@@ -43,7 +43,7 @@ class network:
         return method_to_call(*args, **kwargs)
     
     def handle(self,path,args):
-        print("in handle")
+        #print("in handle")
         
         return "yes"
     

@@ -4,6 +4,7 @@ sys.path.append("../")
 import decelium_wallet.wallet as Wallet
 from decelium_wallet.network import network
 import uuid
+import io
 
 
 def init():
@@ -34,16 +35,16 @@ def register():
                'self_id':None,
                'meta':{'test_id':"unit_test"},
                'port':port})
-    print ("preping message")
-    print (q)
+    # print ("preping message")
+    # print (q)
 
 
     # Any user can inspect the message here, to ensure they are comfortable with it
     qSigned = state['dw'].sign_request(q, ["admin"])
     resp = state['pq'].node_ping(qSigned)
     state['self_id'] = resp['self_id']        
-    print ("STARTING------------")
-    print (resp['self_id'])
+    #print ("STARTING------------")
+    #print (resp['self_id'])
     return True
     
 
@@ -100,8 +101,8 @@ def connect():
                                'val':val},session_id=sid)
         
         
-        print("SETTING RESPONSE")
-        print(respset)
+        #print("SETTING RESPONSE")
+        #print(respset)
     time.sleep(2)
     return True
     
@@ -151,20 +152,34 @@ def run_all_tests():
 
     results = []
     for i, step in enumerate(steps):
-        #print(f"Worker {worker_id}: Running step {step.__name__}")
-        result = False
-        try:
-            result = step()
-        except Exception as e:
-            import traceback as tb
-            tb.print_exc()
-            print(e)
         
-        results.append(result)
-        if result == False:
-            break
-        print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
+        output_buffer = io.StringIO()
+        old_stdout, old_stderr = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = output_buffer, output_buffer
+        try:        
+            print("--------------------------------------------------")
+            print(f"[{i}] Worker {worker_id}: Running step {step.__name__}")
+            result = False
+            try:
+                result = step()
+            except Exception as e:
+                import traceback as tb
+                tb.print_exc()
+                print(e)
 
+            results.append(result)
+            if result == False:
+                break
+            print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
+            print("--------------------------------------------------")
+        finally:
+            # Restore the original stdout and stderr
+            sys.stdout, sys.stderr = old_stdout, old_stderr
+
+        # Print the buffered output
+        print(output_buffer.getvalue())
+        output_buffer.close()
+        
     with open(f"worker{worker_id}_output.txt", "w") as f:
         for result in results:
             f.write(f"{result}\n")
