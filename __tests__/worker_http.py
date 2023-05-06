@@ -3,10 +3,6 @@ import time,datetime
 sys.path.append("../")
 import decelium_wallet.wallet as Wallet
 from decelium_wallet.network import network
-
-    # Test Manual Query
-    # We load a wallet class, and manually sign a transaction.
-    # This is more secure, as it can control signatures on a message by message basis.
     
 def init():
     global state
@@ -17,8 +13,6 @@ def init():
 
     state['dw'].load(path="/app/projects/wallet.dec", password=password)
     test_url = "https://dev.paxfinancial.ai/data/query"
-
-    #state['pq'] = network(test_url,state['dw'].pubk("admin"))
 
     state['pq'] = network()
     state['pq'].connect({'type':'tcpip',
@@ -31,10 +25,12 @@ def init():
     
 def register():
     global state
+    port = 5003 + int(worker_id)
     q = state['pq'].gen_node_ping({
                'name': "node-session-file-"+str(worker_id)+".node", 
                'api_key':state['dw'].pubk("admin"),
-               'self_id':None })
+               'self_id':None,
+               'port':port})
     print ("preping message")
     print (q)
 
@@ -50,20 +46,15 @@ def register():
 
 def listen():
     port = 5003 + int(worker_id)
-    api_key = state['dw'].pubk("admin")
-    new_id = None
-    name = "node-session-file-"+str(worker_id)+".node"
-    message = {'name': name, 
-               'api_key':api_key,
-               'self_id':state['self_id'],
-
-               'connect_data':{"id":"http://localhost:"+str(port),
-                                'services':{"id_download_data":{"id":"id_download_data",
-                                                                "name":"download_data",}},
-                                 "type":"tcpip"}
-              }
-    qSigned = state['dw'].sign_request(message, ["admin"])
-    resp = state['pq'].register(qSigned)
+    #api_key = state['dw'].pubk("admin")
+    #new_id = None
+    #name = "node-session-file-"+str(worker_id)+".node"
+    #message = {'name': name, 
+    #           'api_key':api_key,
+    #           'self_id':state['self_id']
+    #          }
+    #qSigned = state['dw'].sign_request(message, ["admin"])
+    #resp = state['pq'].register(qSigned)
 
     state['pq'].listen(port)
     assert state['pq'].listening()
@@ -92,8 +83,14 @@ def list_nodes():
 def connect():
     global state
     state['sessions']=[]
-    for node in state['nodes']:
-        state['sessions'].append(state['pq'].connect(node))
+    for self_id in state['node_peers']:
+        nd = state['pq'].node_pong({'self_id':self_id})
+        if 'localhost' in nd['connect_data']['id']:
+            print("found")
+            print(nd)
+        else:
+            print(nd['connect_data']['id'])
+        #state['sessions'].append(state['pq'].connect(node))
     return True
     
 def list_sessions():
@@ -129,7 +126,7 @@ def run_all_tests():
         register,
         listen,
         list_nodes,
-        #connect,
+        connect,
         #list_sessions,
         #store_variable,
         #force_disconnect,

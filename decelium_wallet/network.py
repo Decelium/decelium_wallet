@@ -48,14 +48,14 @@ class network:
         return "yes"
     
     def gen_node_ping(self,args):
-        for k in ['name','api_key','self_id']:
+        for k in ['name','api_key','self_id','port']:
             if not k in args:
                 return {"error":"network: you must provide "+k}
         message = {'name': args['name'], 
                    'api_key':args['api_key'],
                    'self_id':args['self_id'],
 
-                   'connect_data':{"id":"UNDEFINED",
+                   'connect_data':{"id":"http://localhost:"+str(args['port']),
                                     'services':{"id_download_data":{"id":"id_download_data",
                                                                     "name":"download_data",}},
                                      "type":"tcpip"}
