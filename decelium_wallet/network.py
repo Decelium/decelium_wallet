@@ -42,32 +42,29 @@ class network:
             del(kwargs['session_id'])
         return method_to_call(*args, **kwargs)
     
-    def handle(args):
+    def handle(self,path,args):
         print("in handle")
         
         return "yes"
     
     def gen_node_ping(self,args):
-        for k in ['name','api_key','self_id','port']:
+        for k in ['name','api_key','self_id','port','meta']:
             if not k in args:
                 return {"error":"network: you must provide "+k}
+        args['meta']['port'] = args['port']
+        args['meta']['url'] = "http://localhost:"+str(args['port'])+"/"
+        
         message = {'name': args['name'], 
                    'api_key':args['api_key'],
                    'self_id':args['self_id'],
-
-                   'connect_data':{"id":"http://localhost:"+str(args['port']),
-                                    'services':{"id_download_data":{"id":"id_download_data",
-                                                                    "name":"download_data",}},
-                                     "type":"tcpip"}
+                   'connect_data':{"id":"localhost-"+str(args['port']),
+                                    'meta':args['meta'],
+                                    'services':{"id_download_data":{"id":"id_download_data", "name":"download_data",}},
+                                                "type":"tcpip"}
                   }        
         return message
     
-    
-        
-    #def node_ping(self, node_def):
-    #    result=self.session1.node_ping(node_def,remote=True)
-    #    return result
-    
+
     def node_list(self,session_id=None):
         time_10_minutes_ago = datetime.datetime.utcnow() - datetime.timedelta(minutes=3)
         query = {
@@ -97,15 +94,30 @@ class network:
         return node_list;
     
     def connect(self,args):
+        # TODO Support Object Id Connection
+        #print ("worker http connect")
+        #import pprint
+        #pprint.pprint(args)
         if type(args) == dict:
-            assert 'type' in args and args['type']=='tcpip'
-            assert 'url' in args and len(args['url']) > 4
-            assert 'port' in args and type(args['port']) == int
-            assert 'api_key' in args and len(args['api_key']) > 4
-            inst_id = str(uuid.uuid4())
-            self.sessions[inst_id]= args
-            self.sessions[inst_id]['instance'] = httpws_client(args['url'],args['api_key'], args['port'],self.handle)
-            return True
+            if "connect_data" in args:
+                cd = args['connect_data']
+                assert 'type' in cd and cd['type']=='tcpip'
+                assert 'url' in cd['meta'] and len(cd['meta']['url']) > 4
+                assert 'port' in cd['meta'] and type(cd['meta']['port']) == int
+                assert 'api_key' in args and len(args['api_key']) > 4
+                inst_id = str(uuid.uuid4())
+                self.sessions[inst_id]= args
+                self.sessions[inst_id]['instance'] = httpws_client(cd['meta']['url'],args['api_key'], cd['meta']['port'],self.handle)
+                
+            else:
+                assert 'type' in args and args['type']=='tcpip'
+                assert 'url' in args and len(args['url']) > 4
+                assert 'port' in args and type(args['port']) == int
+                assert 'api_key' in args and len(args['api_key']) > 4
+                inst_id = str(uuid.uuid4())
+                self.sessions[inst_id]= args
+                self.sessions[inst_id]['instance'] = httpws_client(args['url'],args['api_key'], args['port'],self.handle)
+            return inst_id
         else:
             return False
         return False

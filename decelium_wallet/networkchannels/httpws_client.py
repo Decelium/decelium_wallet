@@ -37,13 +37,16 @@ class httpws_client():
     def __init__(self,url_version=None,api_key=None,port=None, handle=None):
         self.url_version = url_version
         self.api_key = api_key
+        print("httpws_client")
+        print(url_version)
+        print(port)
         
         #####
         self.port = port
         self.handle = handle
         self.app = Flask(__name__)
         self.shutdown_token = 'yyhhcthdjasif7'
-        
+        self.server_process = None
         
         
         @self.app.route('/', methods=['GET', 'POST'])
@@ -122,6 +125,8 @@ class httpws_client():
         data = {}
         data['qtype'] = source_id
         data['__encoded_query'] = self.do_encode(query)
+        
+        print("attempt",url_version)
         r = requests.post(url_version, data = data)        
         try:
             dat = jsondateencode_local.loads(r.text)
@@ -214,5 +219,6 @@ class httpws_client():
         return response.text
     '''
     def disconnect(self):
-        self.server_process.terminate()
-        self.server_process.join()    
+        if self.server_process:
+            self.server_process.terminate()
+            self.server_process.join()    
