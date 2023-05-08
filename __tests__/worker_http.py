@@ -50,7 +50,7 @@ class core:
     
     
     
-    def init(self):
+    def stage_init(self):
         self.dw = Wallet.wallet()
         password = ""
         with open('/app/projects/.password','r') as f:
@@ -68,7 +68,7 @@ class core:
         assert self.pq.connected() 
         return True
 
-    def register(self):
+    def stage_register(self):
         port = 5003 + int(worker_id)
         q = self.pq.gen_node_ping({
                    'name': "node-session-file-"+str(worker_id)+".node", 
@@ -87,7 +87,7 @@ class core:
         return True
 
 
-    def listen(self):
+    def stage_listen(self):
         port = 5003 + int(worker_id)
         #api_key = state['dw'].pubk("admin")
         #new_id = None
@@ -104,11 +104,11 @@ class core:
         time.sleep(3)
         return True
 
-    def shutdown(self):
+    def stage_shutdown(self):
         self.pq.disconnect(0)
         return True
 
-    def list_nodes(self):
+    def stage_list_nodes(self):
         time.sleep(0.5)
         self.node_peers = []
         self.nodes = self.pq.node_list()
@@ -123,7 +123,7 @@ class core:
 
         return found
 
-    def connect(self):
+    def stage_connect(self):
         self.sessions=[]
         #print("CONNECTING")
         for peer_connect_data in self.node_peers:
@@ -142,25 +142,25 @@ class core:
         time.sleep(2)
         return True
 
-    def list_sessions(self):
+    def stage_list_sessions(self):
         return True
 
-    def store_variable(self):
+    def stage_store_variable(self):
         return True
 
-    def force_disconnect(self):
+    def stage_force_disconnect(self):
         return True
 
-    def get_disconnect_requests(self):
+    def stage_get_disconnect_requests(self):
         return True
 
-    def reconnect(self):
+    def stage_reconnect(self):
         return True
 
-    def retrieve_variable(self):
+    def stage_retrieve_variable(self):
         return True
 
-    def purge_network_data(self):
+    def stage_purge_network_data(self):
         return True
     
 def run_all_tests():
@@ -168,19 +168,19 @@ def run_all_tests():
     c = core()
     print(2)
     steps = [
-        c.init,
-        c.register,
-        c.listen,
-        c.list_nodes,
-        c.connect,
-        #c.list_sessions,
-        #store_variable,
-        #force_disconnect,
-        #get_disconnect_requests,
-        #reconnect,
-        #retrieve_variable,
-        c.shutdown,
-        #purge_network_data
+        c.stage_init,
+        c.stage_register,
+        c.stage_listen,
+        c.stage_list_nodes,
+        c.stage_connect,
+        #c.stage_list_sessions,
+        #c.stage_store_variable,
+        #c.stage_force_disconnect,
+        #c.stage_get_disconnect_requests,
+        #c.stage_reconnect,
+        #c.stage_retrieve_variable,
+        c.stage_shutdown,
+        #c.stage_purge_network_data
     ]
 
     results = []
