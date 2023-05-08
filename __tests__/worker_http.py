@@ -47,42 +47,41 @@ if __name__ == "__main__":
     pprint.pprint(query.get_registry('public'))
 '''
 class core:
+    
+    
+    
     def init(self):
-        global state
-        state['dw'] = Wallet.wallet()
+        self.dw = Wallet.wallet()
         password = ""
         with open('/app/projects/.password','r') as f:
             password = f.read().strip()
 
-        state['dw'].load(path="/app/projects/.wallet.dec", password=password)
+        self.dw.load(path="/app/projects/.wallet.dec", password=password)
         test_url = "https://dev.paxfinancial.ai/data/query"
 
-        state['pq'] = network()
-        state['pq'].connect({'type':'tcpip',
+        self.pq = network()
+        self.pq.connect({'type':'tcpip',
                              'url':test_url,
                              'port':5000,
-                             'api_key':state['dw'].pubk("admin")})
+                             'api_key':self.dw.pubk("admin")})
 
-        assert state['pq'].connected() 
+        assert self.pq.connected() 
         return True
 
     def register(self):
-        global state
         port = 5003 + int(worker_id)
-        q = state['pq'].gen_node_ping({
+        q = self.pq.gen_node_ping({
                    'name': "node-session-file-"+str(worker_id)+".node", 
-                   'api_key':state['dw'].pubk("admin"),
+                   'api_key':self.dw.pubk("admin"),
                    'self_id':None,
                    'meta':{'test_id':"unit_test"},
                    'port':port})
-        # print ("preping message")
-        # print (q)
 
 
         # Any user can inspect the message here, to ensure they are comfortable with it
-        qSigned = state['dw'].sign_request(q, ["admin"])
-        resp = state['pq'].node_ping(qSigned)
-        state['self_id'] = resp['self_id']        
+        qSigned = self.dw.sign_request(q, ["admin"])
+        resp = self.pq.node_ping(qSigned)
+        self.self_id = resp['self_id']        
         #print ("STARTING------------")
         #print (resp['self_id'])
         return True
@@ -100,43 +99,40 @@ class core:
         #qSigned = state['dw'].sign_request(message, ["admin"])
         #resp = state['pq'].register(qSigned)
 
-        state['pq'].listen(port)
-        assert state['pq'].listening()
+        self.pq.listen(port)
+        assert self.pq.listening()
         time.sleep(3)
         return True
 
     def shutdown(self):
-        state['pq'].disconnect(0)
+        self.pq.disconnect(0)
         return True
 
     def list_nodes(self):
-        global state
         time.sleep(0.5)
-        state['node_peers'] = []
-        state['nodes'] = state['pq'].node_list()
+        self.node_peers = []
+        self.nodes = self.pq.node_list()
         found = False
-        for n in state['nodes']:            
-            if n['self_id'] == state['self_id']:
+        for n in self.nodes:            
+            if n['self_id'] == self.self_id:
                 found = True
             else:
                 if 'test_id' in n['connect_data']['meta']:
-                    state['node_peers'].append(n)
+                    self.node_peers.append(n)
                     print("passed inspection" + n['self_id'] )
 
-        #print(state['node_peers'])
         return found
 
     def connect(self):
-        global state
-        state['sessions']=[]
+        self.sessions=[]
         #print("CONNECTING")
-        for peer_connect_data in state['node_peers']:
+        for peer_connect_data in self.node_peers:
             connect_data = peer_connect_data
-            connect_data['api_key'] = state['dw'].pubk("admin")
-            sid = state['pq'].connect(connect_data)
+            connect_data['api_key'] = self.dw.pubk("admin")
+            sid = self.pq.connect(connect_data)
 
             val = str(uuid.uuid4())
-            respset = state['pq'].set_value({'api_key':connect_data['api_key'] ,
+            respset = self.pq.set_value({'api_key':connect_data['api_key'] ,
                                   'key':"test"+str(worker_id),
                                    'val':val},session_id=sid)
 
@@ -147,30 +143,24 @@ class core:
         return True
 
     def list_sessions(self):
-        global state
         return True
 
     def store_variable(self):
         return True
 
     def force_disconnect(self):
-        global state
         return True
 
     def get_disconnect_requests(self):
-        global state
         return True
 
     def reconnect(self):
-        global state
         return True
 
     def retrieve_variable(self):
-        global state
         return True
 
     def purge_network_data(self):
-        global state
         return True
     
 def run_all_tests():
@@ -238,5 +228,4 @@ def run_all_tests():
 if __name__ == "__main__":
     print("running "+str(sys.argv[1]))
     worker_id = int(sys.argv[1])
-    state={}
     run_all_tests()
