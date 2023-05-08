@@ -40,17 +40,21 @@ class network:
         method_to_call = getattr(inst, self.current_attr)
         if 'session_id' in kwargs: 
             del(kwargs['session_id'])
+        print(inst)
+        print(method_to_call)
+        print(args[0])
         return method_to_call(*args, **kwargs)
     
-    def handle(self,path,args):
-        #print("in handle")
-        
-        return "yes"
+
     
     def gen_node_ping(self,args):
-        for k in ['name','api_key','self_id','port','meta']:
+        for k in ['name','api_key','self_id','port','meta','services']:
             if not k in args:
                 return {"error":"network: you must provide "+k}
+            
+        for skey in args['services']:
+            for k in ['name','id']:
+                assert k in args['services'][skey]
         args['meta']['port'] = args['port']
         args['meta']['url'] = "http://localhost:"+str(args['port'])+"/"
         
@@ -58,9 +62,9 @@ class network:
                    'api_key':args['api_key'],
                    'self_id':args['self_id'],
                    'connect_data':{"id":"localhost-"+str(args['port']),
+                                    'type':'tcpip',
                                     'meta':args['meta'],
-                                    'services':{"id_download_data":{"id":"id_download_data", "name":"download_data",}},
-                                                "type":"tcpip"}
+                                    'services':args['services']}
                   }        
         return message
     
@@ -93,7 +97,7 @@ class network:
         
         return node_list;
     
-    def connect(self,args):
+    def connect(self,args,handler=None):
         # TODO Support Object Id Connection
         #print ("worker http connect")
         #import pprint
@@ -107,7 +111,7 @@ class network:
                 assert 'api_key' in args and len(args['api_key']) > 4
                 inst_id = str(uuid.uuid4())
                 self.sessions[inst_id]= args
-                self.sessions[inst_id]['instance'] = httpws_client(cd['meta']['url'],args['api_key'], cd['meta']['port'],self.handle)
+                self.sessions[inst_id]['instance'] = httpws_client(cd['meta']['url'],args['api_key'], cd['meta']['port'],handler)
                 
             else:
                 assert 'type' in args and args['type']=='tcpip'
@@ -116,7 +120,7 @@ class network:
                 assert 'api_key' in args and len(args['api_key']) > 4
                 inst_id = str(uuid.uuid4())
                 self.sessions[inst_id]= args
-                self.sessions[inst_id]['instance'] = httpws_client(args['url'],args['api_key'], args['port'],self.handle)
+                self.sessions[inst_id]['instance'] = httpws_client(args['url'],args['api_key'], args['port'],handler)
             return inst_id
         else:
             return False

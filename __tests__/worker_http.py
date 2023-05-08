@@ -82,6 +82,8 @@ class core:
         # 
         # 
         services = self.service.get_registry('public')
+        #print("FOUND SERVICES")
+        #print(services)
         
         port = 5003 + int(worker_id)
         q = c.net.gen_node_ping({
@@ -91,7 +93,7 @@ class core:
                    'services':services,
                    'meta':{'test_id':"unit_test"},
                    'port':port})
-
+        #print(q)
         #qSigned = c.dw.sign_request(q, ["admin"])
         #resp = c.net.node_ping(qSigned)
         #self.self_id = resp['self_id']  
@@ -100,33 +102,36 @@ class core:
     def start_broadcast(self):
         ### TODO - Figure out Signature interface
         port = 5003 + int(worker_id)
-        print(1)
+        #print(1)
         q = self.gen_node_ping()
         qSigned = self.dw.sign_request(q, ["admin"])
-        print(2)
+        #print(2)
         if "error" in qSigned:
-            print(2.25)
-            print(qSigned)
+            #print(2.25)
+            #print(qSigned)
             return qSigned
-        print(2.5)
+        #print(2.5)
         resp = self.net.node_ping(qSigned)
-        print(3)
+        #print(3)
         if "error" in resp:
             return resp
         self.self_id = resp['self_id']        
         self.net.listen(port)
         ## TODO -- you should be selecting a session to listen on, and the port should be built in
-        print(4)
+        #print(4)
         if not self.net.listening():
             return {"error":"could not start listening"}
         time.sleep(3)
-        print(5)
+        #print(5)
         return True
     
     def sync_node_list(self):
         # TODO, choose who to sync with
         self.node_peer_list = []
         self.nodes = self.net.node_list() # Where are we pulling this list from?
+        #import pprint
+        #pprint.pprint(self.nodes)
+        
         found = False
         for n in self.nodes:            
             if n['self_id'] == self.self_id:
@@ -145,6 +150,13 @@ class core:
             self.sync_node_list()
         return self.node_peer_list
     
+    def handle_connection(self,path,args):
+        try:
+            res = self.service.run(args)
+        except:
+            import traceback as tb
+            res = tb.format_exc()
+        return res 
 #############################
 ###
 ###     Stages Below
@@ -160,6 +172,10 @@ class WorkerHTTP():
     ###
     ###  1. Load the wallet, and connect to the Miner
     ###
+    # TODO -- split HTTP host from HTTP client, because you likely have one server for many clients. It makes no sense to instance many handlers with each connection. 
+
+        
+    
     def stage_init(self):
         success = self.core.load_wallet()
         assert success == True
@@ -167,7 +183,8 @@ class WorkerHTTP():
         self.tst_sid = self.core.net.connect({'type':'tcpip',
                              'url':test_url,
                              'port':5000,
-                             'api_key':self.core.dw.pubk("admin")})
+                             'api_key':self.core.dw.pubk("admin")},
+                             self.core.handle_connection)
 
         assert self.core.net.connected() 
         return True
@@ -179,6 +196,38 @@ class WorkerHTTP():
     def stage_broadcast(self):
         # TODO -- Look up registry
         # TODO -- when to call core, and when to call core.net
+        from MiniGetterSetter import MiniGetterSetter
+        
+
+        mimi = MiniGetterSetter()
+
+        def do_echo(args,settings):
+            return args
+
+        for cfg in [("set_value",mimi.set_value),
+                    ("get_value",mimi.get_value),
+                    ("do_echo",do_echo),
+
+                   ]:
+            self.core.service.set_handler({"id":cfg[0],
+                                           "name":cfg[0],
+                               "handler":cfg[1],
+                               "group":"public",
+                               "runtime":None,
+                               "meta":{}
+                              }) 
+
+
+        # Usage #######
+        #req = {"key":"test_key","val":str(uuid.uuid4())}
+        #dec = self.core.service.set_value(req)
+        #print(dec)
+
+        #val = self.core.service.get_value({"key":"test_key"})  
+        #print(val)
+        #val = self.core.service.do_echo({"key":"test_key"})  
+        #print(val)
+        
         resp = self.core.start_broadcast()
         return resp
 
@@ -209,15 +258,21 @@ class WorkerHTTP():
         self.sessions=[]
         #print("CONNECTING")
         for peer_connect_data in self.core.node_peers():
+            print("a")
             connect_data = peer_connect_data
+            print("b")
             connect_data['api_key'] = self.core.dw.pubk("admin")
-            sid = self.core.net.connect(connect_data)
+            print("c")
+            sid = self.core.net.connect(connect_data,self.core.handle_connection)
+            print("d")
 
             val = str(uuid.uuid4())
-            respset = self.core.net.set_value({'api_key':connect_data['api_key'] ,
+            print("e")
+            respset = self.core.net.set_value({'api_key':self.core.dw.pubk("admin") ,
                                   'key':"test"+str(worker_id),
                                    'val':val},session_id=sid)
 
+            print("f")
 
             #print("SETTING RESPONSE")
             #print(respset)

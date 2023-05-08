@@ -59,7 +59,9 @@ class httpws_client():
         @self.app.route('/<path:path>', methods=['GET', 'POST'])
         def index(path='/'):
             args = request.args if request.method == 'GET' else request.form
-            return self.handle(path, args)
+            if self.handle == None:
+                return '''{"error":"no httpws_client handler assigned"}'''
+            return self.handle(path, args.to_dict())
 
         @self.app.route('/disconnect', methods=['GET'])
         def disconnect():
@@ -195,8 +197,16 @@ class httpws_client():
         if remote == 'ws':
             return self.query_websocket(source_id,filter,url_version)
         if remote  in [True,'http','https']:
-            return self.query_remote(source_id,filter,url_version,show_url)
-        
+            print("query--------------x>")
+            print(source_id)
+            print(filter)
+            print(remote)
+            print(url_version)
+                      
+            resp = self.query_remote(source_id,filter,url_version,show_url)
+            print(resp)
+            print("query--------------x>")
+            return resp
         return None    
 
 
