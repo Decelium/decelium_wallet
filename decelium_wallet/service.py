@@ -20,6 +20,9 @@ class service:
     
     
     def get_registry(self, group):
+        if group not in self.handlers:
+            return {"error":"This kind of handler group is not registered"}
+        
         reg = copy.deepcopy(self.handlers[group])
         for k in reg:
             del(reg[k]['handler'])

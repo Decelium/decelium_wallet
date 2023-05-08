@@ -131,7 +131,7 @@ class network:
     def get_variable(self,session_id,key):
         return True
     
-    def disconnect(self,session_id):
+    def disconnect(self,session_id=None):
         for skey in self.sessions:
             disconnect = self.sessions[skey]['instance'].disconnect()
         return True
