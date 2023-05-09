@@ -197,15 +197,15 @@ class httpws_client():
         if remote == 'ws':
             return self.query_websocket(source_id,filter,url_version)
         if remote  in [True,'http','https']:
-            print("query--------------x>")
-            print(source_id)
-            print(filter)
-            print(remote)
-            print(url_version)
+            #print("query--------------x>")
+            #print(source_id)
+            #print(filter)
+            #print(remote)
+            #print(url_version)
                       
             resp = self.query_remote(source_id,filter,url_version,show_url)
-            print(resp)
-            print("query--------------x>")
+            #print(resp)
+            #print("query--------------x>")
             return resp
         return None    
 

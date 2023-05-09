@@ -258,21 +258,25 @@ class WorkerHTTP():
         self.sessions=[]
         #print("CONNECTING")
         for peer_connect_data in self.core.node_peers():
-            print("a")
             connect_data = peer_connect_data
-            print("b")
             connect_data['api_key'] = self.core.dw.pubk("admin")
-            print("c")
             sid = self.core.net.connect(connect_data,self.core.handle_connection)
-            print("d")
 
             val = str(uuid.uuid4())
-            print("e")
             respset = self.core.net.set_value({'api_key':self.core.dw.pubk("admin") ,
                                   'key':"test"+str(worker_id),
                                    'val':val},session_id=sid)
+            print("1 respset",respset)
+            respget = self.core.net.get_value({'api_key':self.core.dw.pubk("admin") ,
+                                  'key':"test"+str(worker_id),},session_id=sid)
+            
+            print("2 val",val)
+            print("3 respget",respget)
+            
+            assert respset == True
+            assert respget == val
+            
 
-            print("f")
 
             #print("SETTING RESPONSE")
             #print(respset)
@@ -362,7 +366,8 @@ def run_all_tests():
         output_buffer.close()
         if result != True:
             break
-        
+    
+    #worker.stage_shutdown()
     with open(f"worker{worker_id}_output.txt", "w") as f:
         for result in results:
             f.write(f"{result}\n")

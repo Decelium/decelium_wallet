@@ -7,9 +7,6 @@ def load_pq(path,password,url_version,target_user):
     dw.load(path,password)
     accts = dw.list_accounts()
 
-    #print(accts)
-    #print(target_user)
-    #print(dw.get_user(target_user))
 
     assert target_user in accts
     user = dw.get_user(target_user)
@@ -40,9 +37,6 @@ class network:
         method_to_call = getattr(inst, self.current_attr)
         if 'session_id' in kwargs: 
             del(kwargs['session_id'])
-        print(inst)
-        print(method_to_call)
-        print(args[0])
         return method_to_call(*args, **kwargs)
     
 
