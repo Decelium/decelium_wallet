@@ -13,10 +13,13 @@ class wallet():
         self.mode=mode
            
     def load(self,path=None,password=None,data=None):
+        if path == None and data != None:
+            self.mode = 'js'
+        
         if self.mode=="fs":
-            self.load_fs(path,password,data)
+            return self.load_fs(path,password,data)
         else:
-            self.load_js(path,password,data)
+            return self.load_js(path,password,data)
         
     def save(self,path,password=None):
         if self.mode=="fs":
@@ -25,7 +28,21 @@ class wallet():
             self.save_js(path,password)        
                 
     def load_js(self,path=None,password=None,data=None):
-        self.wallet={};
+        self.wallet={}
+        if type(data) == dict:
+            # Force validation via encoding
+            astr = crypto.do_encode_string(data)
+        elif '{' in data:
+            astr = crypto.do_encode_string(json.loads(data))
+        else:
+            astr = data
+        if password != None:
+            astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
+        
+        self.wallet= crypto.do_decode_string(astr )        
+        if type(self.wallet) == dict:
+            return True
+        return False
     
     def save_js(self,path,password=None):
         print(self.wallet);

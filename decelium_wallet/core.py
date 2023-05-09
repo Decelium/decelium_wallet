@@ -15,25 +15,34 @@ import io
 
 class core:
     
-    def load_wallet(self):
-        # TODO - Add in loading OP
+    #def load_wallet_from_disk(self):
+    #    # TODO - Add in loading OP
+    #    
+    #    for root in ['./','../','../../','../../../','../../../../']:
+    #        try:
+    #            #print(root)
+    #            self.dw = wallet()
+    #            password = ""
+    #            with open(root+'.password','r') as f:
+    #                password = f.read().strip()
+    #            with open(root+'.wallet.dec','r') as f:
+    #                walletstr = f.read().strip()
+    #            self.dw.load(path=root+'.wallet.dec', password=password)
+    #            return True
+    #        except:
+    #            #import traceback as tb
+    #            #tb.print_exc()
+    #            pass
+    #    return {"error":"could not find .password and .wallet.dec in parent path"}
+    
+    def load_wallet(self,data,password):
+        assert type(data) == str
+        assert type(password) == str
+        self.dw = wallet()
         
-        for root in ['./','../','../../','../../../','../../../../']:
-            try:
-                #print(root)
-                self.dw = wallet()
-                password = ""
-                with open(root+'.password','r') as f:
-                    password = f.read().strip()
-                with open(root+'.wallet.dec','r') as f:
-                    walletstr = f.read().strip()
-                self.dw.load(path=root+'.wallet.dec', password=password)
-                return True
-            except:
-                #import traceback as tb
-                #tb.print_exc()
-                pass
-        return {"error":"could not find .password and .wallet.dec in parent path"}
+        success = self.dw.load(data=data, password=password)
+        return success
+        #return {"error":"could not find .password and .wallet.dec in parent path"}
     
     def __init__(self):
         self.net = network()

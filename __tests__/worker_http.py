@@ -14,9 +14,26 @@ class WorkerHTTP():
     ###  1. Load the wallet, and connect to the Miner
     ###
     # TODO -- split HTTP host from HTTP client, because you likely have one server for many clients. It makes no sense to instance many handlers with each connection. 
-
+    def load_wallet_strings_from_disk(self):
+        for root in ['./','../','../../','../../../','../../../../']:
+            try:
+                with open(root+'.password','r') as f:
+                    password = f.read().strip()
+                with open(root+'.wallet.dec','r') as f:
+                    walletstr = f.read().strip()
+                return {"password":password,
+                        "data":walletstr}
+            except:
+                #import traceback as tb
+                #tb.print_exc()
+                pass
+        return {"error":"could not find .password and .wallet.dec in parent path"}
+    
     def stage_init(self):
-        success = self.core.load_wallet()
+        raw_wallet = self.load_wallet_strings_from_disk()
+        #print(raw_wallet)
+        success = self.core.load_wallet(data=raw_wallet['data'],
+                                        password=raw_wallet['password'])
         print("success",success)
         assert success == True
         # The initial connection is to a miner and relay. Through this system, a user can download addresses of even more public access points.
