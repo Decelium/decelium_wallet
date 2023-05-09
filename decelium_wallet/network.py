@@ -2,17 +2,6 @@ from decelium_wallet.networkchannels.httpws_client import httpws_client
 import datetime
 import uuid
 
-def load_pq(path,password,url_version,target_user):
-    dw = decelium.SimpleWallet()
-    dw.load(path,password)
-    accts = dw.list_accounts()
-
-
-    assert target_user in accts
-    user = dw.get_user(target_user)
-    pq_raw = decelium.Decelium(url_version=url_version,api_key=user['api_key'])
-    pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
-    return pq, user['api_key'], dw
 
 class network:
     '''
@@ -121,25 +110,16 @@ class network:
         return False
     
     def list_sessions(self):
-        return []
+        return self.sessions
     
-    def store_variable(self,session_id,key,value):
-        return True
-    
-    def get_variable(self,session_id,key):
-        return True
     
     def disconnect(self,session_id=None):
         for skey in self.sessions:
             disconnect = self.sessions[skey]['instance'].disconnect()
         return True
     
-    def delete_variable(self,session_id,key):
-        return True
-    
     def connected(self):
         return len(self.sessions) > 0
-    
     
     def listening(self):
         return True

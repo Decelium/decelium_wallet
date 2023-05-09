@@ -6,9 +6,9 @@ import pickle
 import base64
 from flask import Flask, request
 #from threading import Thread
-from multiprocessing import Process
 import logging
-
+from multiprocessing import Process, Pipe
+import threading
 
 class jsondateencode_local:
     def loads(dic):
@@ -53,7 +53,7 @@ class httpws_client():
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
         
-        
+        self.parent_conn, self.child_conn = Pipe()        
         
         @self.app.route('/', methods=['GET', 'POST'])
         @self.app.route('/<path:path>', methods=['GET', 'POST'])
@@ -61,8 +61,12 @@ class httpws_client():
             args = request.args if request.method == 'GET' else request.form
             if self.handle == None:
                 return '''{"error":"no httpws_client handler assigned"}'''
-            return self.handle(path, args.to_dict())
-
+            ### THIS SHOULD BE CALLED IN THE PARENT. AND AWAITED.
+            # return self.handle(path, args.to_dict())
+            self.child_conn.send((path, args.to_dict()))
+            response = self.child_conn.recv()
+            return response
+        
         @self.app.route('/disconnect', methods=['GET'])
         def disconnect():
             if self.shutdown_token is None:
@@ -76,6 +80,42 @@ class httpws_client():
         
         self.server = None        
         
+    def listen(self,port):
+        self.server_process = Process(target=self.app.run, kwargs={'port': port})
+        self.server_process.start()        
+        return True
+
+    def listening(self):
+        return self.server_process is not None and self.server_process.is_alive()
+    
+    def process_requests(self):
+        while self.listening():
+            if self.parent_conn.poll():
+                path, args = self.parent_conn.recv()
+                response = self.handle(path, args)
+                self.parent_conn.send(response)
+    
+    def listen(self,port):
+        
+        self.process_requests_thread = threading.Thread(target=self.process_requests)        
+        self.server_process = Process(target=self.app.run, kwargs={'port': port})
+        self.server_process.start()        
+        self.process_requests_thread.start()        
+        
+        return True
+
+    def listening(self):
+        return self.server_process is not None and self.server_process.is_alive()
+
+    def disconnect(self):
+        if self.server_process:
+            self.server_process.terminate()
+            self.server_process.join()  
+            self.process_requests_thread.join()    
+    
+    
+    
+    
     def __getattr__(self,attr):
         self.current_attr = attr
         return self.__run_query
@@ -210,31 +250,3 @@ class httpws_client():
         return None    
 
 
-    def listen(self,port):
-        #self.thread = Thread(target=self.app.run, kwargs={'port': self.port})
-        #self.thread.start()        
-        self.server_process = Process(target=self.app.run, kwargs={'port': port})
-        self.server_process.start()        
-        
-        #self.server = self.app.run(port=self.port)
-        return True
-
-    def listening(self):
-        return self.server_process is not None and self.server_process.is_alive()
-
-
-    '''
-    def disconnect(self):
-
-        import requests
-        if self.shutdown_token is None:
-            return 'Shutdown endpoint is not secured'
-        response = requests.get(f'http://localhost:{self.port}/disconnect?token={self.shutdown_token}')
-        if response.status_code == 401:
-            return 'Unauthorized'
-        return response.text
-    '''
-    def disconnect(self):
-        if self.server_process:
-            self.server_process.terminate()
-            self.server_process.join()    

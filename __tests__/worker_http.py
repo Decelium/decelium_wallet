@@ -1,9 +1,6 @@
 import sys
 import time,datetime
 sys.path.append("../")
-#import decelium_wallet.wallet as Wallet
-#from decelium_wallet.network import network
-#from decelium_wallet.service import service
 from decelium_wallet.core import core
 import uuid
 import io
@@ -38,22 +35,15 @@ class WorkerHTTP():
         def do_echo(args,settings):
             return args
 
-        for cfg in [("set_value",mimi.set_value),
-                    ("get_value",mimi.get_value),
-                    ("do_echo",do_echo),
-
-                   ]:
-            self.core.service.set_handler({"id":cfg[0],
-                                           "name":cfg[0],
-                               "handler":cfg[1],
-                               "group":"public",
-                               "runtime":None,
-                               "meta":{}
-                              }) 
         port = 5003 + int(worker_id)
         name = "node-session-file-"+str(worker_id)+".node"
-
-        resp = self.core.start_broadcast(port,name)
+        public_handlers =  [("set_value",mimi.set_value),
+                    ("get_value",mimi.get_value),
+                    ("get_all",mimi.get_all),
+                    ("do_echo",do_echo)]
+        
+        
+        resp = self.core.listen(port,name,public_handlers)
         return resp
 
     #############################
@@ -81,7 +71,6 @@ class WorkerHTTP():
     ###
     def stage_set(self):
         self.sessions=[]
-        #print("CONNECTING")
         for peer_connect_data in self.core.node_peers():
             connect_data = peer_connect_data
             connect_data['api_key'] = self.core.dw.pubk("admin")
@@ -91,24 +80,39 @@ class WorkerHTTP():
             respset = self.core.net.set_value({'api_key':self.core.dw.pubk("admin") ,
                                   'key':"test"+str(worker_id),
                                    'val':val},session_id=sid)
-            print("1 respset",respset)
             respget = self.core.net.get_value({'api_key':self.core.dw.pubk("admin") ,
                                   'key':"test"+str(worker_id),},session_id=sid)
             
-            print("2 val",val)
-            print("3 respget",respget)
-            
             assert respset == True
             assert respget == val
-            
-
-
-            #print("SETTING RESPONSE")
-            #print(respset)
         time.sleep(2)
         return True
 
 
+    #############################
+    ###
+    ###  4. Verify that we have all the data, locally
+    ###
+    def stage_verify(self):
+        self.sessions=[]
+        print("Stored the following data")
+        vals = self.core.service.get_all({})
+        import pprint
+        pprint.pprint(vals)
+        #for sid in self.core.list_sessions():
+        #    print("for session")
+        #
+        #    val = str(uuid.uuid4())
+        #    respset = self.core.net.set_value({'api_key':self.core.dw.pubk("admin") ,
+        #                          'key':"test"+str(worker_id),
+        #                           'val':val},session_id=sid)
+        #    respget = self.core.net.get_value({'api_key':self.core.dw.pubk("admin") ,
+        #                          'key':"test"+str(worker_id),},session_id=sid)
+        
+        return True
+    
+    
+    
     def stage_shutdown(self):
         self.core.net.disconnect()
         return True
@@ -123,6 +127,7 @@ def run_all_tests():
         worker.stage_broadcast,
         worker.stage_list_nodes,
         worker.stage_set,
+        worker.stage_verify,
         worker.stage_shutdown,
     ]
 
@@ -135,8 +140,8 @@ def run_all_tests():
         sys.stdout, sys.stderr = output_buffer, output_buffer
         
         try:        
-            print("--------------------------------------------------")
-            print(f"[{i}] Worker {worker_id}: Running step {step.__name__}")
+            print("----------------------------------------------------------")
+            print(f"[{i}] Worker {worker_id}: {step.__name__}")
             result = False
             try:
                 result = step()
@@ -148,7 +153,6 @@ def run_all_tests():
                 print(result)
             results.append(result)
             print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
-            print("--------------------------------------------------")
         except:
             import traceback as tb
             tb.print_exc()

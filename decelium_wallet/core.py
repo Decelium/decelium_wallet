@@ -52,8 +52,18 @@ class core:
                    'port':port})
         return q
     
-    def start_broadcast(self,port,name):
-        ### TODO - Figure out Signature interface
+    def listen(self,port,name,public_handlers = []):
+        
+        for cfg in public_handlers:
+            self.service.set_handler({"id":cfg[0],
+                                           "name":cfg[0],
+                               "handler":cfg[1],
+                               "group":"public",
+                               "runtime":None,
+                               "meta":{}
+                              })         
+        
+        
         q = self.gen_node_ping(port,name)
         qSigned = self.dw.sign_request(q, ["admin"])
         if "error" in qSigned:
@@ -92,6 +102,9 @@ class core:
         if self.node_peer_list == None:
             self.sync_node_list()
         return self.node_peer_list
+    
+    def list_sessions(self):
+        return self.list_sessions()
     
     def handle_connection(self,path,args):
         try:
