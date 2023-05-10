@@ -26,6 +26,9 @@ class WorkerHTTP {
     }
 
     async stage_init() {
+        await this.core.init();
+        console.log ("FINISHED INIT");
+        //console.log (this.core.pyodide);
         const raw_wallet = await this.load_wallet_strings_from_disk();
         const success = this.core.load_wallet(raw_wallet.data, raw_wallet.password);
         console.log('success', success);
@@ -40,6 +43,7 @@ class WorkerHTTP {
         //if (connected !== true) {
         //    throw new Error('Failed to connect');
         //}
+        console.log(this.core.dw.get_raw())
         return true;
     }
 

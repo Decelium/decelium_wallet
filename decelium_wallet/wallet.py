@@ -12,7 +12,7 @@ class wallet():
     def __init__(self,mode="fs",fs=None):
         self.mode=mode
            
-    def load(self,path=None,password=None,data=None):
+    def load(self,path=None,password=None,data=None,format=None):
         if path == None and data != None:
             self.mode = 'js'
         

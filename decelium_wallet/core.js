@@ -14,11 +14,12 @@ class Core {
     }
     
     constructor(){
-        this.init();
     }
     
     
     async init() {
+        if (this.init_done)
+            return true;
         
         if (this.isNode())
         {
@@ -29,7 +30,9 @@ class Core {
             //};
             
             const { loadPyodide } = await import("pyodide");
-            //this.pyodide = await loadPyodide();     
+            this.pyodide = await loadPyodide(
+                {indexURL:"/app/projects/decelium_wallet/node_modules/pyodide/"}
+            );     
             //const pyodideReady = pyodideLoader.loadPyodide({
             //    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/",
             //    fs
@@ -42,18 +45,53 @@ class Core {
             
         }
         
+        
+        ////
+
+        await this.pyodide.runPythonAsync(`
+        import codecs`); 
+        
+        await this.pyodide.loadPackage("micropip");
+        await this.pyodide.runPythonAsync(`
+        import micropip
+        micropip.INDEX_URL = 'https://pypi.org/simple'
+        import os
+        import time
+
+        def wait_for_file(filename, timeout=5):
+            start_time = time.time()
+            while not os.path.exists(filename):
+                time.sleep(0.1)
+                elapsed_time = time.time() - start_time
+                if elapsed_time > timeout:
+                    raise FileNotFoundError(f"File {filename} not found within {timeout} seconds.")
+        
+        `);        
+        const micropip = this.pyodide.pyimport("micropip");
+        await micropip.install('requests'); 
+        await micropip.install('ecdsa');
+        await micropip.install('cryptography');        
+        
+        this.init_done = true;
+        
+        this.dw = new wallet(this);
         this.net = new network();
         this.service = new service();
         this.node_peer_list = null;
+        console.log("FINISHED INIT 1");
+        
+        await this.dw.init();
+        return true;
+        
     }
     
     
     load_wallet(data, password) {
+        
         if (typeof data !== 'string' || typeof password !== 'string') {
             throw new Error('Invalid argument types.');
         }
-        this.dw = new wallet(this);
-
+       
         const success = this.dw.load({ data, password });
         return success;
     }
