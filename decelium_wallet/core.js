@@ -78,7 +78,7 @@ class Core {
         this.net = new network();
         this.service = new service();
         this.node_peer_list = null;
-        console.log("FINISHED INIT 1");
+        //console.log("FINISHED INIT 1");
         
         await this.dw.init();
         return true;
