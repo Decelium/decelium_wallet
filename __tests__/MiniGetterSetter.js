@@ -25,4 +25,5 @@ class MiniGetterSetter {
     }
 }
 
-module.exports = MiniGetterSetter;
+export default  MiniGetterSetter;
+export {MiniGetterSetter};

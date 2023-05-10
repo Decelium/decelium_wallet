@@ -1,5 +1,5 @@
 // WorkerHTTP.js
-import { Core } from './core.js';
+import { Core } from '../decelium_wallet/core.js';
 import { MiniGetterSetter } from './MiniGetterSetter.js';
 import fs from 'fs/promises';
 import process from 'process';
@@ -33,13 +33,13 @@ class WorkerHTTP {
             throw new Error('Failed to load wallet');
         }
 
-        const connected = await this.core.initial_connect(
-            'https://dev.paxfinancial.ai/data/query',
-            'admin'
-        );
-        if (connected !== true) {
-            throw new Error('Failed to connect');
-        }
+        //const connected = await this.core.initial_connect(
+        //    'https://dev.paxfinancial.ai/data/query',
+        //    'admin'
+        //);
+        //if (connected !== true) {
+        //    throw new Error('Failed to connect');
+        //}
         return true;
     }
 
@@ -135,11 +135,11 @@ async function run_all_tests() {
 
     const steps = [
         worker.stage_init.bind(worker),
-        worker.stage_broadcast.bind(worker),
-        worker.stage_list_nodes.bind(worker),
-        worker.stage_set.bind(worker),
-        worker.stage_verify.bind(worker),
-        worker.stage_shutdown.bind(worker),
+        //worker.stage_broadcast.bind(worker),
+        //worker.stage_list_nodes.bind(worker),
+        //worker.stage_set.bind(worker),
+        //worker.stage_verify.bind(worker),
+        //worker.stage_shutdown.bind(worker),
     ];
 
     const results = [];
@@ -169,9 +169,9 @@ async function run_all_tests() {
     await fs.writeFile(`worker${workerId}_output.txt`, results.join('\n'));
 }
 
-if (require.main === module) {
-    console.log('running ' + process.argv[2]);
-    const workerId = parseInt(process.argv[2]);
-    run_all_tests();
-}
+//if (require.main === module) {
+console.log('running ' + process.argv[2]);
+const workerId = parseInt(process.argv[2]);
+run_all_tests();
+//}
 

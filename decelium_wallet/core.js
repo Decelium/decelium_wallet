@@ -1,24 +1,63 @@
 // core.js
 import { wallet } from './wallet.js';
-import { network } from './network.js';
-import { service } from './service.js';
+//import { network } from './network.js';
+//import { service } from './service.js';
+class network {};
+class service {};
+
 
 class Core {
+    isNode()
+    {
+        if (typeof window === 'undefined') return true;
+        return false;
+    }
+    
+    constructor(){
+        this.init();
+    }
+    
+    
+    async init() {
+        
+        if (this.isNode())
+        {
+            //const { loadPyodide } = require("pyodide");
+            //const loadPyodide = async () => {
+            //    const pyodideModule = await import('pyodide');
+            //    return pyodideModule.loadPyodide();
+            //};
+            
+            const { loadPyodide } = await import("pyodide");
+            //this.pyodide = await loadPyodide();     
+            //const pyodideReady = pyodideLoader.loadPyodide({
+            //    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/",
+            //    fs
+            //});
+            //this.pyodide = await pyodideReady;            
+        }
+        else
+        {
+            this.pyodide = await window.loadPyodide({indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"});
+            
+        }
+        
+        this.net = new network();
+        this.service = new service();
+        this.node_peer_list = null;
+    }
+    
+    
     load_wallet(data, password) {
         if (typeof data !== 'string' || typeof password !== 'string') {
             throw new Error('Invalid argument types.');
         }
-        this.dw = new wallet();
+        this.dw = new wallet(this);
 
         const success = this.dw.load({ data, password });
         return success;
     }
 
-    constructor() {
-        this.net = new network();
-        this.service = new service();
-        this.node_peer_list = null;
-    }
 
     gen_node_ping(port, name) {
         const services = this.service.get_registry('public');

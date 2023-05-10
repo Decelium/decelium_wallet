@@ -6,7 +6,7 @@
   "scripts": {
     "test": "cd __tests__ && python3 test_script.py",
     "network-test": "cd __tests__ && python3 network_test.py",
-    "postinstall": "node post_install.js"      
+    "postinstall": "node post_install.cjs"      
   },
   "exports": {
     "import": "./decelium.js",
@@ -16,6 +16,7 @@
     "type": "git",
     "url": "git+https://github.com/Decelium/decelium_wallet.git"
   },
+  "type":"module",
   "keywords": [],
   "author": "",
   "license": "ISC",

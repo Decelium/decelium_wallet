@@ -18,3 +18,4 @@ class MiniGetterSetter:
     
     def get_all(self, args,settings):
         return self.vals    
+    
