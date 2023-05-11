@@ -1,9 +1,16 @@
 import axios from 'axios';
 import moment from 'moment';
+//node worker_http.js 1 > debug.txt
 
+/*
 class jsondateencode_local {
     static loads(dic) {
-        return JSON.parse(dic, this.datetime_parser);
+        console.log("DECODING");
+        console.log(dic);
+        console.log("DECODING2");
+        let p =  JSON.parse(dic, this.datetime_parser);
+        console.log("DECODING3");
+
     }
 
     static dumps(dic) {
@@ -29,7 +36,52 @@ class jsondateencode_local {
         }
         return val;
     }
+}*/
+
+class jsondateencode_local {
+    static loads(dic) {
+        console.log("DECODING");
+        console.log(dic);
+        console.log("DECODING2");
+        let p;
+        if (typeof dic === 'string') {
+            p = JSON.parse(dic, this.datetime_parser);
+        } else if (typeof dic === 'object') {
+            p = this.datetime_parser('', dic);
+        }
+        console.log("DECODING3");
+        return p;
+    }
+
+    static dumps(dic) {
+        return JSON.stringify(dic, this.datedefault);
+    }
+
+    static datedefault(key, val) {
+        if (Array.isArray(val) && val[0] === '__ref') {
+            return ['__ref', ...val.slice(1)];
+        }
+        if (val instanceof Date) {
+            return val.toISOString();
+        }
+        return val;
+    }
+
+    static datetime_parser(key, val) {
+        if (typeof val === 'string' && val.includes('T')) {
+            const date = moment(val, 'YYYY-MM-DDTHH:mm:ss', true);
+            if (date.isValid()) {
+                return date.toDate();
+            }
+        } else if (typeof val === 'object') {
+            for (let k in val) {
+                val[k] = this.datetime_parser(k, val[k]);
+            }
+        }
+        return val;
+    }
 }
+
 
 class http_client_wrapped {
     constructor(url_version = null, api_key = null, port = null) {
@@ -54,12 +106,13 @@ class http_client_wrapped {
     
     async query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false}) {
         const time_start = Date.now();
+        let resp = undefined;
         while ((Date.now() - time_start) / 1000 < wait_seconds) {
-            let resp = await this.query_wait(filter, source_id, {remote, url_version, show_url});
+            resp = await this.query_wait(filter, source_id, {remote, url_version, show_url});
             if (resp && typeof resp === 'object' && 'state' in resp && resp['state'] === 'updating') {
-                console.log(filter);
-                console.log(resp);
-                console.log('.');
+                //console.log(filter);
+                //console.log(resp);
+                //console.log('.');
                 await new Promise(resolve => setTimeout(resolve, re_query_delay * 1000));
                 if ('force_refresh' in filter) {
                     delete filter['force_refresh'];
@@ -88,12 +141,14 @@ class http_client_wrapped {
     async query_remote(source_id, query, url_version = 'dev', show_url = false) {
         let data = {};
         data['qtype'] = source_id;
-        data['__str__encoded_query'] = this.do_encode_string(query);
+        data['__str_encoded_query'] = this.do_encode_string(query);
 
         if (show_url) {
             console.log(url_version);
             console.log(query);
         }
+        console.log(url_version);
+        console.log(query);
 
         let r = await axios.post(url_version, data);
         let dat;

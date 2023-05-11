@@ -37,31 +37,32 @@ class WorkerHTTP {
             throw new Error('Failed to load wallet');
         }
 
-        //const connected = await this.core.initial_connect(
-        //    'https://dev.paxfinancial.ai/data/query',
-        //    'admin'
-        //);
-        //if (connected !== true) {
-        //    throw new Error('Failed to connect');
-        //}
-        //console.log(this.core.dw.get_raw())
+        const connected = await this.core.initial_connect(
+            'https://dev.paxfinancial.ai/data/query',
+            'admin'
+        );
+        if (connected !== true) {
+            throw new Error('Failed to connect');
+        }
+        console.log(this.core.dw.get_raw())
         return true;
     }
 
     async stage_broadcast() {
-        const mimi = new MiniGetterSetter();
+        return true;
+        //const mimi = new MiniGetterSetter();
 
-        const port = 5003 + parseInt(workerId);
-        const name = 'node-session-file-' + workerId + '.node';
-        const public_handlers = [
-            ['set_value', mimi.set_value.bind(mimi)],
-            ['get_value', mimi.get_value.bind(mimi)],
-            ['get_all', mimi.get_all.bind(mimi)],
-            ['do_echo', (args) => args],
-        ];
+        //const port = 5003 + parseInt(workerId);
+        //const name = 'node-session-file-' + workerId + '.node';
+        //const public_handlers = [
+        //    ['set_value', mimi.set_value.bind(mimi)],
+        //    ['get_value', mimi.get_value.bind(mimi)],
+        //    ['get_all', mimi.get_all.bind(mimi)],
+        //    ['do_echo', (args) => args],
+        //];
 
-        const resp = await this.core.listen(port, name, public_handlers);
-        return resp;
+        //const resp = await this.core.listen(port, name, public_handlers);
+        //return resp;
     }
 
     async stage_list_nodes() {
@@ -130,7 +131,7 @@ class WorkerHTTP {
     }
 
     async stage_shutdown() {
-        await this.core.net.disconnect();
+        //await this.core.net.disconnect();
         return true;
     }
 }
@@ -140,11 +141,11 @@ async function run_all_tests() {
 
     const steps = [
         worker.stage_init.bind(worker),
-        //worker.stage_broadcast.bind(worker),
-        //worker.stage_list_nodes.bind(worker),
+        worker.stage_broadcast.bind(worker),
+        worker.stage_list_nodes.bind(worker),
         //worker.stage_set.bind(worker),
         //worker.stage_verify.bind(worker),
-        //worker.stage_shutdown.bind(worker),
+        worker.stage_shutdown.bind(worker),
     ];
 
     const results = [];

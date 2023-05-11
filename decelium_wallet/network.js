@@ -1,5 +1,6 @@
-import http_client from './http_client.js';
+import http_client from './networkchannels/http_client.js';
 //import http_server from './http_server.js';
+import { v4 as uuidv4 } from 'uuid';
 
 class networkWrapped {
     constructor() {
@@ -52,6 +53,14 @@ class networkWrapped {
         if (session_id === null) {
             session_id = Object.keys(this.sessions)[0];
         }
+        let date = new Date();
+        date.setMinutes(date.getMinutes() - 3);
+
+        let query = {
+            "connect_data.ping": {"$gte": date},
+            "file_type":"node"
+        };
+        
         // Assuming "list" method exists in the http_client instance
         this.nodes = this.sessions[session_id].instance.list({"attrib":query,'limit':10});
         return this.nodes;
@@ -131,7 +140,7 @@ const proxyHandler = {
 
 // Factory function to create a new network instance with proxy
 function network() {
-    const net = new network();
+    const net = new networkWrapped();
     return new Proxy(net, proxyHandler);
 }
 

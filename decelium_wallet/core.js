@@ -1,8 +1,8 @@
 // core.js
 import { wallet } from './wallet.js';
-//import { network } from './network.js';
+import { network } from './network.js';
 //import { service } from './service.js';
-class network {};
+//class network {};
 class service {};
 
 

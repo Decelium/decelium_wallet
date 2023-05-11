@@ -32,14 +32,38 @@ class IPythonWrapper {
         
         instanceMethods.forEach(method=>
             this[method] = (args) => {
+                console.log("CALLING method ", method);
+                console.log("---------------------------------------");
+                console.log(args);
                 if (!args)
                     args={};
-                let argString = '('; 
-                for ( const key in args ) {
-                    argString=argString+key+'="'+args[key]+'",';
+            
+                let argString = '';             
+                if (typeof args !== 'object') {
+                    if (typeof args === 'number')
+                        argString = `${args},`;
+                    else
+                        argString = `"${args}",`;
                 }
-                argString=argString+'format="json")';
-                //console.log(argString);
+                else
+                {
+                    if (Array.isArray(args)) {
+                        console.log("AM ARRAY");
+                        // args is an array, join elements with commas
+                        argString += args.join(',') + ',';
+                    } else {
+                        console.log("AM NOT ARRAY");
+                        // args is an object, join key-value pairs with commas
+                        for (const key in args) {
+                            argString += key + '="' + args[key] + '",';
+                        }
+                    }            
+                }
+                //for ( const key in args ) {
+                //    argString=argString+key+'="'+args[key]+'",';
+                //}
+                argString='('+argString+'format="json")';
+                console.log(instanceName+`.`+method+argString);
                 let result = this.pyodide.runPython(instanceName+`.`+method+argString);
                 return JSON.parse(result); 
               } 
