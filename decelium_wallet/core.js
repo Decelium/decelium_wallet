@@ -85,7 +85,6 @@ class Core {
         
     }
     
-    
     load_wallet(data, password) {
         
         if (typeof data !== 'string' || typeof password !== 'string') {
@@ -200,3 +199,4 @@ class Core {
 }
 
 export { Core };
+export default Core;

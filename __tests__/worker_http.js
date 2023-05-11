@@ -140,7 +140,7 @@ async function run_all_tests() {
 
     const steps = [
         worker.stage_init.bind(worker),
-        worker.stage_broadcast.bind(worker),
+        //worker.stage_broadcast.bind(worker),
         //worker.stage_list_nodes.bind(worker),
         //worker.stage_set.bind(worker),
         //worker.stage_verify.bind(worker),

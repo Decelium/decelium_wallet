@@ -150,3 +150,6 @@ function http_client(url_version = null, api_key = null, port = null) {
     const client = new http_client_wrapped(url_version, api_key, port);
     return new Proxy(client, proxyHandler);
 }
+
+export default http_client;
+export {http_client};
