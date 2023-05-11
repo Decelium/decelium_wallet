@@ -29,10 +29,11 @@ class jsondateencode_local:
                     pass
         return dct
 
-class httpws_client():
-    def __init__(self, url_version=None, api_key=None):
+class http_client():
+    def __init__(self, url_version=None, api_key=None,port=None):
         self.url_version = url_version
         self.api_key = api_key
+        self.port = port
 
     def __getattr__(self, attr):
         self.current_attr = attr

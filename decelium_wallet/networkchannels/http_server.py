@@ -5,7 +5,7 @@ import pickle
 import base64
 from flask import Flask, request
 import logging
-from multiprocessing import Process
+from multiprocessing import Process, Pipe
 import threading
 
 class jsondateencode_local:
@@ -32,7 +32,7 @@ class jsondateencode_local:
                     pass
         return dct
 
-class httpws_server():
+class http_server():
     def __init__(self, port=None, handler=None):
         self.port = port
         self.handler = handler

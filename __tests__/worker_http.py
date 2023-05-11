@@ -100,6 +100,9 @@ class WorkerHTTP():
             respget = self.core.net.get_value({'api_key':self.core.dw.pubk("admin") ,
                                   'key':"test"+str(worker_id),},session_id=sid)
             
+            print('respset',respset)
+            print('respget',respget)
+            
             assert respset == True
             assert respget == val
         time.sleep(2)

@@ -80,8 +80,10 @@ class core:
         resp = self.net.node_ping(qSigned)
         if "error" in resp:
             return resp
-        self.self_id = resp['self_id']        
-        self.net.listen(port)
+        self.self_id = resp['self_id']
+        resp['api_key']=self.dw.pubk("admin")
+        self.net.listen(resp,self.handle_connection) # Begin listening with the requested configuration!
+        
         if not self.net.listening():
             return {"error":"could not start listening"}
         time.sleep(3)

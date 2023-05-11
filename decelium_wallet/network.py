@@ -1,4 +1,11 @@
 from decelium_wallet.networkchannels.httpws_client import httpws_client
+
+from decelium_wallet.networkchannels.http_client import http_client
+
+from decelium_wallet.networkchannels.http_server import http_server
+
+
+
 import datetime
 import uuid
 
@@ -8,11 +15,11 @@ class network:
             state['pq'].connect({'type':'tcpip',
                              'url':test_url,
                              'api_key':state['dw'].pubk("admin")})
-
     '''
     def __init__(self):
         #self.session1=httpws_client(self.test_url,self.api_key, 5000,self.handle)
         self.sessions = {}
+        self.servers = {}
         
     def __getattr__(self,attr):
         self.current_attr = attr
@@ -65,21 +72,6 @@ class network:
         
     
     
-    def list_nodes(self):
-        node_list = []
-        for i in range(5):
-            node_list.append( {'name': 'node-session-file-'+str(i)+'.node', 
-                   'api_key':self.api_key,
-                   'self_id':str(i),
-
-                  'connect_data':{"id":"node-session-test",
-                                    'services':{"id_download_data":{"id":"id_download_data",
-                                                                    "name":"download_data",}},
-                                     "type":"tcpip"}
-                  })
-        
-        return node_list;
-    
     def connect(self,args,handler=None):
         # TODO Support Object Id Connection
         #print ("worker http connect")
@@ -94,7 +86,7 @@ class network:
                 assert 'api_key' in args and len(args['api_key']) > 4
                 inst_id = str(uuid.uuid4())
                 self.sessions[inst_id]= args
-                self.sessions[inst_id]['instance'] = httpws_client(cd['meta']['url'],args['api_key'], cd['meta']['port'],handler)
+                self.sessions[inst_id]['instance'] = http_client(cd['meta']['url'],args['api_key'], cd['meta']['port'])
                 
             else:
                 assert 'type' in args and args['type']=='tcpip'
@@ -103,19 +95,49 @@ class network:
                 assert 'api_key' in args and len(args['api_key']) > 4
                 inst_id = str(uuid.uuid4())
                 self.sessions[inst_id]= args
-                self.sessions[inst_id]['instance'] = httpws_client(args['url'],args['api_key'], args['port'],handler)
+                self.sessions[inst_id]['instance'] = http_client(args['url'],args['api_key'], args['port'])
             return inst_id
         else:
             return False
         return False
     
+    def listen(self,args,handler):
+        # TODO Support Object Id Connection
+        #print ("worker http connect")
+        #import pprint
+        #pprint.pprint(args)
+        if type(args) == dict:
+            if "connect_data" in args:
+                cd = args['connect_data']
+                assert 'type' in cd and cd['type']=='tcpip'
+                assert 'url' in cd['meta'] and len(cd['meta']['url']) > 4
+                assert 'port' in cd['meta'] and type(cd['meta']['port']) == int
+                assert 'api_key' in args and len(args['api_key']) > 4
+                inst_id = str(uuid.uuid4())
+                self.servers[inst_id]= args
+                self.servers[inst_id]['instance'] = http_server(cd['meta']['port'],handler)
+                self.servers[inst_id]['instance'].listen(cd['meta']['port'])
+            else:
+                assert 'type' in args and args['type']=='tcpip'
+                assert 'url' in args and len(args['url']) > 4
+                assert 'port' in args and type(args['port']) == int
+                assert 'api_key' in args and len(args['api_key']) > 4
+                inst_id = str(uuid.uuid4())
+                self.servers[inst_id]= args
+                self.servers[inst_id]['instance'] = http_server(args['port'],handler)
+                self.servers[inst_id]['instance'].listen(args['port'])
+
+            return inst_id
+        else:
+            return False
+        return False    
+    
     def list_sessions(self):
         return self.sessions
     
-    
     def disconnect(self,session_id=None):
-        for skey in self.sessions:
-            disconnect = self.sessions[skey]['instance'].disconnect()
+        for skey in self.servers:
+            disconnect = self.servers[skey]['instance'].disconnect()
         return True
     
     def connected(self):
