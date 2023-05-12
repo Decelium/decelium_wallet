@@ -55,23 +55,14 @@ class networkWrapped {
         }
         let date = new Date();
         let utcDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-        //utcDate.setMinutes(utcDate.getMinutes() - 3000);
-        utcDate.setHours(utcDate.getHours() - 3);
+        utcDate.setMinutes(utcDate.getMinutes() - 3);
+        //utcDate.setHours(utcDate.getHours() - 3);
         
         let query = 
             {"attrib": {"connect_data.ping": {"$gte": utcDate.toISOString().split('.')[0].toString()},
                         "file_type":"node"},
             'limit':10};
-        //WORKS query = 
-        //    {"attrib": {"connect_data.ping": {"$gte":"2023-05-12T05:01:15"},
-        //                "file_type":"node"},
-        //    'limit':10};
-        //let utcDateNew = new Date("2023-05-12T05:01:15");
-        //WORKS query = 
-        //    {"attrib": {"connect_data.ping": {"$gte":utcDateNew.toISOString()},
-        //                "file_type":"node"},
-        //    'limit':10};
-        //console.log("JSON.stringify(query)",JSON.stringify(query));
+
         query = JSON.parse(JSON.stringify(query));
         console.log("attrib",query);
         // Assuming "list" method exists in the http_client instance
