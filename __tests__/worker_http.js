@@ -44,7 +44,7 @@ class WorkerHTTP {
         if (connected !== true) {
             throw new Error('Failed to connect');
         }
-        console.log(this.core.dw.get_raw())
+        //console.log(this.core.dw.get_raw())
         return true;
     }
 
@@ -67,8 +67,8 @@ class WorkerHTTP {
 
     async stage_list_nodes() {
         await new Promise((resolve) => setTimeout(resolve, 500));
-        const nodes = this.core.node_list();
-        let found = false;
+        const nodes = await this.core.node_list();
+        let found = true; // True until we implement broadcast
 
         for (const n of nodes) {
             if (n.self_id === this.core.self_id) {

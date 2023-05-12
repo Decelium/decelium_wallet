@@ -49,23 +49,46 @@ class networkWrapped {
         return message;
     }
 
-    node_list(session_id = null) {
+    async node_list(session_id = null) {
         if (session_id === null) {
             session_id = Object.keys(this.sessions)[0];
         }
         let date = new Date();
-        date.setMinutes(date.getMinutes() - 3);
-
-        let query = {
-            "connect_data.ping": {"$gte": date},
-            "file_type":"node"
-        };
+        let utcDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        //utcDate.setMinutes(utcDate.getMinutes() - 3000);
+        utcDate.setHours(utcDate.getHours() - 3);
         
+        let query = 
+            {"attrib": {"connect_data.ping": {"$gte": utcDate.toISOString().split('.')[0].toString()},
+                        "file_type":"node"},
+            'limit':10};
+        //WORKS query = 
+        //    {"attrib": {"connect_data.ping": {"$gte":"2023-05-12T05:01:15"},
+        //                "file_type":"node"},
+        //    'limit':10};
+        //let utcDateNew = new Date("2023-05-12T05:01:15");
+        //WORKS query = 
+        //    {"attrib": {"connect_data.ping": {"$gte":utcDateNew.toISOString()},
+        //                "file_type":"node"},
+        //    'limit':10};
+        //console.log("JSON.stringify(query)",JSON.stringify(query));
+        query = JSON.parse(JSON.stringify(query));
+        console.log("attrib",query);
         // Assuming "list" method exists in the http_client instance
-        this.nodes = this.sessions[session_id].instance.list({"attrib":query,'limit':10});
+        this.nodes = await this.sessions[session_id].instance.list(query);
+        console.log("source this.nodes",this.nodes );
+        
         return this.nodes;
     }
 
+    /*
+    
+{'api_key': 'e66eebeb3b56bd627c082a36fb0528e45d1fa8d6a1b9e47d478c3af9a11baaf6431bfdb491ceb6d8c5a3674433dcf5a1a1f9af74cf5a9414d026b68fdcedfc5d', 'limit': 10, 'offset': None, 'key': {'connect_data.ping': {'$gte': datetime.datetime(2023, 5, 12, 4, 42, 18)}, 'file_type': 'node'}}
+
+
+    
+    */
+    
     connect(args, handler = null) {
         if (typeof args === 'object') {
             let inst_id = uuidv4();

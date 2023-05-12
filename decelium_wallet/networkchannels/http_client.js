@@ -40,16 +40,16 @@ class jsondateencode_local {
 
 class jsondateencode_local {
     static loads(dic) {
-        console.log("DECODING");
-        console.log(dic);
-        console.log("DECODING2");
+        //console.log("DECODING");
+        //console.log(dic);
+        //console.log("DECODING2");
         let p;
         if (typeof dic === 'string') {
             p = JSON.parse(dic, this.datetime_parser);
         } else if (typeof dic === 'object') {
             p = this.datetime_parser('', dic);
         }
-        console.log("DECODING3");
+        //console.log("DECODING3");
         return p;
     }
 
@@ -148,9 +148,10 @@ class http_client_wrapped {
             console.log(query);
         }
         console.log(url_version);
-        console.log(query);
+        console.log('query_remote',query);
 
         let r = await axios.post(url_version, data);
+        console.log("query_remote_data",r.data);
         let dat;
 
         try 

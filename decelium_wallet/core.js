@@ -139,11 +139,12 @@ class Core {
         return true;
     }
 
-    sync_node_list() {
+    async sync_node_list() {
         this.node_peer_list = [];
-        this.nodes = this.net.node_list();
+        this.nodes = await this.net.node_list();
 
         let found = false;
+        console.log("this.nodes",this.nodes);
         for (const n of this.nodes) {
             if (n.self_id === this.self_id) {
                 found = true;
@@ -156,16 +157,16 @@ class Core {
         }
     }
 
-    node_list() {
+    async node_list() {
         if (this.node_peer_list === null) {
-            this.sync_node_list();
+            await this.sync_node_list();
         }
         return this.nodes;
     }
 
-    node_peers() {
+    async node_peers() {
         if (this.node_peer_list === null) {
-            this.sync_node_list();
+            await this.sync_node_list();
         }
         return this.node_peer_list;
     }
