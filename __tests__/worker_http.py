@@ -61,6 +61,8 @@ class WorkerHTTP():
         
         
         resp = self.core.listen(port,name,public_handlers)
+        time.sleep(10)
+        print("sleeping")
         return resp
 
     #############################
@@ -78,7 +80,7 @@ class WorkerHTTP():
                 found = True
             else:
                 if 'test_id' in n['connect_data']['meta']:
-                    print("passed inspection" + n['self_id'] )
+                    print("py passed inspection" + n['self_id'] )
 
         return found
 

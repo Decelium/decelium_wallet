@@ -3,6 +3,8 @@ import { Core } from '../decelium_wallet/core.js';
 import { MiniGetterSetter } from './MiniGetterSetter.js';
 import fs from 'fs/promises';
 import process from 'process';
+import { v4 as uuidv4 } from 'uuid';
+
 
 class WorkerHTTP {
     constructor(core) {
@@ -75,8 +77,9 @@ class WorkerHTTP {
                 console.log('found self');
                 found = true;
             } else {
+                let x = 0;
                 if ('test_id' in n.connect_data.meta) {
-                    console.log('passed inspection' + n.self_id);
+                    console.log('js passed inspection' + x.toString()+n.self_id);
                 }
             }
         }
@@ -86,7 +89,7 @@ class WorkerHTTP {
 
     async stage_set() {
         this.sessions = [];
-        for (const peer_connect_data of this.core.node_peers()) {
+        for (const peer_connect_data of await this.core.node_peers()) {
             const connect_data = peer_connect_data;
             connect_data.api_key = this.core.dw.pubk('admin');
             const sid = await this.core.net.connect(
@@ -95,6 +98,9 @@ class WorkerHTTP {
             );
 
             const val = uuidv4();
+            
+            console.log("Target Funk");
+            console.log(this.core.net.set_value);
             const respset = await this.core.net.set_value(
                 {
                     api_key: this.core.dw.pubk('admin'),
@@ -112,6 +118,8 @@ class WorkerHTTP {
             );
 
             if (respset !== true) {
+                console.log("THE REPSET");
+                console.log(respset);
                 throw new Error('Failed to set value');
             }
             if (respget !== val) {
@@ -143,7 +151,7 @@ async function run_all_tests() {
         worker.stage_init.bind(worker),
         worker.stage_broadcast.bind(worker),
         worker.stage_list_nodes.bind(worker),
-        //worker.stage_set.bind(worker),
+        worker.stage_set.bind(worker),
         //worker.stage_verify.bind(worker),
         worker.stage_shutdown.bind(worker),
     ];

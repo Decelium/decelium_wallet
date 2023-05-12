@@ -3,7 +3,7 @@ import os
 import datetime
 import pickle
 import base64
-from flask import Flask, request
+from flask import Flask, request,jsonify
 import logging
 from multiprocessing import Process, Pipe
 import threading
@@ -46,13 +46,44 @@ class http_server():
 
         self.parent_conn, self.child_conn = Pipe()
 
+        #@self.app.route('/', methods=['GET', 'POST'])
+        #@self.app.route('/<path:path>', methods=['GET', 'POST'])
+        #def index(path='/'):
+        #    args = request.args if request.method == 'GET' else request.form
+        #    if self.handler == None:
+        #        return '''{"error":"no httpws_server handler assigned"}'''
+        #    print("AT INTERFACE ARGS")
+        #    print("AT INTERFACE ARGS------------------------")
+        #    
+        #    print(args)
+        #    with open("file_dump.txt",'w+') as f:
+        #        f.write(str(args))
+        #    self.child_conn.send((path, args.to_dict()))
+        #    response = self.child_conn.recv()
+        #    return response
+
         @self.app.route('/', methods=['GET', 'POST'])
         @self.app.route('/<path:path>', methods=['GET', 'POST'])
         def index(path='/'):
-            args = request.args if request.method == 'GET' else request.form
+            if request.method == 'POST':
+                if request.is_json:
+                    args = request.get_json()
+                else:
+                    args = request.form.to_dict()
+            else:
+                args = request.args.to_dict()
+
             if self.handler == None:
-                return '''{"error":"no httpws_server handler assigned"}'''
-            self.child_conn.send((path, args.to_dict()))
+                return jsonify({"error":"no httpws_server handler assigned"})
+
+            #print("AT INTERFACE ARGS")
+            #print("AT INTERFACE ARGS------------------------")
+            #print(args)
+
+            #with open("file_dump.txt",'w+') as f:
+            #    f.write(str(args))
+
+            self.child_conn.send((path, args))
             response = self.child_conn.recv()
             return response
 

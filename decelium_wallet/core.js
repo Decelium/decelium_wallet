@@ -144,14 +144,14 @@ class Core {
         this.nodes = await this.net.node_list();
 
         let found = false;
-        console.log("this.nodes",this.nodes);
+        //console.log("this.nodes",this.nodes);
         for (const n of this.nodes) {
             if (n.self_id === this.self_id) {
                 found = true;
             } else {
                 if ('test_id' in n.connect_data.meta) {
                     this.node_peer_list.push(n);
-                    console.log('passed inspection' + n.self_id);
+                    //console.log('passed inspection' + n.self_id);
                 }
             }
         }

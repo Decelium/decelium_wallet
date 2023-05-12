@@ -61,20 +61,36 @@ class service:
                 return {"error":"No public handler registered for query"}
             qtype = json_obj.get("qtype")
             if not qtype:
-                return {"error":"qtype is missing in the JSON object"}
+                return {"error":"qtype is missing in the JSON object -- "+ str(json_obj)}
 
             if qtype not in self.handlers[group]:
                 return {"error":f"No handler found for qtype '{qtype}'"}
 
             handler = self.handlers[group][qtype]['handler']
-            encoded_payload = json_obj.get("__encoded_query")
-            if not encoded_payload:
-                return {"error":"Encoded payload is missing in the JSON object"}
-        #return encoded_payload
-            decoded_payload = self.do_decode(encoded_payload)
-            #return str(decoded_payload) + str(handler)
-            response = jsondt.dumps(handler(decoded_payload,{}))
-            return response
+            
+            if json_obj.get("__encoded_query"):
+                encoded_payload = json_obj.get("__encoded_query")
+
+                if not encoded_payload:
+                    return {"error":"PIK Encoded payload is missing in the JSON object"}
+                #return encoded_payload
+                decoded_payload = self.do_decode(encoded_payload)
+                #return str(decoded_payload) + str(handler)
+                response = jsondt.dumps(handler(decoded_payload,{}))
+                return response
+            
+            if json_obj.get("__str_encoded_query"):
+                encoded_payload = json_obj.get("__str_encoded_query")
+
+                if not encoded_payload:
+                    return {"error":"STR Encoded payload is missing in the JSON object"}
+                #return encoded_payload
+                decoded_payload = self.do_decode_string(encoded_payload)
+                #return str(decoded_payload) + str(handler)
+                response = jsondt.dumps(handler(decoded_payload,{}))
+                return response
+            return {"error":"Could not find a decoding method"}
+            
         except:
             import traceback as tb
             return "service.run critical error: "+tb.format_exc()
@@ -110,7 +126,7 @@ class service:
         return self.__run_query
     
     def __run_query(self, args):
-        #method_to_call = getattr(self, self.current_attr)        
+        #method_to_call = getattr(self, self.current_attr)
         json_obj = {
             "qtype": self.current_attr,
             "__encoded_query":self.do_encode(jsondt.dumps(args))  

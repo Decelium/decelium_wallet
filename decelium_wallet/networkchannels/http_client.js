@@ -39,19 +39,55 @@ class jsondateencode_local {
 }*/
 
 class jsondateencode_local {
+    //static loads(dic) {
+    //    console.log("DECODING");
+    //    console.log(dic);
+    //    console.log(typeof dic);
+    //    console.log("DECODING2");
+    //    let p;
+    //    if (typeof dic === 'string') {
+    //        p = JSON.parse(dic, this.datetime_parser);
+    //    } else if (typeof dic === 'object') {
+    //        p = this.datetime_parser('', dic);
+    //    }
+    //    //console.log("DECODING3");
+    //    return p;
+    //}
     static loads(dic) {
-        //console.log("DECODING");
-        //console.log(dic);
-        //console.log("DECODING2");
+        console.log("DECODING");
+        console.log(dic);
+        console.log(typeof dic);
+        console.log("DECODING2");
         let p;
         if (typeof dic === 'string') {
-            p = JSON.parse(dic, this.datetime_parser);
+            if (this.isJsonString(dic)) {
+                p = JSON.parse(dic, this.datetime_parser);
+            } else if (!isNaN(dic)) {
+                p = Number(dic);
+            } else {
+                p = dic;
+            }
         } else if (typeof dic === 'object') {
             p = this.datetime_parser('', dic);
         }
-        //console.log("DECODING3");
+        else
+        {
+         p = dic;
+        }
+        console.log("DECODING3");
+        console.log(p);
         return p;
     }
+
+    static isJsonString(str) {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+    
 
     static dumps(dic) {
         return JSON.stringify(dic, this.datedefault);
@@ -121,6 +157,10 @@ class http_client_wrapped {
                 break;
             }
         }
+         //    console.log("GETTING DATA3");
+         //   console.log(resp);
+       
+        
         return resp;
     }
 
@@ -133,6 +173,7 @@ class http_client_wrapped {
 
         if ([true, 'http', 'https'].includes(remote)) {
             let resp = await this.query_remote(source_id, filter, url_version, show_url);
+            
             return resp;
         }
         return null;
@@ -147,11 +188,13 @@ class http_client_wrapped {
             console.log(url_version);
             console.log(query);
         }
-        console.log(url_version);
-        console.log('query_remote',query);
+        //console.log('query_remote----------------------');
+        //console.log(url_version);
+        //console.log(data);
+        //console.log(query);
 
         let r = await axios.post(url_version, data);
-        console.log("query_remote_data",r.data);
+        //console.log("query_remote_data",r.data);
         let dat;
 
         try 
@@ -162,6 +205,8 @@ class http_client_wrapped {
             console.log(e);
             dat = r.data;
         }
+        
+        
         return dat;
         
     }
