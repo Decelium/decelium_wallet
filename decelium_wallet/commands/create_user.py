@@ -13,8 +13,9 @@ try:
 except:
     import decelium
 import getpass
+
 class CreateUser: 
-    def load_pq(path,password,url_version,target_user):
+    def load_pq(self,path,password,url_version,target_user):
         dw = decelium.SimpleWallet()
         dw.load(path,password)
         accts = dw.list_accounts()
@@ -28,7 +29,7 @@ class CreateUser:
         pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
         return pq, user['api_key'], dw
 
-    def run(*args):
+    def run(self,args):
 
         wallet_path = args[0]
         password = crypto.getpass()
@@ -36,7 +37,7 @@ class CreateUser:
         dec_username = args[2]
         url_version = args[3]
 
-        [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,wallet_user)
+        [pq,api_key,wallet] = self.load_pq(wallet_path,password,url_version,wallet_user)
 
         print(api_key)
 
@@ -70,3 +71,7 @@ class CreateUser:
         obj_id = pq.user_register(feature,remote=True)
         print(obj_id) 
         return obj_id
+    
+def run(*args):
+    c = CreateUser()
+    return c.run (args)

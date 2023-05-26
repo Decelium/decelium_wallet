@@ -24,7 +24,7 @@ from sys import getsizeof
 from os.path import exists
 
 class Generate:
-    def run(self,*args):
+    def run(self,args):
 
         '''
         This example shows, if you have the api_key and public key of an account, how to generate a wallet. This is 
@@ -45,12 +45,14 @@ class Generate:
         if password1 != password2:
             print("The passwords don't match")
             sys.exit()    
-        print(args)
         if len(args) == 0:
             print("path is empty, pass a path")
             return {"error":"path is empty, pass a path"}
         path = args[0]
         dw = decelium.SimpleWallet()
+        print(args)
+        print(path)
+        print(password1)
         dw.load(path=path,password=password1)
         for user_id in users.keys():
             user_data = users[user_id]
@@ -64,3 +66,7 @@ class Generate:
         import pprint
         raw = dw.get_raw()
         return raw
+    
+def run(*args):
+    c = Generate()
+    return c.run (args)

@@ -1,3 +1,6 @@
+#contract=Deploy
+#version=0.1
+
 import os
 import sys
  
@@ -198,7 +201,7 @@ class Deploy():
     def explain(self):
         return "wallet_path url_version site_dir dec_path"
 
-    def run(self,*args):
+    def run(self,args):
         #print("RUNNING")
         #dir_path = os.path.dirname(os.path.realpath(__file__))    
         #os.chdir(dir_path)
@@ -277,3 +280,7 @@ if __name__ == "__main__":
     #sys.path.append('./')
 
     run(*sys.argv[1:])
+    
+def run(*args):
+    c = Deploy()
+    return c.run (args)

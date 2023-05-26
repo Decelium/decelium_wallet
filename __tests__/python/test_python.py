@@ -5,7 +5,7 @@ import pprint
 import traceback
 import subprocess
 import os
-
+# python3 ./decelium_wallet/decelium_wallet/decw.py generate_a_wallet test.wallet
 def capture_output():
     sys.stdout.flush()
     sys.stderr.flush()
@@ -54,8 +54,8 @@ try:
 </html>                
 ''')
     
-    cmdStr="yes | pip uninstall decelium_wallet"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
+    #cmdStr="yes | pip uninstall decelium_wallet"
+    #subprocess.run(cmdStr,shell=True,capture_output=True)
     
     #cmdStr = 'pip install "git+https://github.com/Decelium/decelium_wallet.git"'
     #subprocess.run(cmdStr,shell=True,capture_output=True)
@@ -70,16 +70,14 @@ try:
     import decelium_wallet.commands.check_balance as check_balance
     import decelium_wallet.commands.deploy as deploy
     import decelium_wallet.commands.delete_user as delete_user    
+    
+    
         
     with open(".password","w") as f:
         f.write("passtest")
     
     wallet=generate_a_wallet.run("./test_wallet.dec")
     assert len(wallet)==0
-    
-    
-    
-    
     
     wallet=generate_user.run("./test_wallet.dec","test_user","confirm")
     assert "test_user" in wallet
@@ -97,10 +95,13 @@ try:
     assert "obj-" in user_id
     
     fund_result=fund.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
-    assert fund_result
+    print("fund_result", fund_result)
     
+    assert fund_result and not 'error' in  fund_result
+        
     balance=check_balance.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
     assert balance==200    
+    
     
     # Test Manual Query
     # We load a wallet class, and manually sign a transaction.
@@ -108,7 +109,12 @@ try:
     dw = Wallet.wallet()
     dw.load(path="./test_wallet.dec",password="passtest")
     print(dir(dw))
-    pq = network.network(url_version="https://test.paxfinancial.ai/data/query",api_key=dw.pubk("test_user"))
+    pq = network.network()
+    session = pq.connect({'type':'tcpip',
+                         'url':"https://test.paxfinancial.ai/data/query",
+                         'port':5000,
+                         'api_key':dw.pubk("test_user")},
+                         None)    
     
     
     qUnsigned = {
@@ -126,10 +132,7 @@ try:
                                       'self_id':fil},
                                       ["test_user"]))
     assert result == True
-    
-
-    
-    
+        
     website_id = deploy.run("./test_wallet.dec","test_user","test.paxfinancial.ai","test/example_small_website.ipfs","./website/")
     url = "https://test.paxfinancial.ai/obj/"+website_id+"/"
     assert "obj-" in website_id

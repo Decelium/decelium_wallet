@@ -1,3 +1,6 @@
+#contract=Command
+#version=0.1
+
 import os
 import sys
  
@@ -28,13 +31,7 @@ import pprint
 import shutil     
 import json
 import time
-
-def run(*args):
-    c = Deploy()
-    c.run(*args)    
-
-class Deploy():
-
+class Command:
     def explain(self):
         return "wallet_path target_user command secret_id secret_value secret_value"
 
@@ -67,11 +64,11 @@ class Deploy():
             secret_passcode = wallet.set_secret(target_user, secret_id,secret_value)
             wallet.save(wallet_path,password)
             print(1)
-        
+
         if command == "view":
             secret_passcode = wallet.get_secret(target_user, secret_id)
             print(secret_passcode)
-    
+
     def get_password(self):
         for prefix in ['./','../','../../']:
             filename = prefix+".password"
@@ -85,10 +82,8 @@ class Deploy():
             password = crypto.getpass()
        #print("password="+str(password))
         return password        
-if __name__ == "__main__":
-    direc = '/'.join(__file__.split('/')[:-3]) +'/'
-    run(*sys.argv[1:])
-# python3 secret.py ../../../.wallet.dec admin view decelium_com_dns_code 
-# python3 secret.py ../../../.wallet.dec admin list 
-# python3 secret.py ../../../.wallet.dec admin add testdecelium_com_dns_code "NEW VAL"
-# python3 secret.py ../../../.wallet.dec admin add decelium_com_dns_code "NER VAL"
+
+    
+def run(*args):
+    c = Command()
+    return c.run (args)
