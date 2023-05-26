@@ -35,7 +35,7 @@ class Command:
         dec_username = args[2]
         url_version = args[3]
 
-        [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,wallet_user)
+        [pq,api_key,wallet] = self.load_pq(wallet_path,password,url_version,wallet_user)
 
         print(api_key)
 
