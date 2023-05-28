@@ -1,3 +1,6 @@
+#contract=Deploy
+#version=0.1
+
 import os
 import sys
  
@@ -271,3 +274,7 @@ if __name__ == "__main__":
     from decelium import decelium
     c = Deploy()
     c.run(*sys.argv[1:])
+
+def run(*args):
+    c = Deploy()
+    return c.run (args)
