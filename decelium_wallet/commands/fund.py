@@ -1,7 +1,7 @@
 #contract=Command
 #version=0.1
 
-import sys
+import sys,json
 sys.path.append("../../")
 try:
     from decelium_wallet.crypto import crypto
@@ -36,14 +36,14 @@ class Command:
 
         [pq,api_key,wallet] = self.load_pq(wallet_path,password,url_version,target_user)
 
-        print(api_key)
+        #print(api_key)
 
         faucet_contract_id = "obj-24f598c9-71a8-4038-88f4-4fedac22acc1"
         cpu_symbol = "CPU"
 
         response  = pq.execute_entity({'api_key':api_key ,'self_id':faucet_contract_id,'func':'send','args':{'dst_id': api_key}},remote=True)
-        print("FUNDING RESPONSE",response)   
-        return response
+        #print("FUNDING RESPONSE",response)   
+        return json.dumps(response)
     
 def run(*args):
     c = Command()

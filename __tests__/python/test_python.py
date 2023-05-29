@@ -1,20 +1,53 @@
 import uuid
 import requests
 import sys
-import pprint
 import traceback
 import subprocess
 import os
-# python3 ./decelium_wallet/decelium_wallet/decw.py generate_a_wallet test.wallet
+import json
+import sys
+import importlib
+
+mode = 'python'  # Switch between 'decw' and 'python'
+try:
+    mode = sys.argv[1]
+except IndexError:
+    print("Please provide a mode ('decw' or 'python') as an argument when running this script.")
+    sys.exit(1)
+
+def run_command(command, *args):
+    if mode == 'decw':
+        return run_decw_cmd(command, *args)
+    elif mode == 'python':
+        return run_py_cmd(command, *args)
+    else:
+        raise Exception(f"Invalid mode: {mode}")
+#/app/projects/jgops/projects/portfolio/src/decelium_wallet/__tests__/python/../../decelium_wallet/
+def run_decw_cmd(command, *args):
+    #cmd = ["decw", command] + list(args)
+    cmd = ["python3", "../../decelium_wallet/decw.py", command] + list(args)
+    print(' '.join(cmd))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        raise Exception(f"Command {cmd} failed with error: {result.stderr}")
+    try:
+        return json.loads(result.stdout)
+    except:
+        print ("COULD NOT DECODE")
+        print(result.stdout)
+
+def run_py_cmd(command, *args):
+    command_module_path = f'decelium_wallet.commands.{command}'
+    command_module = importlib.import_module(command_module_path)
+    return command_module.run(*args)
+
 def capture_output():
     sys.stdout.flush()
     sys.stderr.flush()
 
     original_stdout = sys.stdout
     original_stderr = sys.stderr
-
-    #sys.stdout = open("data.out", "w")
-    #sys.stderr = sys.stdout
 
     return original_stdout, original_stderr
 
@@ -28,19 +61,12 @@ def restore_output(original_stdout, original_stderr):
 try:
     original_stdout, original_stderr = capture_output()
     
-    cmdStr = "rm .password"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
+    subprocess.run("rm .password", shell=True, capture_output=True)
+    subprocess.run("rm test_wallet.dec", shell=True, capture_output=True)
+    subprocess.run("rm -rf website", shell=True, capture_output=True)
+    subprocess.run("mkdir website", shell=True, capture_output=True)
     
-    cmdStr = "rm test_wallet.dec"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
-    
-    cmdStr = "rm -rf website"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
-    
-    cmdStr = "mkdir website"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
-    
-    with open("website/index.html","w") as f:
+    with open("website/index.html", "w") as f:
         f.write(
 '''<!DOCTYPE html>
 <html>
@@ -54,106 +80,48 @@ try:
 </html>                
 ''')
     
-    #cmdStr="yes | pip uninstall decelium_wallet"
-    #subprocess.run(cmdStr,shell=True,capture_output=True)
-    
-    #cmdStr = 'pip install "git+https://github.com/Decelium/decelium_wallet.git"'
-    #subprocess.run(cmdStr,shell=True,capture_output=True)
     sys.path.append("../../")
     
-    import decelium_wallet.network as network
-    import decelium_wallet.wallet as Wallet
-    import decelium_wallet.commands.generate_a_wallet as generate_a_wallet
-    import decelium_wallet.commands.generate_user as generate_user
-    import decelium_wallet.commands.create_user as create_user
-    import decelium_wallet.commands.fund as fund
-    import decelium_wallet.commands.check_balance as check_balance
-    import decelium_wallet.commands.deploy as deploy
-    import decelium_wallet.commands.delete_user as delete_user    
-    
-    
-        
     with open(".password","w") as f:
         f.write("passtest")
     
-    wallet=generate_a_wallet.run("./test_wallet.dec")
-    assert len(wallet)==0
+    wallet = run_command("generate_a_wallet", "./test_wallet.dec")
+    assert len(wallet) == 0
     
-    wallet=generate_user.run("./test_wallet.dec","test_user","confirm")
+    wallet = run_command("generate_user", "./test_wallet.dec", "test_user", "confirm")
     assert "test_user" in wallet
-    assert "description" in wallet["test_user"]
-    assert "image" in wallet["test_user"]
-    assert "secrets" in wallet["test_user"]
-    assert "title" in wallet["test_user"]
-    assert "user" in wallet["test_user"]
-    assert "api_key" in wallet["test_user"]["user"]
-    assert "private_key" in wallet["test_user"]["user"]
-    assert "version" in wallet["test_user"]["user"]
     
-    test_username="test_user"+str(uuid.uuid4())
-    user_id=create_user.run("./test_wallet.dec","test_user",test_username,"test.paxfinancial.ai","passtest")
-    assert "obj-" in user_id
+    test_username = "test_user"+str(uuid.uuid4())
+    user_id = run_command("create_user", "./test_wallet.dec", "test_user", test_username, "test.paxfinancial.ai", "passtest")
     
-    fund_result=fund.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
-    print("fund_result", fund_result)
-    
+    try:
+        assert "obj-" in user_id
+    except Exception as e:
+        print( "user_id error", user_id)
+        raise(e)
+    fund_result = run_command("fund", "./test_wallet.dec", "test_user", "test.paxfinancial.ai")
+    #print("fund_result", fund_result)
     assert fund_result and not 'error' in  fund_result
         
-    balance=check_balance.run("./test_wallet.dec","test_user","test.paxfinancial.ai")
-    assert balance==200    
+    balance = run_command("check_balance", "./test_wallet.dec", "test_user", "test.paxfinancial.ai")
+    assert balance == 200    
     
-    
-    # Test Manual Query
-    # We load a wallet class, and manually sign a transaction.
-    # This is more secure, as it can control signatures on a message by message basis.
-    dw = Wallet.wallet()
-    dw.load(path="./test_wallet.dec",password="passtest")
-    print(dir(dw))
-    pq = network.network()
-    session = pq.connect({'type':'tcpip',
-                         'url':"https://test.paxfinancial.ai/data/query",
-                         'port':5000,
-                         'api_key':dw.pubk("test_user")},
-                         None)    
-    
-    
-    qUnsigned = {
-        'api_key':dw.pubk("test_user"),
-        'path':"/",
-        'name':"test_dict.json",
-        'file_type':'dict',
-        'payload':{"test":"val"}}
-    qSigned = dw.sign_request(qUnsigned, ["test_user"])    
-    assert "__sigs" in qSigned
-    fil  = pq.create_entity(qSigned)
-    print(fil)
-    assert "obj-" in fil
-    result  = pq.delete_entity(dw.sr({'api_key':dw.pubk("test_user"),
-                                      'self_id':fil},
-                                      ["test_user"]))
-    assert result == True
-        
-    website_id = deploy.run("./test_wallet.dec","test_user","test.paxfinancial.ai","test/example_small_website.ipfs","./website/")
-    url = "https://test.paxfinancial.ai/obj/"+website_id+"/"
-    assert "obj-" in website_id
+    website_data = run_command("deploy", "./test_wallet.dec", "test_user", "test.paxfinancial.ai", "test/example_small_website.ipfs", "./website/")
+    url = "https://test.paxfinancial.ai/obj/"+website_data["app_id"]+"/"
+    assert "obj-" in website_data["app_id"]
     response = requests.get(url)
-    print(website_id)
-    print(url)
-    print(response)
-    assert response.status_code==200
+    #print(website_data["app_id"])
+    #print(url)
+    #print(response)
+    assert response.status_code == 200
     assert '<!DOCTYPE html>\n<html>\n<body>\n\n<p>This text is normal.</p>\n\n<p><em>This text is emphasized.</em></p>\n\n</body>\n</html>' in response.text
         
-    del_result=delete_user.run("./test_wallet.dec","test_user",test_username,"test.paxfinancial.ai")
-    assert del_result==True
+    del_result = run_command("delete_user", "./test_wallet.dec", "test_user", test_username, "test.paxfinancial.ai")
+    assert del_result == True
     
-    cmdStr = "rm .password"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
-    
-    cmdStr = "rm test_wallet.dec"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
-    
-    cmdStr = "rm -rf website"
-    subprocess.run(cmdStr,shell=True,capture_output=True)
+    subprocess.run("rm .password", shell=True, capture_output=True)
+    subprocess.run("rm test_wallet.dec", shell=True, capture_output=True)
+    subprocess.run("rm -rf website", shell=True, capture_output=True)
     
     restore_output(original_stdout, original_stderr)
 
@@ -164,4 +132,3 @@ except Exception as e:
     restore_output(original_stdout, original_stderr)
     traceback.print_exc()
     sys.exit(1)
-

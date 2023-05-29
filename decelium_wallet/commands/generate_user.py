@@ -1,4 +1,4 @@
-#contract=Generate
+#contract=Command
 #version=0.1
 
 import sys, getpass
@@ -44,23 +44,13 @@ class Command:
         dw.load(path=path,password=password)
         user_data = crypto.generate_user()
         user = dw.create_account(label=user_id,user=user_data)
-        print("Are you sure you want to write this user? you should backup your wallet first!! (yes/no)")
-        #print(user_id+":")
-        #print(user)
-        if confirm != "confirm":
-            yes = getpass.getpass()
-            if yes != "yes" and yes != "y":
-                print("aborted. exit..")
-                sys.exit(0)
-        print("saving..")
-        #dw.set_secret(user_id, 'Example_secret_value', "some_password_123")
+    
         dw.save(path=path,password=password)
         dw = decelium.SimpleWallet()
         dw.load(path=path,password=password)
-        import pprint
         raw = dw.get_raw()
-        pprint.pprint(raw)
-        return raw
+        #print(type(raw))
+        return json.dumps(raw)
 def run(*args):
     c = Command()
     return c.run (args)

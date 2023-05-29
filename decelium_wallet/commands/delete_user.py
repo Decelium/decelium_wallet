@@ -1,7 +1,7 @@
 #contract=Command
 #version=0.1
 
-import sys
+import sys,json
 sys.path.append("../../")
 sys.path.append("../../../")
 try:
@@ -37,11 +37,11 @@ class Command:
 
         [pq,api_key,wallet] = self.load_pq(wallet_path,password,url_version,wallet_user)
 
-        print(api_key)
+        #print(api_key)
 
         result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)
-        print(result)
-        return result
+        #print(result)
+        return json.dumps(result)
 
 def run(*args):
     c = Command()

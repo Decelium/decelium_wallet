@@ -1,7 +1,7 @@
 #contract=CreateUser
 #version=0.1
 
-import sys
+import sys,json
 sys.path.append("../../")
 sys.path.append("../../../")
 try:
@@ -30,7 +30,7 @@ class CreateUser:
         return pq, user['api_key'], dw
 
     def run(self,args):
-
+        #return "TEST RETURN"
         wallet_path = args[0]
         password = crypto.getpass()
         wallet_user = args[1]
@@ -39,7 +39,7 @@ class CreateUser:
 
         [pq,api_key,wallet] = self.load_pq(wallet_path,password,url_version,wallet_user)
 
-        print(api_key)
+        #print(api_key)
 
         #dw = decelium.SimpleWallet()
         #dw.load(path=wallet_path,password=password)
@@ -69,8 +69,8 @@ class CreateUser:
                    'password2': password2,}
         result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)   
         obj_id = pq.user_register(feature,remote=True)
-        print(obj_id) 
-        return obj_id
+        #print(obj_id) 
+        return json.dumps(obj_id)
     
 def run(*args):
     c = CreateUser()

@@ -2,7 +2,7 @@
 #version=0.1
 
 import os
-import sys
+import sys,json
  
 sys.path.append('../../')
 sys.path.append('../../../')
@@ -90,7 +90,7 @@ class Deploy():
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")
             
-        print(dir(Chunk))
+        #print(dir(Chunk))
 
         from_path = source_path
         chunk_path = "remote_test"
@@ -99,20 +99,20 @@ class Deploy():
         remote=True
 
         dir_fil = Chunk.upload(pq,api_key,remote,from_path,chunk_path)
-        print(dir_fil) # node index.js .env.test file_browser deploy-test
+        #print(dir_fil) # node index.js .env.test file_browser deploy-test
         assert 'obj-' in dir_fil or 'dir-' in dir_fil
 
-        print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
+        #print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
         del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
-        print("_deploy_website DEBUG 2") # node index.js .env.test file_browser deploy-test
-        print(del_fil)
-        print({
-            'api_key':api_key,
-            'path':remote_path_ipfs,
-            'name':name,
-            'file_type':'ipfs',
-            'payload_type':'chunk_directory',
-            'payload':dir_fil})
+        #print("_deploy_website DEBUG 2") # node index.js .env.test file_browser deploy-test
+        #print(del_fil)
+        #print({
+        #    'api_key':api_key,
+        #    'path':remote_path_ipfs,
+        #    'name':name,
+        #    'file_type':'ipfs',
+        #    'payload_type':'chunk_directory',
+        #    'payload':dir_fil})
         # node index.js .env.test file_browser deploy-test
         q = {
             'api_key':api_key,
@@ -125,7 +125,7 @@ class Deploy():
         
         fil  = pq.create_entity(q,remote=True)
         #print(fil['traceback'])
-        print("early upload response...  ",fil)
+        #print("early upload response...  ",fil)
         if 'message' in fil and fil['message']=='Endpoint request timed out':
             time.sleep(5)
             for i in range (1,5):
@@ -135,11 +135,11 @@ class Deploy():
                 else:
                     fil = data_test['self_id']
                     break
-        print("later upload response...  ",fil)
+        #print("later upload response...  ",fil)
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
         sys.stdout = original_stdout 
-        print(json.dumps(data))
+        #print(json.dumps(data))
         return fil
     
     def _deploy_small_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
@@ -152,13 +152,13 @@ class Deploy():
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")
             
-        print("encoded...  ", encoded[0:20])
+        #print("encoded...  ", encoded[0:20])
         remote=True
         fil  = pq.delete_entity({'api_key':api_key, 
                                 'path':path, 
                                 'name':name, 
                                 },remote=remote) # show_url=True to debug
-        print(fil)                            
+        #print(fil)                            
         assert fil == True or 'error' in fil
 
         fil_args = {
@@ -174,20 +174,20 @@ class Deploy():
         fil  = pq.create_entity(fil_args,remote=remote)
     
         #print(fil['traceback'])
-        print("upload response...  ",fil)
+        #print("upload response...  ",fil)
         sys.stdout = original_stdout        
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=remote)
         #import pprint
         #pprint.pprint(data)
-        print(json.dumps(data))
+        #print(json.dumps(data))
         return fil
-        print("Uploaded to "+fil)
+        #print("Uploaded to "+fil)
 
     def get_password():
         for prefix in ['./','../','../../']:
             filename = prefix+".password"
-            print(filename)
+            #print(filename)
             if os.path.exists(filename):
                 f = open(filename, 'r')
                 password = f.read()
@@ -195,7 +195,7 @@ class Deploy():
                 break
         else:
             password = crypto.getpass()
-        print("password="+str(password))
+        #print("password="+str(password))
         return password
 
     def explain(self):
@@ -223,7 +223,7 @@ class Deploy():
             dns_secret_location = args[6]
         if not dns_host and dns_secret_location:
             print("If you provide a dns_host you need to specify where the secret is located within your wallet as well")
-        print("dns_host",args)
+        #print("dns_host",args)
         self_id = None
         jsonOutputOnly = False
         for i in (5,6,7,8):
@@ -247,9 +247,9 @@ class Deploy():
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")
 
-        print(root_path)
-        print(site_name)
-        print(website_path)
+        #print(root_path)
+        #print(site_name)
+        #print(website_path)
         #return
         
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
@@ -261,23 +261,21 @@ class Deploy():
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")        
         
-        print("deploy_website ..."+website_id)
+        dns = ""
+        #print("deploy_website ..."+website_id)
         if dns_host: #(self,       pq,api_key,path,    name,    secret_passcode):
             dns = self._deploy_dns(pq,api_key,'/_dns/',dns_host,website_id,secret_passcode)
-            print("deploy_dns ..."+ str(dns))
+            #print("deploy_dns ..."+ str(dns))
         else:        
-            print("skip_dns ...")
+            pass
+            #print("skip_dns ...")
         
-        for item in pq.list({'api_key':api_key, 'path':root_path, },remote=True):
-            print("deployed... ", item['self_id'], ' as ', item['dir_name'])
+        lst= pq.list({'api_key':api_key, 'path':root_path, },remote=True)
         sys.stdout = original_stdout
-        return website_id
+        return json.dumps({"app_id":website_id,"dns_id":dns,"list":lst})
     
 if __name__ == "__main__":
-    # if you import as a library, then the importer is in charge of these imports
     direc = '/'.join(__file__.split('/')[:-3]) +'/'
-    #os.chdir(direc)
-    #sys.path.append('./')
 
     run(*sys.argv[1:])
     

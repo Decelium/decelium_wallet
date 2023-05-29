@@ -50,9 +50,9 @@ class Generate:
             return {"error":"path is empty, pass a path"}
         path = args[0]
         dw = decelium.SimpleWallet()
-        print(args)
-        print(path)
-        print(password1)
+        #print(args)
+        #print(path)
+        #print(password1)
         dw.load(path=path,password=password1)
         for user_id in users.keys():
             user_data = users[user_id]
@@ -69,4 +69,5 @@ class Generate:
     
 def run(*args):
     c = Generate()
+    #print("generate_a_wallet args",args)
     return c.run (args)
