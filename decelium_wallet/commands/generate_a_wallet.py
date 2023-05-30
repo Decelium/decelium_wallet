@@ -65,7 +65,7 @@ class Generate:
         dw.load(path=path,password=password1)
         import pprint
         raw = dw.get_raw()
-        return raw
+        return json.dumps(raw)
     
 def run(*args):
     c = Generate()

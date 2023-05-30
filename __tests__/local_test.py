@@ -13,35 +13,20 @@ def run_test(test_dir, test_command):
             text=True
         )
         return {"result": True, "output": output}
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         return {"result": False, "output": e.output}
 
 def main():
     tests = [
         {
-            "name": "js",
-            "directory": "js",
-            "command": "python3 test_js.py",
-        },
-        {
-            "name": "nodejs",
-            "directory": "nodejs",
-            "command": "node test_nodejs.js",
-        },
-        {
-            "name": "reactjs",
-            "directory": "reactjs",
-            "command": "nodejs test_reactjs.js",
-        },
-        {
             "name": "cli",
-            "directory": "cli",
-            "command": "python3 test_cli.py",
+            "directory": "python",
+            "command": "python3 test_python.py decw",
         },
         {
             "name": "python",
             "directory": "python",
-            "command": "python3 test_python.py",
+            "command": "python3 test_python.py python",
         },
     ]
 

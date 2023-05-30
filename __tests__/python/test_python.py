@@ -7,7 +7,8 @@ import os
 import json
 import sys
 import importlib
-
+sys.path.append('../')
+sys.path.append('../../')
 mode = 'python'  # Switch between 'decw' and 'python'
 try:
     mode = sys.argv[1]
@@ -86,7 +87,7 @@ try:
         f.write("passtest")
     
     wallet = run_command("generate_a_wallet", "./test_wallet.dec")
-    assert len(wallet) == 0
+    assert len(json.loads(wallet)) == 0
     
     wallet = run_command("generate_user", "./test_wallet.dec", "test_user", "confirm")
     assert "test_user" in wallet
@@ -107,6 +108,7 @@ try:
     assert balance == 200    
     
     website_data = run_command("deploy", "./test_wallet.dec", "test_user", "test.paxfinancial.ai", "test/example_small_website.ipfs", "./website/")
+    website_data = json.loads(website_data)
     url = "https://test.paxfinancial.ai/obj/"+website_data["app_id"]+"/"
     assert "obj-" in website_data["app_id"]
     response = requests.get(url)
@@ -117,7 +119,7 @@ try:
     assert '<!DOCTYPE html>\n<html>\n<body>\n\n<p>This text is normal.</p>\n\n<p><em>This text is emphasized.</em></p>\n\n</body>\n</html>' in response.text
         
     del_result = run_command("delete_user", "./test_wallet.dec", "test_user", test_username, "test.paxfinancial.ai")
-    assert del_result == True
+    assert json.loads(del_result) == True
     
     subprocess.run("rm .password", shell=True, capture_output=True)
     subprocess.run("rm test_wallet.dec", shell=True, capture_output=True)
