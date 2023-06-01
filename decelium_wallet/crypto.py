@@ -9,10 +9,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import hashlib, json
 import datetime
 import getpass
-try:    
-    from decelium_wallet.wallet import wallet
-except:
-    from wallet import wallet
+
 
 
 class jsondateencode_crypto:
@@ -41,8 +38,8 @@ def datetime_parser(dct):
 
 class crypto:
     def getpass(format=None,rootfile=None):
-        if file != None:
-            return wallet.getpass(rootfile)
+        #if file != None:
+        #    return wallet.getpass(rootfile)
         raise Exception("Deprecated. Use wallet.discover instead. It is more secure.")
         path = ''
         password = None

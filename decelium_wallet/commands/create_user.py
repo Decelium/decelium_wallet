@@ -12,7 +12,7 @@ try:
     from decelium_wallet import decelium
 except:
     import decelium
-import getpass
+
 
 class CreateUser: 
     def load_pq(self,path,password,url_version,target_user):
@@ -32,7 +32,7 @@ class CreateUser:
     def run(self,args):
         #return "TEST RETURN"
         wallet_path = args[0]
-        password = crypto.getpass()
+        password = decelium.getpass(wallet_path)
         wallet_user = args[1]
         dec_username = args[2]
         url_version = args[3]
@@ -55,9 +55,9 @@ class CreateUser:
             password2 = password
         else:
             print("Enter the password for the user on Decelium:")
-            password = getpass.getpass()
+            password = decelium.getpass()
             print("Reenter the password for the user on Decelium:")
-            password2 = getpass.getpass()
+            password2 = decelium.getpass()
         if password != password2:
             print("The passwords don't match.")
             sys.exit()

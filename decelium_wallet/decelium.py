@@ -53,6 +53,8 @@ try:
     len(PaxFinancialAPIEndpointRegistry)
 except:
     PaxFinancialAPIEndpointRegistry = {}
+def getpass(path):
+    return wallet.getpass(path)
 
 def time_print_init():
     '''

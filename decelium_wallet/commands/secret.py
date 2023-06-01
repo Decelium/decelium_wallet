@@ -46,7 +46,7 @@ class Command:
         if len(args) > 4:
             secret_value = args[4]
 
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
         #print(password)
         #print(wallet_path)
         wallet = decelium.SimpleWallet()
@@ -69,19 +69,7 @@ class Command:
             secret_passcode = wallet.get_secret(target_user, secret_id)
             print(secret_passcode)
 
-    def get_password(self):
-        for prefix in ['./','../','../../']:
-            filename = prefix+".password"
-            #print(filename)
-            if os.path.exists(filename):
-                f = open(filename, 'r')
-                password = f.read()
-                f.close()
-                break
-        else:
-            password = crypto.getpass()
-       #print("password="+str(password))
-        return password        
+    
 
     
 def run(*args):

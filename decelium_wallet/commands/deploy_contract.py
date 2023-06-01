@@ -165,7 +165,7 @@ class Deploy():
         print("Uploaded to "+fil)
 
     def get_password(wallet_path):
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
 
     def __deploy_contract(self,pq,api_key,path,name,target_contract_id,target_contract_path):    
         with open(target_contract_path,'r') as contract_py:
@@ -225,7 +225,7 @@ class Deploy():
                 if args[i] == 'json':
                     jsonOutputOnly = True
         
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
     
         root_path='/'.join(site_dir.split("/")[:-1])
         site_name = site_dir.split("/")[-1]

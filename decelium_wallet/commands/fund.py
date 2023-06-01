@@ -32,7 +32,7 @@ class Command:
         wallet_path = args[0]
         target_user = args[1]
         url_version = args[2]
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
 
         [pq,api_key,wallet] = self.load_pq(wallet_path,password,url_version,target_user)
 

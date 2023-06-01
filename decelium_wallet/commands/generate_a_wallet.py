@@ -42,31 +42,28 @@ class Generate:
         }
 
         path = args[0]
-        password1 = crypto.getpass(path)
-        password2 = crypto.getpass(path)
+        password = decelium.getpass(path)
         
-        if password1 != password2:
-            print("The passwords don't match")
-            sys.exit()    
-        if len(args) == 0:
-            print("path is empty, pass a path")
-            return {"error":"path is empty, pass a path"}        
         dw = decelium.SimpleWallet()
-        #print(args)
-        #print(path)
-        #print(password1)
-        dw.load(path=path,password=password1)
+        dw.load(path=path,password=password)
         for user_id in users.keys():
             user_data = users[user_id]
             #print(users[user_id])
             user = dw.create_account(label=user_id,user=user_data)
             #dw.set_secret(user_id, 'Example_secret_value', "some_password_123")
-
-        dw.save(path=path,password=password1)
+        
+        print("GENERATING")
+        print(dw.get_raw())
+        print(password)
+        
+        dw.save(path=path,password=password)
+        
         dw = decelium.SimpleWallet()
-        dw.load(path=path,password=password1)
+        dw.load(path=path,password=password)
         import pprint
         raw = dw.get_raw()
+        #print("LOADING")
+        #print(dw.get_raw())        
         return json.dumps(raw)
     
 def run(*args):

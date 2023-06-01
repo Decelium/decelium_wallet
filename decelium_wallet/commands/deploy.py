@@ -185,7 +185,7 @@ class Deploy():
         #print("Uploaded to "+fil)
 
     def get_password(wallet_path):
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
         #print("password="+str(password))
         return password
 
@@ -224,7 +224,7 @@ class Deploy():
                 else:
                     if self_id == None:
                         self_id = args[i]
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
     
         #---- begin
         #root_path= site_dir

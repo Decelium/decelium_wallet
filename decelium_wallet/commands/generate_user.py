@@ -32,14 +32,17 @@ class Command:
                                 'version': 'python-ecdsa-0.1'},
                 }
         '''
-        #path = '../../.wallet.dec'
-        #path = '../../.wallet.dec'
+
         path = args[0:][0]
         user_id = args[0:][1]
         confirm = None
         if len(args)>2:
             confirm = args[0:][2]
-        password = crypto.getpass(path)
+        with open(path,'r') as f:
+            print(f.read())
+        #with open(path+'.password','r') as f:
+        #    print(f.read())
+        password = decelium.getpass(path)
         dw = decelium.SimpleWallet()
         dw.load(path=path,password=password)
         user_data = crypto.generate_user()

@@ -17,7 +17,7 @@ from os.path import exists
 class Command:
     def run(self,args):
         path = args[0:][0]
-        password = crypto.getpass(path)
+        password = decelium.getpass(path)
         dw = decelium.SimpleWallet()
         dw.load(path=path,password=password)
         return json.dumps(dw.get_raw())    

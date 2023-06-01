@@ -1,7 +1,7 @@
 #contract=Command
 #version=0.1
 
-import sys, getpass
+import sys
 import unittest    
 import uuid    
 import json
@@ -37,7 +37,7 @@ class Command:
         path = args[0:][0]
         user_id = args[0:][1]
         private_key = args[0:][2]
-        password = crypto.getpass(path)
+        password = decelium.getpass(path)
         dw = decelium.SimpleWallet()
         dw.load(path=path,password=password)
         user_data = crypto.generate_user_from_string(private_key=private_key)

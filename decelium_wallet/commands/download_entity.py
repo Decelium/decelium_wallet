@@ -50,7 +50,7 @@ class Command:
         url_version = args[2]
         root_directory = args[3]
 
-        password = crypto.getpass(wallet_path)
+        password = getpass.getpass(wallet_path)
 
         [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,target_user)
         print({'api_key':api_key, 'path':root_directory, })

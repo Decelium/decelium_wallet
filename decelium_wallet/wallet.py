@@ -20,9 +20,9 @@ class wallet():
             self.mode = 'js'
         try:
             if self.mode=="fs":
-                return self.load_fs(path,password,data)
+                return self.load_fs(str(path),password,data)
             else:
-                return self.load_js(path,password,data)
+                return self.load_js(str(path),password,data)
         except InvalidToken:
             return False
         
@@ -67,6 +67,7 @@ class wallet():
             else:
                 astr = crypto.do_encode_string(json.loads(data))
             if password != None:
+                #print("astr",astr)
                 astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
             self.wallet= crypto.do_decode_string(astr )
             return True
@@ -81,9 +82,9 @@ class wallet():
     def save_fs(self,path,password=None):
         if exists(path):
             os.remove(path)
-
+        dumpstr = self.export_encrypted(password)
         with open(path,'w') as f:
-            f.write(self.export_encrypted(password))
+            f.write(dumpstr)
             
         with open(path,'r') as f:
             savedstr = f.read()
@@ -277,17 +278,13 @@ class wallet():
     
     @staticmethod
     def getpass(walletpath):
-        # Use rootfile to find the password for a certain path
-        # start with looking for a properly named .filename.dec.password
-        # then look for a .password
-        # use discover() with the currentr __file__ directory to start the search for the password file.
-        # you will know if a password file exists if (a) it is oprhaned or (b) a wallet returns true or (c) THIS wallet returns true
-        # There are many ways to solve this problem, but leaning on discover prevents duplicating indexing logic
         wallet_path = Path(walletpath)
         wallet_dir = wallet_path.parent
-
+        #print(wallet_dir)
+        #print(os.getcwd())
         # look for a properly named .filename.dec.password
         password_file = wallet_dir / (wallet_path.stem + '.dec.password')
+        #print(password_file)
         if not password_file.is_file():
             # then look for a .password
             password_file = wallet_dir / '.password'
@@ -306,7 +303,7 @@ class wallet():
         with password_file.open('r') as f:
             password = f.read().strip()
 
-        return password_file        
+        return password        
         
     @staticmethod
     def discover(root="./", password=None):

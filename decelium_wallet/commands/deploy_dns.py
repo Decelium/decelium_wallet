@@ -79,7 +79,7 @@ class Deploy():
                 f.close()
                 break
         else:
-            password = crypto.getpass()
+            password = decelium.getpass()
         print("password="+str(password))
         return password
 
@@ -110,7 +110,7 @@ class Deploy():
                 else:
                     if self_id == None:
                         self_id = args[i]
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
     
         #---- begin
         #root_path= site_dir

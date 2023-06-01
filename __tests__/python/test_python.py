@@ -66,8 +66,8 @@ def get_wallet_info():
     wallet_info = json.loads(run_command("discover_wallets"))
     if wallet_info:
         for info in wallet_info:
-            print(wallet_info)
-            if 'test_wallet.dec' in info['wallet']:
+            #print(wallet_info)
+            if info['wallet'] and 'test_wallet.dec' in info['wallet']:
                 return info['wallet'], info['passfile']
     return None, None    
     
@@ -79,14 +79,16 @@ try:
     
     if wallet_path is None or password_file is None:
         wallet_path = "./test_wallet.dec"
-        password_file = ".password"
+        password_file = "./test_wallet.dec.password"
     
     if not check_wallet_exists(wallet_path):
         subprocess.run(f"rm {wallet_path}", shell=True, capture_output=True)
+        with open(password_file,'w')as f:
+            f.write("unittestpass")
         wallet = run_command("generate_a_wallet", wallet_path)
-        assert len(json.loads(wallet)) == 0
-    
-
+        assert len(json.loads(wallet)) == 0 and len(wallet) > 0
+    #sys.exit(0)
+    print("have wallet file,",wallet_path)
     wallet = run_command("generate_user", wallet_path, "test_user", "confirm")
     assert "test_user" in wallet
 

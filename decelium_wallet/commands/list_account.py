@@ -16,7 +16,7 @@ import uuid
 import base64
 import pprint
 import shutil
-import getpass
+
 #from dotenv import load_dotenv
 class Command:
     def load_pq(self,path,password,url_version,target_user):
@@ -49,7 +49,7 @@ class Command:
         url_version = args[2]
         root_directory = args[3]
 
-        password = crypto.getpass(wallet_path)
+        password = decelium.getpass(wallet_path)
 
         [pq,api_key,wallet] = load_pq(wallet_path,password,url_version,target_user)
         q={'api_key':api_key, 'path':root_directory, }
