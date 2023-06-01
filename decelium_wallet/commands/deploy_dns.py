@@ -110,7 +110,7 @@ class Deploy():
                 else:
                     if self_id == None:
                         self_id = args[i]
-        password = crypto.getpass()
+        password = crypto.getpass(wallet_path)
     
         #---- begin
         #root_path= site_dir

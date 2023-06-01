@@ -1,10 +1,13 @@
 # This is the main test driver. It sets up the whole suite, runs tests, and reports results, including how to do a deeper dive.
 # Key Tasks
 # [X] Unit Test core single user wallet commands
+# ---- Look for a wallet
+# ---- if wallet exists
 # [] Unit Test Py Network Commands (Single-py)
 # [] Unit Test Py Network Commands (Single-js)
 # [] Unit Test Py Network Commands (Group-hetero)
-# 
+# [] target the tests at a specific node based on config
+# [] Derive or require some 
 
 import subprocess
 

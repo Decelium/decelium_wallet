@@ -1,18 +1,15 @@
-#contract=Generate
+#contract=Command
 #version=0.1
-#description= A smart contract that can generate wallets on this local machine. Intended to be used locally.
-import sys
-import getpass
+
+import sys, getpass
 import unittest    
 import uuid    
 import json
 sys.path.append('../../')
-sys.path.append('../')
-sys.path.append('../../../')
 import datetime,time
 import unittest
 import uuid
-try:
+try: 
     import decelium_wallet.decelium as decelium
 except:
     import decelium
@@ -22,10 +19,8 @@ except:
     from crypto import crypto
 from sys import getsizeof
 from os.path import exists
-
-class Generate:
+class Command:
     def run(self,args):
-
         '''
         This example shows, if you have the api_key and public key of an account, how to generate a wallet. This is 
         a very rare circumstance, and usually only comes up if you have just a private key to work with.
@@ -37,39 +32,25 @@ class Generate:
                                 'version': 'python-ecdsa-0.1'},
                 }
         '''
-        users = {
-
-        }
-
-        path = args[0]
-        password1 = crypto.getpass(path)
-        password2 = crypto.getpass(path)
+        #path = '../../.wallet.dec'
+        #path = '../../.wallet.dec'
+        path = args[0:][0]
+        user_id = args[0:][1]
+        private_key = args[0:][2]
+        password = crypto.getpass(path)
+        dw = decelium.SimpleWallet()
+        dw.load(path=path,password=password)
+        user_data = crypto.generate_user_from_string(private_key=private_key)
         
-        if password1 != password2:
-            print("The passwords don't match")
-            sys.exit()    
-        if len(args) == 0:
-            print("path is empty, pass a path")
-            return {"error":"path is empty, pass a path"}        
-        dw = decelium.SimpleWallet()
-        #print(args)
-        #print(path)
-        #print(password1)
-        dw.load(path=path,password=password1)
-        for user_id in users.keys():
-            user_data = users[user_id]
-            #print(users[user_id])
-            user = dw.create_account(label=user_id,user=user_data)
-            #dw.set_secret(user_id, 'Example_secret_value', "some_password_123")
-
-        dw.save(path=path,password=password1)
-        dw = decelium.SimpleWallet()
-        dw.load(path=path,password=password1)
-        import pprint
-        raw = dw.get_raw()
-        return json.dumps(raw)
+        
+        user = dw.create_account(label=user_id,user=user_data)
     
+        dw.save(path=path,password=password)
+        dw = decelium.SimpleWallet()
+        dw.load(path=path,password=password)
+        raw = dw.get_raw()
+        #print(type(raw))
+        return json.dumps(raw)
 def run(*args):
-    c = Generate()
-    #print("generate_a_wallet args",args)
+    c = Command()
     return c.run (args)

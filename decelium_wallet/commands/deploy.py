@@ -184,17 +184,8 @@ class Deploy():
         return fil
         #print("Uploaded to "+fil)
 
-    def get_password():
-        for prefix in ['./','../','../../']:
-            filename = prefix+".password"
-            #print(filename)
-            if os.path.exists(filename):
-                f = open(filename, 'r')
-                password = f.read()
-                f.close()
-                break
-        else:
-            password = crypto.getpass()
+    def get_password(wallet_path):
+        password = crypto.getpass(wallet_path)
         #print("password="+str(password))
         return password
 
@@ -233,7 +224,7 @@ class Deploy():
                 else:
                     if self_id == None:
                         self_id = args[i]
-        password = crypto.getpass()
+        password = crypto.getpass(wallet_path)
     
         #---- begin
         #root_path= site_dir

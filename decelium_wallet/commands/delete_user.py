@@ -30,7 +30,7 @@ class Command:
     def run(self,args):
 
         wallet_path = args[0]
-        password = crypto.getpass()
+        password = crypto.getpass(wallet_path)
         wallet_user = args[1]
         dec_username = args[2]
         url_version = args[3]

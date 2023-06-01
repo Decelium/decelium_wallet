@@ -46,7 +46,7 @@ class Command:
         if len(args) > 4:
             secret_value = args[4]
 
-        password = crypto.getpass()
+        password = crypto.getpass(wallet_path)
         #print(password)
         #print(wallet_path)
         wallet = decelium.SimpleWallet()

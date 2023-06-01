@@ -39,7 +39,7 @@ class Command:
         confirm = None
         if len(args)>2:
             confirm = args[0:][2]
-        password = crypto.getpass()
+        password = crypto.getpass(path)
         dw = decelium.SimpleWallet()
         dw.load(path=path,password=password)
         user_data = crypto.generate_user()
