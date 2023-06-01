@@ -77,6 +77,28 @@ try:
     
     wallet_path, password_file = get_wallet_info()
     
+    cmdStr = "rm -rf website"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    cmdStr = "mkdir website"
+    subprocess.run(cmdStr,shell=True,capture_output=True)
+    
+    with open("website/index.html","w") as f:
+        f.write(
+'''<!DOCTYPE html>
+<html>
+<body>
+
+<p>This text is normal.</p>
+
+<p><em>This text is emphasized.</em></p>
+
+</body>
+</html>                
+''')
+       
+    
+    
     if wallet_path is None or password_file is None:
         wallet_path = "./test_wallet.dec"
         password_file = "./test_wallet.dec.password"
