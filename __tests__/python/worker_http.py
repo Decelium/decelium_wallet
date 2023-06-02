@@ -4,11 +4,13 @@ sys.path.append("../")
 from decelium_wallet.core import core
 import uuid
 import io
+import json
 
 class WorkerHTTP():
-    def __init__(self,core,node):
+    def __init__(self,core,node,peers):
         self.core = core
         self.node_address = node
+        self.peer_ids = peers
     #############################
     ###
     ###  1. Load the wallet, and connect to the Miner
@@ -90,21 +92,22 @@ class WorkerHTTP():
         time.sleep(0.5)
         nodes = self.core.node_list()
         found = False
-        
+        count = 0
         for n in nodes:            
             if n['self_id'] == self.core.self_id:
                 print ("found self")
                 found = True
             else:
                 if 'test_id' in n['connect_data']['meta']:
+                    count = count + 1
                     print("py passed inspection" + n['self_id'] )
-
+        assert len(self.peer_ids) == count
         return found
 
     #############################
     ###
     ###  4. Connect to every remote peer in a P2P manner. For each, set a value
-    ###
+    ###  
     def stage_set(self):
         self.sessions=[]
         for peer_connect_data in self.core.node_peers():
@@ -157,9 +160,9 @@ class WorkerHTTP():
         return True
     
     
-def run_all_tests(worker_id,node):
+def run_all_tests(worker_id,node,peers):
     
-    worker = WorkerHTTP(core(),node)
+    worker = WorkerHTTP(core(),node,peers)
     
     steps = [
         worker.stage_init,
@@ -173,48 +176,30 @@ def run_all_tests(worker_id,node):
     results = []
     for i, step in enumerate(steps):
         print(step)
-        
-        output_buffer = io.StringIO()
-        old_stdout, old_stderr = sys.stdout, sys.stderr
-        sys.stdout, sys.stderr = output_buffer, output_buffer
-        
-        try:        
-            print("----------------------------------------------------------")
-            print(f"[{i}] Worker {worker_id}: {step.__name__}")
-            result = False
-            try:
-                result = step()
-            except Exception as e:
-                import traceback as tb
-                tb.print_exc()
-                print(e)
-            if not result == True:
-                print(result)
-            results.append(result)
-            print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
-        except:
+        print("----------------------------------------------------------")
+        print(f"[{i}] Worker {worker_id}: {step.__name__}")
+        result = False
+        try:
+            result = step()
+        except Exception as e:
             import traceback as tb
-            tb.print_exc()
-            # Restore the original stdout and stderr
-            sys.stdout, sys.stderr = old_stdout, old_stderr
-            
-        finally:
-            # Restore the original stdout and stderr
-            sys.stdout, sys.stderr = old_stdout, old_stderr
-            pass
-        # Print the buffered output
-        print(output_buffer.getvalue())
-        output_buffer.close()
+            result = tb.format_exc()
+            try:
+                print("forcing shutdown . . .", end="")
+                worker.stage_shutdown()
+                print(" done")
+            except:
+                pass
+        print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
+        if not result == True:
+            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(result))
         if result != True:
             break
-    
-    #worker.stage_shutdown()
-    with open(f"worker{worker_id}_output.txt", "w") as f:
-        for result in results:
-            f.write(f"{result}\n")
 
 if __name__ == "__main__":
-    print("running "+str(sys.argv[1]))
+    print("running "+str(sys.argv[1])+" on "+sys.argv[2])
     worker_id = int(sys.argv[1])
     node = sys.argv[2]
-    run_all_tests(worker_id,node)
+    peers = json.loads(sys.argv[3])
+    
+    run_all_tests(worker_id,node,peers)

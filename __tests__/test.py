@@ -17,8 +17,8 @@ class SystemTests():
     
     def run_simple(self):
         try:
-            cmd = ['python3','./python/test_python.py','python']
-            print(' '.join(cmd ))
+            cmd = ['python3','./python/test_python.py','python','dev.paxfinancial.ai']
+            print(' '.join(cmd ),end="...")
             output = subprocess.check_output(
                 cmd,
                 #shell=True,
@@ -32,8 +32,8 @@ class SystemTests():
     
     def run_py_network(self):
         try:
-            cmd = ['python3','./python/test_python.py','python']
-            print(' '.join(cmd ))
+            cmd = ['python3','./python/worker_http.py','1','dev.paxfinancial.ai',"\"[2,3]\""]
+            print(' '.join(cmd ),end="...")
             output = subprocess.check_output(
                 cmd,
                 #shell=True,
@@ -47,4 +47,13 @@ class SystemTests():
     
 if __name__=="__main__":
     st = SystemTests()
-    print(st.run_simple())
+    meths = [st.run_simple,st.run_py_network]
+    for m in meths:
+        res = m()
+        if res["result"]==True:
+            print(" success")
+        else:
+            print(" FAILED")
+            print(res['output'])
+    #print(st.run_simple())
+    #print(st.run_py_network())
