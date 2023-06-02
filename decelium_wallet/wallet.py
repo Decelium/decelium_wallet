@@ -7,7 +7,7 @@ except:
     crypto = crypto.crypto
     #from decelium.crypto import crypto
 import json
-import os
+import os,sys
 from os.path import exists
 from cryptography.fernet import InvalidToken
 
@@ -28,9 +28,9 @@ class wallet():
         
     def save(self,path,password=None):
         if self.mode=="fs":
-            self.save_fs(path,password)
+            return self.save_fs(path,password)
         else:
-            self.save_js(path,password)        
+            return self.save_js(path,password)        
                 
     def load_js(self,path=None,password=None,data=None):
         self.wallet={}
@@ -51,6 +51,7 @@ class wallet():
     
     def save_js(self,path,password=None):
         print(self.wallet);
+        return True
         
     
     def load_fs(self,path=None,password=None,data=None):
@@ -89,7 +90,7 @@ class wallet():
         with open(path,'r') as f:
             savedstr = f.read()
             assert dumpstr == savedstr
-            
+        return True
             
     def sr(self,q,user_ids,format=None):
         return self.sign_request(q,user_ids,format=format)
@@ -175,7 +176,7 @@ class wallet():
         except:
             return {'error':'could not encode secret as json'}
 
-        if getsizeof(a_string) > 1024/2:
+        if sys.getsizeof(a_string) > 1024/2:
             return {'error':'can not store a secret larger than 0.5kb'}
 
         self.wallet[label]['secrets'][sid] = sjson 
@@ -200,80 +201,7 @@ class wallet():
 
     def recover_user(self,private_key,format=None):
         return crypto.generate_user_from_string(private_key,version='python-ecdsa-0.1')
-    '''
-    @staticmethod
-    def discover(root="./", password=None):
-        root = Path(root)
-        wallets = []
 
-        for depth in range(8):
-            current_dir = root.absolute()
-
-            # Check for all .dec files
-            for file in current_dir.glob('*.dec'):
-                password_file = current_dir / (file.stem + '.dec.password')
-                if password_file == None:
-                    password_file = current_dir / (file.stem + '.password')
-                    
-                if password is not None:
-                    w = wallet()
-                    password_works = w.load(file, password)
-                    wallets.append((str(file), str(password_file) if password_file.is_file() else None, password_works))
-                else:
-                    wallets.append((str(file), str(password_file) if password_file.is_file() else None))
-
-            root = current_dir.parent
-        return wallets
-        '''
-    '''
-    @staticmethod
-    def discover(root="./", password=None):
-        root = Path(root)
-        original_root = root
-        wallets = []
-
-        for depth in range(8):
-            current_dir = root.absolute()
-
-            # Check for all .dec files (potential wallets)
-            for file in current_dir.glob('*.dec'):
-                password_file = current_dir / (file.stem + '.dec.password')
-                if not password_file.is_file():
-                    password_file = current_dir / (file.stem + '.password')
-
-                if password is not None:
-                    w = wallet()
-                    password_works = w.load(file, password)
-                    wallets.append((str(file), str(password_file) if password_file.is_file() else None, password_works))
-                else:
-                    wallets.append((str(file), str(password_file) if password_file.is_file() else None))
-
-            root = current_dir.parent  # Move up one directory level
-
-        root = original_root  # Reset root to the original directory
-
-        # Only look for orphaned password files if no password was provided
-        if password is None:
-            for depth in range(8):
-                current_dir = root.absolute()
-
-                # Check for all .password files (potential orphaned password files)
-                for password_file in current_dir.glob('*.password'):
-                    if password_file.stem:  # Exclude files literally named ".password"
-                        wallet_file = current_dir / password_file.stem
-                        if not wallet_file.with_suffix('.dec').is_file():
-                            wallets.append((None, str(password_file)))
-                            print(1)
-                # Check for password files literally named ".password"
-                #password_file = current_dir / '.password'
-                #if password_file.is_file() and not current_dir.joinpath('.dec').is_file():
-                #    wallets.append((None, str(password_file)))
-                #    print(2)
-
-                root = current_dir.parent  # Move up one directory level
-
-        return wallets
-        '''
     
     
     @staticmethod

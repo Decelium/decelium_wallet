@@ -193,14 +193,7 @@ class Deploy():
         return "wallet_path url_version site_dir dec_path"
 
     def run(self,args):
-        #print("RUNNING")
-        #dir_path = os.path.dirname(os.path.realpath(__file__))    
-        #os.chdir(dir_path)
-        #url_version = 'test.paxfinancial.ai'
-        #print(type(args))
-        #print(args)
-        #print(type(args[0]))
-        #print(args[0])
+
         wallet_path = args[0]
         target_user = args[1]
         url_version = args[2]    

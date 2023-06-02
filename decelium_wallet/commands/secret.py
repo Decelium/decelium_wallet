@@ -35,7 +35,9 @@ class Command:
     def explain(self):
         return "wallet_path target_user command secret_id secret_value secret_value"
 
-    def run(self,*args):
+    def run(self,args):
+        #print(args)
+        
         wallet_path = args[0]
         target_user = args[1]
         command = args[2]    
@@ -57,17 +59,16 @@ class Command:
         assert target_user in accts   
         if command == "list":
             wallet.list_secrets(target_user)
-            print(wallet.list_secrets(target_user))
+            return json.dumps(wallet.list_secrets(target_user))
 
         if command == "add":
             shutil.copy(wallet_path, wallet_path+'.backup')        
             secret_passcode = wallet.set_secret(target_user, secret_id,secret_value)
-            wallet.save(wallet_path,password)
-            print(1)
+            return json.dumps(wallet.save(wallet_path,password))
 
         if command == "view":
             secret_passcode = wallet.get_secret(target_user, secret_id)
-            print(secret_passcode)
+            return json.dumps(secret_passcode)
 
     
 

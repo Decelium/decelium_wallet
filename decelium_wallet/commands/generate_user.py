@@ -38,8 +38,8 @@ class Command:
         confirm = None
         if len(args)>2:
             confirm = args[0:][2]
-        with open(path,'r') as f:
-            print(f.read())
+        #with open(path,'r') as f:
+        #    print(f.read())
         #with open(path+'.password','r') as f:
         #    print(f.read())
         password = decelium.getpass(path)

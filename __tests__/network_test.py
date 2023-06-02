@@ -4,10 +4,10 @@ import time
 workers = [
     ("./python/worker_http.py", "python"),
     ("./python/worker_http.py", "python"),
-    #("./python/worker_http.py", "python"),
-    #("./python/worker_http.py", "python"),
-    #("./python/worker_http.py", "python"),
-    #("./python/worker_http.py", "python")
+#    ("./python/worker_http.py", "python"),
+#    ("./python/worker_http.py", "python"),
+#    ("./python/worker_http.py", "python"),
+#    ("./python/worker_http.py", "python")
 #    ("worker_ws.py", "python"),
 #    ("worker_node_http.js", "node"),
 #    ("worker_node_ws.js", "node"),

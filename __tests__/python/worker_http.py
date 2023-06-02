@@ -6,27 +6,42 @@ import uuid
 import io
 
 class WorkerHTTP():
-    def __init__(self,core):
+    def __init__(self,core,node):
         self.core = core
-        
+        self.node_address = node
     #############################
     ###
     ###  1. Load the wallet, and connect to the Miner
     ###
     # TODO -- split HTTP host from HTTP client, because you likely have one server for many clients. It makes no sense to instance many handlers with each connection. 
+    '''
+    for root in ['./','../','../../','../../../','../../../../']:
+        try:
+            with open(root+'.password','r') as f:
+                password = f.read().strip()
+            with open(root+'.wallet.dec','r') as f:
+                walletstr = f.read().strip()
+            return {"password":password,
+                    "data":walletstr}
+        except:
+            #import traceback as tb
+            #tb.print_exc()
+            pass
+    '''    
     def load_wallet_strings_from_disk(self):
-        for root in ['./','../','../../','../../../','../../../../']:
-            try:
-                with open(root+'.password','r') as f:
-                    password = f.read().strip()
-                with open(root+'.wallet.dec','r') as f:
-                    walletstr = f.read().strip()
-                return {"password":password,
-                        "data":walletstr}
-            except:
-                #import traceback as tb
-                #tb.print_exc()
-                pass
+        ret = {}
+        wallets = self.core.discover_wallet()
+        #look for a wallet named "test wallet" and load its contents
+        for wal in wallets:
+            if 'test_wallet' in wal['wallet']:
+                with open(wal['wallet'],'r') as f:
+                    ret['data'] = f.read()
+                    assert len(ret['data']) > 0
+                with open(wal['passfile'],'r') as f:
+                    ret['password'] = f.read()
+                    assert len(ret['password']) > 0
+                return ret
+                
         return {"error":"could not find .password and .wallet.dec in parent path"}
     
     def stage_init(self):
@@ -37,8 +52,8 @@ class WorkerHTTP():
         print("success",success)
         assert success == True
         # The initial connection is to a miner and relay. Through this system, a user can download addresses of even more public access points.
-        assert self.core.initial_connect(target_url="https://dev.paxfinancial.ai/data/query",
-                          target_user="admin") == True
+        assert self.core.initial_connect(target_url="https://"+self.node_address+"/data/query",
+                          target_user="test_user") == True
         return True
     
     #############################
@@ -60,7 +75,9 @@ class WorkerHTTP():
                     ("do_echo",do_echo)]
         
         
-        resp = self.core.listen(port,name,public_handlers)
+        resp = self.core.listen(port,name,"test_user",public_handlers)
+        if resp not in [True, False, None] and "error" in resp:
+            return resp
         time.sleep(10)
         print("sleeping")
         return resp
@@ -92,14 +109,14 @@ class WorkerHTTP():
         self.sessions=[]
         for peer_connect_data in self.core.node_peers():
             connect_data = peer_connect_data
-            connect_data['api_key'] = self.core.dw.pubk("admin")
+            connect_data['api_key'] = self.core.dw.pubk("test_user")
             sid = self.core.net.connect(connect_data,self.core.handle_connection)
 
             val = str(uuid.uuid4())
-            respset = self.core.net.set_value({'api_key':self.core.dw.pubk("admin") ,
+            respset = self.core.net.set_value({'api_key':self.core.dw.pubk("test_user") ,
                                   'key':"test"+str(worker_id),
                                    'val':val},session_id=sid)
-            respget = self.core.net.get_value({'api_key':self.core.dw.pubk("admin") ,
+            respget = self.core.net.get_value({'api_key':self.core.dw.pubk("test_user") ,
                                   'key':"test"+str(worker_id),},session_id=sid)
             
             print('respset',respset)
@@ -140,9 +157,9 @@ class WorkerHTTP():
         return True
     
     
-def run_all_tests():
+def run_all_tests(worker_id,node):
     
-    worker = WorkerHTTP(core())
+    worker = WorkerHTTP(core(),node)
     
     steps = [
         worker.stage_init,
@@ -199,4 +216,5 @@ def run_all_tests():
 if __name__ == "__main__":
     print("running "+str(sys.argv[1]))
     worker_id = int(sys.argv[1])
-    run_all_tests()
+    node = sys.argv[2]
+    run_all_tests(worker_id,node)

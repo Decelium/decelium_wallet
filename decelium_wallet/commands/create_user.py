@@ -36,6 +36,7 @@ class CreateUser:
         wallet_user = args[1]
         dec_username = args[2]
         url_version = args[3]
+        online_password = args[4]
 
         [pq,api_key,wallet] = self.load_pq(wallet_path,password,url_version,wallet_user)
 
@@ -46,27 +47,16 @@ class CreateUser:
         wallet_contents = wallet.get_raw()
 
         access_keys = wallet_contents[wallet_user]['user'].copy()
-        access_keys['private_key'] = "deadbeef"
+        access_keys['private_key'] = "destroy it"
 
-        password = None
-        password2 = None
-        if len(args)>4:
-            password = args[4]
-            password2 = password
-        else:
-            print("Enter the password for the user on Decelium:")
-            password = decelium.getpass()
-            print("Reenter the password for the user on Decelium:")
-            password2 = decelium.getpass()
-        if password != password2:
-            print("The passwords don't match.")
-            sys.exit()
 
+        if len(password) == 0:
+            return json.dumps({"error":"empty password"})
         feature = {'username': dec_username,
                    'api_key': api_key,
                    'access_key':access_keys,
-                   'password': password,
-                   'password2': password2,}
+                   'password': online_password,
+                   'password2': online_password,}
         result = pq.delete_entity({'api_key':api_key,'path':'system_users','name':dec_username,},remote=True)   
         obj_id = pq.user_register(feature,remote=True)
         #print(obj_id) 

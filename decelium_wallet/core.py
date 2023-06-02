@@ -14,7 +14,8 @@ import uuid
 import io
 
 class core:
-    
+    def discover_wallet(self,root="./",password=None):
+        return wallet.discover(root,password)
     #def load_wallet_from_disk(self):
     #    # TODO - Add in loading OP
     #    
@@ -49,19 +50,19 @@ class core:
         self.service = service()
         self.node_peer_list = None
     
-    def gen_node_ping(self,port,name):
+    def gen_node_ping(self,port,name,wallet_user):
         c = self
         services = self.service.get_registry('public')
         q = c.net.gen_node_ping({
                    'name': name, 
-                   'api_key':self.dw.pubk("admin"),
+                   'api_key':self.dw.pubk(wallet_user),
                    'self_id':None,
                    'services':services,
                    'meta':{'test_id':"unit_test"},
                    'port':port})
         return q
     
-    def listen(self,port,name,public_handlers = []):
+    def listen(self,port,name,wallet_user="admin",public_handlers = []):
         
         for cfg in public_handlers:
             self.service.set_handler({"id":cfg[0],
@@ -73,15 +74,20 @@ class core:
                               })         
         
         
-        q = self.gen_node_ping(port,name)
-        qSigned = self.dw.sign_request(q, ["admin"])
+        q = self.gen_node_ping(port,name,wallet_user)
+        qSigned = self.dw.sign_request(q, [wallet_user])
         if "error" in qSigned:
             return qSigned
         resp = self.net.node_ping(qSigned)
         if "error" in resp:
+            resp["error"] = resp["error"] + " with message "+str(qSigned)
             return resp
+        try:
+            self.self_id = resp['self_id']
+        except:
+            return {"error":"gen_node_ping response is invalid: "+ str(resp)}
         self.self_id = resp['self_id']
-        resp['api_key']=self.dw.pubk("admin")
+        resp['api_key']=self.dw.pubk(wallet_user)
         self.net.listen(resp,self.handle_connection) # Begin listening with the requested configuration!
         
         if not self.net.listening():

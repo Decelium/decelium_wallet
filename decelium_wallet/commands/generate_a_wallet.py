@@ -51,11 +51,7 @@ class Generate:
             #print(users[user_id])
             user = dw.create_account(label=user_id,user=user_data)
             #dw.set_secret(user_id, 'Example_secret_value', "some_password_123")
-        
-        print("GENERATING")
-        print(dw.get_raw())
-        print(password)
-        
+                
         dw.save(path=path,password=password)
         
         dw = decelium.SimpleWallet()
