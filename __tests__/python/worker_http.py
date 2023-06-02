@@ -5,6 +5,7 @@ from decelium_wallet.core import core
 import uuid
 import io
 import json
+from pprint import pprint
 
 class WorkerHTTP():
     def __init__(self,core,node,peers):
@@ -101,7 +102,13 @@ class WorkerHTTP():
                 if 'test_id' in n['connect_data']['meta']:
                     count = count + 1
                     print("py passed inspection" + n['self_id'] )
-        assert len(self.peer_ids) == count
+        try:
+            assert len(self.peer_ids) == count
+        except Exception as e:
+            print("self.peer_ids",len(self.peer_ids))
+            print("count",count)
+            pprint(nodes)
+            raise e
         return found
 
     #############################
@@ -200,6 +207,6 @@ if __name__ == "__main__":
     print("running "+str(sys.argv[1])+" on "+sys.argv[2])
     worker_id = int(sys.argv[1])
     node = sys.argv[2]
-    peers = json.loads(sys.argv[3])
+    peers = json.loads(json.loads(sys.argv[3]))
     
     run_all_tests(worker_id,node,peers)
