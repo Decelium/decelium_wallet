@@ -44,7 +44,7 @@ class SystemTests():
             return {"result": True, "output": output}
         except subprocess.CalledProcessError as e:
             return {"result": False, "output": e.output}
-   
+
 
     def run_py_network_together(self):
         num_jobs = 2
@@ -57,6 +57,9 @@ class SystemTests():
                 # Create list of other jobs
                 other_jobs = list(range(1, num_jobs + 1))
                 other_jobs.remove(i)
+                py_job = ['python3', './python/worker_http.py']
+                js_job = ['node', './nodejs/worker_http.js']
+                
                 cmd = ['python3', './python/worker_http.py', str(i), 'dev.paxfinancial.ai', "\""+str(other_jobs)+"\""]
 
                 # Start the subprocess

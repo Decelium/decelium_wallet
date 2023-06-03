@@ -4,6 +4,8 @@ import { network } from './network.js';
 //import { service } from './service.js';
 //class network {};
 class service {};
+import fs from 'fs';
+import path from 'path';
 
 
 class Core {
@@ -85,9 +87,101 @@ class Core {
         
     }
     
+
+
+     getpass(walletpath) {
+        const wallet_path = path.resolve(walletpath);
+        const wallet_dir = path.dirname(wallet_path);
+        let password_file = path.join(wallet_dir, path.basename(wallet_path, path.extname(wallet_path)) + '.dec.password');
+
+        if (!fs.existsSync(password_file)) {
+            password_file = path.join(wallet_dir, '.password');
+            if (!fs.existsSync(password_file)) {
+                const current_dir = __dirname;
+                const wallet_infos = Wallet.discover(current_dir);
+                for (let info of wallet_infos) {
+                    if (info['wallet'] === wallet_path) {
+                        password_file = info['passfile'];
+                        break;
+                    }
+                }
+                if (!fs.existsSync(password_file)) {
+                    throw new Error("Password file not found.");
+                }
+            }
+        }
+
+        const password = fs.readFileSync(password_file, 'utf8').trim();
+
+        return password;
+    }
+
+     discover_wallet(root = "./", password = null) {
+        root = path.resolve(root);
+        let original_root = root;
+        let wallet_infos = [];
+
+        for (let depth = 0; depth < 8; depth++) {
+            const current_dir = path.resolve(root);
+            const files = fs.readdirSync(current_dir);
+
+            files.forEach(file => {
+                if (path.extname(file) === '.dec') {
+                    let password_file = path.join(current_dir, path.basename(file, '.dec') + '.dec.password');
+
+                    if (!fs.existsSync(password_file)) {
+                        password_file = path.join(current_dir, path.basename(file, '.dec') + '.password');
+                    }
+
+                    const wallet_info = {
+                        'wallet': path.join(current_dir, file),
+                        'passfile': fs.existsSync(password_file) ? password_file : null,
+                    };
+
+                    wallet_infos.push(wallet_info);
+                }
+            });
+
+            root = path.dirname(current_dir);
+        }
+
+        root = original_root;
+
+        if (password === null) {
+            for (let depth = 0; depth < 8; depth++) {
+                const current_dir = path.resolve(root);
+                const files = fs.readdirSync(current_dir);
+
+                files.forEach(file => {
+                    if (path.extname(file) === '.password' && path.basename(file, '.password')) {
+                        const wallet_file = path.join(current_dir, path.basename(file, '.password') + '.dec');
+                        if (!fs.existsSync(wallet_file)) {
+                            wallet_infos.push({
+                                'wallet': null,
+                                'passfile': path.join(current_dir, file),
+                            });
+                        }
+                    }
+                });
+
+                root = path.dirname(current_dir);
+            }
+        }
+
+        return wallet_infos;
+    }
+
+    
+    
+    
+    
     load_wallet(data, password) {
         
         if (typeof data !== 'string' || typeof password !== 'string') {
+            console.log("data");
+            console.log(data);
+            console.log("password");
+            console.log(data);
             throw new Error('Invalid argument types.');
         }
        
@@ -96,11 +190,11 @@ class Core {
     }
 
 
-    gen_node_ping(port, name) {
+    gen_node_ping(port, name,wallet_user) {
         const services = this.service.get_registry('public');
         const q = this.net.gen_node_ping({
             name,
-            api_key: this.dw.pubk('admin'),
+            api_key: this.dw.pubk(wallet_user),
             self_id: null,
             services,
             meta: { test_id: 'unit_test' },
@@ -109,7 +203,7 @@ class Core {
         return q;
     }
 
-    async listen(port, name, public_handlers = []) {
+    async listen(port, name,wallet_user="admin", public_handlers = []) {
         public_handlers.forEach((cfg) => {
             this.service.set_handler({
                 id: cfg[0],
@@ -121,8 +215,8 @@ class Core {
             });
         });
 
-        const q = this.gen_node_ping(port, name);
-        const qSigned = this.dw.sign_request(q, ['admin']);
+        const q = this.gen_node_ping(port, name,wallet_user);
+        const qSigned = this.dw.sign_request(q, [wallet_user]);
         if ('error' in qSigned) {
             return qSigned;
         }
