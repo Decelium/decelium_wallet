@@ -12,6 +12,8 @@ except:
 
 import uuid
 import io
+from threading import Timer
+
 
 class core:
     def discover_wallet(self,root="./",password=None):
@@ -62,8 +64,33 @@ class core:
                    'port':port})
         return q
     
+    ''' 
     def listen(self,port,name,wallet_user="admin",public_handlers = []):
+        resp = self.do_ping(self,port,name,wallet_user,public_handlers)
+        if "error" in resp:
+            return resp
         
+        self.self_id = resp['self_id']
+        resp['api_key']=self.dw.pubk(wallet_user)
+        self.net.listen(resp,self.handle_connection) # Begin listening with the requested configuration!
+        
+        if not self.net.listening():
+            return {"error":"could not start listening"}
+        time.sleep(3)
+        
+        
+        def runPingsDef(nextFunc):
+            t = Timer(ms / 1000., fn, args=args, kwargs=kwargs) 
+            t.start() 
+            resp = self.do_ping(self,port,name,wallet_user,public_handlers)
+            return t
+        
+        return True
+    '''    
+    
+    
+    
+    def do_ping(self,port,name,wallet_user="admin",public_handlers = []):
         for cfg in public_handlers:
             self.service.set_handler({"id":cfg[0],
                                            "name":cfg[0],
@@ -84,16 +111,46 @@ class core:
             return resp
         try:
             self.self_id = resp['self_id']
+            return resp
         except:
             return {"error":"gen_node_ping response is invalid: "+ str(resp)}
+        
+        
+        
+
+
+    def set_interval(self,func,keep_running, sec, *args, **kwargs):
+        def func_wrapper():
+            if keep_running():
+                self.set_interval(func, keep_running,sec, *args, **kwargs)
+                func(*args, **kwargs)
+            else:
+                print("ENDING TIMER FOR "+str(func))
+        t = Timer(sec, func_wrapper)
+        t.start()
+        return t    
+    
+    def listen(self,port,name,wallet_user="admin",public_handlers = []):
+        resp = self.do_ping(port,name,wallet_user,public_handlers)
+        if "error" in resp:
+            return resp
+
         self.self_id = resp['self_id']
         resp['api_key']=self.dw.pubk(wallet_user)
         self.net.listen(resp,self.handle_connection) # Begin listening with the requested configuration!
-        
+
         if not self.net.listening():
             return {"error":"could not start listening"}
-        time.sleep(3)
+
+        def run_pings_def():
+            #if self.net.listening():
+            print("DOING PING")
+            res = self.do_ping(port,name,wallet_user,public_handlers)
+            print(res)
+        self.set_interval(run_pings_def,self.net.listening, 5)  # ping every 60 seconds
         return True
+    
+    
     
     def sync_node_list(self):
         # TODO, choose who to sync with
@@ -110,6 +167,8 @@ class core:
                 if 'test_id' in n['connect_data']['meta']:
                     self.node_peer_list.append(n)
                     print("passed inspection" + n['self_id'] )
+                    
+                    
     def node_list(self):
         if self.node_peer_list == None:
             self.sync_node_list()

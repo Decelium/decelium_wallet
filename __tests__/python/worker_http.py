@@ -204,9 +204,11 @@ def run_all_tests(worker_id,node,peers):
             break
 
 if __name__ == "__main__":
-    print("running "+str(sys.argv[1])+" on "+sys.argv[2])
+    print("running "+str(sys.argv[1])+" on "+sys.argv[2]+" with peers "+sys.argv[2])
     worker_id = int(sys.argv[1])
     node = sys.argv[2]
-    peers = json.loads(json.loads(sys.argv[3]))
-    
+    try:
+        peers = json.loads(json.loads(sys.argv[3]))
+    except:
+        peers = json.loads(sys.argv[3])
     run_all_tests(worker_id,node,peers)

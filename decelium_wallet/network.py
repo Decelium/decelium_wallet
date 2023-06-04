@@ -20,6 +20,7 @@ class network:
         #self.session1=httpws_client(self.test_url,self.api_key, 5000,self.handle)
         self.sessions = {}
         self.servers = {}
+        self.listen_on = False
         
     def __getattr__(self,attr):
         self.current_attr = attr
@@ -126,8 +127,9 @@ class network:
                 self.servers[inst_id]= args
                 self.servers[inst_id]['instance'] = http_server(args['port'],handler)
                 self.servers[inst_id]['instance'].listen(args['port'])
-
+            self.listen_on = True
             return inst_id
+            
         else:
             return False
         return False    
@@ -138,11 +140,12 @@ class network:
     def disconnect(self,session_id=None):
         for skey in self.servers:
             disconnect = self.servers[skey]['instance'].disconnect()
+            self.listen_on = False
         return True
     
     def connected(self):
         return len(self.sessions) > 0
     
     def listening(self):
-        return True
+        return self.listen_on 
     
