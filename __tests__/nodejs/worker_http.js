@@ -87,20 +87,23 @@ class WorkerHTTP {
     }
 
     async stage_broadcast() {
-        return true;
-        //const mimi = new MiniGetterSetter();
+        //return true;
+        const mimi = new MiniGetterSetter();
 
-        //const port = 5003 + parseInt(workerId);
-        //const name = 'node-session-file-' + workerId + '.node';
-        //const public_handlers = [
-        //    ['set_value', mimi.set_value.bind(mimi)],
-        //    ['get_value', mimi.get_value.bind(mimi)],
-        //    ['get_all', mimi.get_all.bind(mimi)],
-        //    ['do_echo', (args) => args],
-        //];
+        const port = 5003 + parseInt(workerId);
+        const name = 'node-session-file-' + workerId + '.node';
+        const public_handlers = [
+            ['set_value', mimi.set_value.bind(mimi)],
+            ['get_value', mimi.get_value.bind(mimi)],
+            ['get_all', mimi.get_all.bind(mimi)],
+            ['do_echo', (args) => args],
+        ];
 
-        //const resp = await this.core.listen(port, name,"wallet_user", public_handlers);
-        //return resp;
+        const resp = await this.core.listen(port, name,"wallet_user", public_handlers);
+        console.log("Listening");
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        console.log("Done");
+        return resp;
     }
     /*
     #############################
@@ -231,7 +234,7 @@ class WorkerHTTP {
     }
 
     async stage_shutdown() {
-        //await this.core.net.disconnect();
+        await this.core.net.disconnect();
         return true;
     }
 }

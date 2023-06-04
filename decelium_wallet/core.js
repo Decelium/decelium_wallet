@@ -189,7 +189,7 @@ class Core {
         return success;
     }
 
-
+    /*
     gen_node_ping(port, name,wallet_user) {
         const services = this.service.get_registry('public');
         const q = this.net.gen_node_ping({
@@ -231,7 +231,85 @@ class Core {
         }
         await new Promise((resolve) => setTimeout(resolve, 3000));
         return true;
+    }*/
+    
+    setInterval(func, keepRunning, sec, ...args) {
+        const intervalId = setInterval(() => {
+            if (keepRunning()) {
+                func(...args);
+            } else {
+                console.log("ENDING TIMER FOR " + func.name);
+                clearInterval(intervalId);
+            }
+        }, sec * 1000);  // Multiply by 1000 to convert sec to ms
+        return intervalId;
     }
+
+    async listen(port, name, wallet_user = "admin", public_handlers = []) {
+        public_handlers.forEach((cfg) => {
+            this.service.set_handler({
+                id: cfg[0],
+                name: cfg[0],
+                handler: cfg[1],
+                group: 'public',
+                runtime: null,
+                meta: {},
+            });
+        });
+
+        let resp = await this.do_ping(port, name, wallet_user);
+        if ('error' in resp) {
+            return resp;
+        }
+        this.self_id = resp.self_id;
+        resp.api_key = this.dw.pubk(wallet_user);
+        this.net.listen(resp, this.handle_connection);
+
+        if (!this.net.listening()) {
+            return { error: 'could not start listening' };
+        }
+
+        const run_pings_def = async () => {
+            console.log("DOING PING");
+            resp = await this.do_ping(port, name, wallet_user);
+            console.log(resp);
+        }
+
+        this.setInterval(run_pings_def, () => this.net.listening(), 5);  // ping every 5 seconds
+
+        return true;
+    }
+
+    async do_ping(port, name, wallet_user = "admin", public_handlers = []) {
+        public_handlers.forEach((cfg) => {
+            this.service.set_handler({
+                id: cfg[0],
+                name: cfg[0],
+                handler: cfg[1],
+                group: 'public',
+                runtime: null,
+                meta: {},
+            });
+        });
+
+        const q = this.gen_node_ping(port, name, wallet_user);
+        const qSigned = this.dw.sign_request(q, [wallet_user]);
+        if ('error' in qSigned) {
+            return qSigned;
+        }
+        const resp = await this.net.node_ping(qSigned);
+        if ('error' in resp) {
+            resp.error = resp.error + " with message " + JSON.stringify(qSigned);
+            return resp;
+        }
+        try {
+            this.self_id = resp.self_id;
+            return resp;
+        } catch {
+            return { error: "gen_node_ping response is invalid: " + JSON.stringify(resp) };
+        }
+    }
+    
 
     async sync_node_list() {
         this.node_peer_list = [];

@@ -6,6 +6,7 @@ class networkWrapped {
     constructor() {
         this.sessions = {};
         this.servers = {};
+        this.listen_on = false;
     }
 
     //__run_query(...args) {
@@ -144,7 +145,8 @@ class networkWrapped {
     }
 
     listen(args, handler) {
-        return false; // Unsupported in JS
+        this.listen_on = true;
+        return true; // Unsupported in JS
         /*
         if (typeof args === 'object') {
             let inst_id = uuidv4();
@@ -165,6 +167,7 @@ class networkWrapped {
     }
 
     disconnect(session_id = null) {
+        this.listen_on = false;
         return true;
         /*for (let skey in this.servers) {
             // Assuming "disconnect" method exists in the http_server instance
@@ -182,7 +185,7 @@ class networkWrapped {
     }
 
     listening() {
-        return true;
+        return this.listen_on;
     }
 }
 
