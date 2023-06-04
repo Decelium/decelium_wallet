@@ -35,6 +35,32 @@ class IPythonWrapper {
                 //console.log("CALLING method ", method);
                 //console.log("---------------------------------------");
                 //console.log(args);
+                //console.log("---------------------------------------");
+            
+                const objectToPythonDict = (item) => {
+                    if (item== null || item == undefined)
+                        return "None"
+                    if (typeof item === 'string') {
+                        return `'${item}'`;
+                    } else if (typeof item === 'number') {
+                        return item;
+                    } else if (typeof item === 'object') {
+                        if (Array.isArray(item)) {
+                            return '[' + item.map(objectToPythonDict).join(', ') + ']';
+                        } else {
+                            let dictString = "{";
+                            for (const [key, value] of Object.entries(item)) {
+                                dictString += `'${key}': ${objectToPythonDict(value)}, `;
+                            }
+                            dictString = dictString+ "}";
+                            return dictString;
+                        }
+                    } else {
+                        throw new Error(`Unsupported data type: ${typeof item}`);
+                    }
+                };
+
+            
                 if (!args)
                     args={};
             
@@ -50,12 +76,18 @@ class IPythonWrapper {
                     if (Array.isArray(args)) {
                         //console.log("AM ARRAY");
                         // args is an array, join elements with commas
-                        argString += args.join(',') + ',';
+                        for (const val of args) {
+                            argString += '' +  objectToPythonDict(val) + ',';
+                        }
+                        
+                        //argString += args.join(',') + ',';
                     } else {
                         //console.log("AM NOT ARRAY");
                         // args is an object, join key-value pairs with commas
                         for (const key in args) {
-                            argString += key + '="' + args[key] + '",';
+                            //console.log(key);
+                            //console.log(args[key]);
+                            argString += key + '=' + objectToPythonDict(args[key]) + ',';
                         }
                     }            
                 }

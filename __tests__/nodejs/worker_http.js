@@ -99,7 +99,7 @@ class WorkerHTTP {
             ['do_echo', (args) => args],
         ];
 
-        const resp = await this.core.listen(port, name,"wallet_user", public_handlers);
+        const resp = await this.core.listen(port, name,"test_user", public_handlers);
         console.log("Listening");
         await new Promise(resolve => setTimeout(resolve, 10000));
         console.log("Done");

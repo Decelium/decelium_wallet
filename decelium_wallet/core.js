@@ -189,9 +189,11 @@ class Core {
         return success;
     }
 
-    /*
     gen_node_ping(port, name,wallet_user) {
-        const services = this.service.get_registry('public');
+        let services = {};
+        if (this.service.get_registry)
+            services = this.service.get_registry('public');
+            
         const q = this.net.gen_node_ping({
             name,
             api_key: this.dw.pubk(wallet_user),
@@ -202,6 +204,7 @@ class Core {
         });
         return q;
     }
+    /*
 
     async listen(port, name,wallet_user="admin", public_handlers = []) {
         public_handlers.forEach((cfg) => {
@@ -246,16 +249,19 @@ class Core {
     }
 
     async listen(port, name, wallet_user = "admin", public_handlers = []) {
-        public_handlers.forEach((cfg) => {
-            this.service.set_handler({
-                id: cfg[0],
-                name: cfg[0],
-                handler: cfg[1],
-                group: 'public',
-                runtime: null,
-                meta: {},
+        if (this.service.set_handler)
+        {
+            public_handlers.forEach((cfg) => {
+                this.service.set_handler({
+                    id: cfg[0],
+                    name: cfg[0],
+                    handler: cfg[1],
+                    group: 'public',
+                    runtime: null,
+                    meta: {},
+                });
             });
-        });
+        }
 
         let resp = await this.do_ping(port, name, wallet_user);
         if ('error' in resp) {
@@ -281,19 +287,22 @@ class Core {
     }
 
     async do_ping(port, name, wallet_user = "admin", public_handlers = []) {
-        public_handlers.forEach((cfg) => {
-            this.service.set_handler({
-                id: cfg[0],
-                name: cfg[0],
-                handler: cfg[1],
-                group: 'public',
-                runtime: null,
-                meta: {},
+        if (this.service.set_handler)
+        {
+            public_handlers.forEach((cfg) => {
+                this.service.set_handler({
+                    id: cfg[0],
+                    name: cfg[0],
+                    handler: cfg[1],
+                    group: 'public',
+                    runtime: null,
+                    meta: {},
+                });
             });
-        });
-
+        }
         const q = this.gen_node_ping(port, name, wallet_user);
-        const qSigned = this.dw.sign_request(q, [wallet_user]);
+        const qSigned = this.dw.sign_request({q:q, user_ids:[wallet_user]});
+        
         if ('error' in qSigned) {
             return qSigned;
         }

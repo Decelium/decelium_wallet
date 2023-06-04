@@ -109,8 +109,13 @@ class wallet():
         '''
             Request a signature on a message from the user.
         '''
+        print("DOING SIG")
+        print(q)
+        print(user_ids)
+        
         if q == None:
             return {"error":"sign_request can not use empty query"}
+            
             
         if not 'api_key' in q or q['api_key'] == None:
             return {"error":"cant sign without selected api_key"}
