@@ -4,8 +4,13 @@ import { network } from './network.js';
 //import { service } from './service.js';
 //class network {};
 class service {};
-import fs from 'fs';
-import path from 'path';
+//import fs from 'fs';
+//import path from 'path';
+let fs, path;
+if (typeof window === 'undefined') { // Check if in Node.js environment
+    fs = require('fs');
+    path = require('path');
+}
 
 
 class Core {
@@ -32,6 +37,7 @@ class Core {
             //};
             
             const { loadPyodide } = await import("pyodide");
+            console.log(loadPyodide);
             this.pyodide = await loadPyodide(
                 {indexURL:"/app/projects/decelium_wallet/node_modules/pyodide/"}
             );     
@@ -72,10 +78,10 @@ class Core {
         const micropip = this.pyodide.pyimport("micropip");
         await micropip.install('requests'); 
         await micropip.install('ecdsa');
+        //await micropip.install('sys');
         await micropip.install('cryptography');        
         
         this.init_done = true;
-        
         this.dw = new wallet(this);
         this.net = new network();
         this.service = new service();
@@ -83,6 +89,8 @@ class Core {
         //console.log("FINISHED INIT 1");
         
         await this.dw.init();
+        console.log("Phase 6");
+        
         return true;
         
     }
@@ -98,7 +106,7 @@ class Core {
             password_file = path.join(wallet_dir, '.password');
             if (!fs.existsSync(password_file)) {
                 const current_dir = __dirname;
-                const wallet_infos = Wallet.discover(current_dir);
+                const wallet_infos = wallet.discover(current_dir);
                 for (let info of wallet_infos) {
                     if (info['wallet'] === wallet_path) {
                         password_file = info['passfile'];
@@ -169,13 +177,10 @@ class Core {
         }
 
         return wallet_infos;
-    }
-
+    }    
     
     
-    
-    
-    load_wallet(data, password) {
+    async load_wallet(data, password,mode='js') {
         
         if (typeof data !== 'string' || typeof password !== 'string') {
             console.log("data");
@@ -184,8 +189,9 @@ class Core {
             console.log(data);
             throw new Error('Invalid argument types.');
         }
-       
-        const success = this.dw.load({ data, password });
+        this.dw = new wallet(this);
+        await this.dw.init();
+        const success = this.dw.load({ data, password ,mode});
         return success;
     }
 

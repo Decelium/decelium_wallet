@@ -1,5 +1,5 @@
-import axios from 'axios';
-import moment from 'moment';
+//import axios from 'axios';
+import fetch from 'cross-fetch';
 //node worker_http.js 1 > debug.txt
 
 /*
@@ -39,20 +39,6 @@ class jsondateencode_local {
 }*/
 
 class jsondateencode_local {
-    //static loads(dic) {
-    //    console.log("DECODING");
-    //    console.log(dic);
-    //    console.log(typeof dic);
-    //    console.log("DECODING2");
-    //    let p;
-    //    if (typeof dic === 'string') {
-    //        p = JSON.parse(dic, this.datetime_parser);
-    //    } else if (typeof dic === 'object') {
-    //        p = this.datetime_parser('', dic);
-    //    }
-    //    //console.log("DECODING3");
-    //    return p;
-    //}
     static loads(dic) {
         console.log("DECODING");
         console.log(dic);
@@ -72,7 +58,7 @@ class jsondateencode_local {
         }
         else
         {
-         p = dic;
+            p = dic;
         }
         console.log("DECODING3");
         console.log(p);
@@ -87,7 +73,6 @@ class jsondateencode_local {
         }
         return true;
     }
-    
 
     static dumps(dic) {
         return JSON.stringify(dic, this.datedefault);
@@ -105,9 +90,9 @@ class jsondateencode_local {
 
     static datetime_parser(key, val) {
         if (typeof val === 'string' && val.includes('T')) {
-            const date = moment(val, 'YYYY-MM-DDTHH:mm:ss', true);
-            if (date.isValid()) {
-                return date.toDate();
+            const date = new Date(val);
+            if (!isNaN(date)) {
+                return date;
             }
         } else if (typeof val === 'object') {
             for (let k in val) {
@@ -117,6 +102,8 @@ class jsondateencode_local {
         return val;
     }
 }
+
+
 
 
 class http_client_wrapped {
@@ -184,15 +171,17 @@ class http_client_wrapped {
         data['qtype'] = source_id;
         data['__str_encoded_query'] = this.do_encode_string(query);
 
-        if (show_url) {
+        //if (show_url) {
+            console.log("QUERY REMOTE");
             console.log(url_version);
             console.log(query);
-        }
+            console.log(data);
+        //}
         //console.log('query_remote----------------------');
         //console.log(url_version);
         //console.log(data);
         //console.log(query);
-
+        /*
         let r = await axios.post(url_version, data);
         //console.log("query_remote_data",r.data);
         let dat;
@@ -205,7 +194,39 @@ class http_client_wrapped {
             console.log(e);
             dat = r.data;
         }
+        */
+        let r = await fetch(url_version, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
         
+        let rData = "could not load";
+        let dat;
+        try {
+            let rText = await r.text();
+            try {
+                rData = JSON.parse(rText);
+            } catch (e) {
+                console.log("Response is not JSON:", e);
+                rData = rText;
+                console.log("data",rData);
+            }
+            dat = rData;
+        } catch (e) {
+            console.log("An error occurred while reading the response:", e);
+        }       
+
+        try 
+        {
+            dat = jsondateencode_local.loads(rData);
+        } catch (e) {
+            console.log(e);
+            dat = rData;
+        }        
+            
         
         return dat;
         

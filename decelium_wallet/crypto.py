@@ -87,13 +87,18 @@ class crypto:
     def generate_user_from_string(private_key,version='python-ecdsa-0.1',format=None):
         assert version == "python-ecdsa-0.1"
         #cls, string, curve=NIST192p, hashfunc=sha1):        
-        pk = binascii.unhexlify(private_key)
-        sk = ecdsa.SigningKey.from_string(pk,hashfunc=hashlib.sha256,curve=ecdsa.SECP256k1)
-        vk = sk.get_verifying_key()
-        user = {'api_key':vk.to_string().hex(),
-                'address':vk.to_string().hex()[-42],
-                'private_key':sk.to_string().hex(),
-                'version':"python-ecdsa-0.1"}
+        try:
+            pk = binascii.unhexlify(private_key)
+            sk = ecdsa.SigningKey.from_string(pk,hashfunc=hashlib.sha256,curve=ecdsa.SECP256k1)
+            vk = sk.get_verifying_key()
+            user = {'api_key':vk.to_string().hex(),
+                    'address':vk.to_string().hex()[-42],
+                    'private_key':sk.to_string().hex(),
+                    'version':"python-ecdsa-0.1"}
+        except:
+            import traceback as tb
+            exc = tb.format_exc()
+            user = {"error":"error reading private key:"+ exc}
         if format == 'json':
             user = json.dumps(user)
         return user

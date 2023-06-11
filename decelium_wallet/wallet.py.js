@@ -1,31 +1,35 @@
-export default `try:
+export default `from pathlib import Path
+
+try:
     from .crypto import crypto
 except:
     import crypto
     crypto = crypto.crypto
     #from decelium.crypto import crypto
 import json
-import os
+import os,sys
 from os.path import exists
+from cryptography.fernet import InvalidToken
 
 class wallet():
-    def __init__(self,mode="fs",fs=None):
-        self.mode=mode
-           
-    def load(self,path=None,password=None,data=None,format=None):
+    def __init__(self):
+        pass
+    def load(self,path=None,password=None,data=None,format=None,mode='fs'):
         if path == None and data != None:
-            self.mode = 'js'
+            mode = 'js'
+        try:
+            if mode=="fs":
+                return self.load_fs(str(path),password,data)
+            else:
+                return self.load_js(str(path),password,data)
+        except InvalidToken:
+            return False
         
-        if self.mode=="fs":
-            return self.load_fs(path,password,data)
+    def save(self,path,password=None,mode='fs'):
+        if mode=="fs":
+            return self.save_fs(path,password)
         else:
-            return self.load_js(path,password,data)
-        
-    def save(self,path,password=None):
-        if self.mode=="fs":
-            self.save_fs(path,password)
-        else:
-            self.save_js(path,password)        
+            return self.save_js(path,password)        
                 
     def load_js(self,path=None,password=None,data=None):
         self.wallet={}
@@ -36,16 +40,20 @@ class wallet():
             astr = crypto.do_encode_string(json.loads(data))
         else:
             astr = data
-        if password != None:
-            astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
+            if password != None:
+                astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
         
-        self.wallet= crypto.do_decode_string(astr )        
+        self.wallet= crypto.do_decode_string(astr )  
+        
         if type(self.wallet) == dict:
             return True
         return False
     
     def save_js(self,path,password=None):
-        print(self.wallet);
+        print("unimplemented")
+        #print(self.wallet);
+        return True
+        
     
     def load_fs(self,path=None,password=None,data=None):
         self.wallet = {}
@@ -61,22 +69,30 @@ class wallet():
             else:
                 astr = crypto.do_encode_string(json.loads(data))
             if password != None:
+                #print("astr",astr)
                 astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
             self.wallet= crypto.do_decode_string(astr )
-
+            return True
+        return False
+    
+    def export_encrypted(self,password=None):
+        dumpstr = crypto.do_encode_string(self.wallet)
+        if password != None:
+            dumpstr = crypto.encode(dumpstr,password,version='python-ecdsa-0.1')
+        return dumpstr
+        
     def save_fs(self,path,password=None):
         if exists(path):
             os.remove(path)
-
+        dumpstr = self.export_encrypted(password)
         with open(path,'w') as f:
-            dumpstr = crypto.do_encode_string(self.wallet)
-            if password != None:
-                dumpstr = crypto.encode(dumpstr,password,version='python-ecdsa-0.1')
-
             f.write(dumpstr)
+            
         with open(path,'r') as f:
             savedstr = f.read()
             assert dumpstr == savedstr
+        return True
+            
     def sr(self,q,user_ids,format=None):
         return self.sign_request(q,user_ids,format=format)
     
@@ -94,8 +110,13 @@ class wallet():
         '''
             Request a signature on a message from the user.
         '''
+        print("DOING SIG")
+        print(q)
+        print(user_ids)
+        
         if q == None:
             return {"error":"sign_request can not use empty query"}
+            
             
         if not 'api_key' in q or q['api_key'] == None:
             return {"error":"cant sign without selected api_key"}
@@ -113,7 +134,10 @@ class wallet():
         return qsig
 
 
-    def create_account(self,user = None,label=None,version='python-ecdsa-0.1',format=None):
+    def create_account(self,user ,label,version='python-ecdsa-0.1',format=None):
+        #print("user",user)
+        #print("label",label)
+        #print("version",version)
         if user == None:
             user = crypto.generate_user(version=version)
         assert 'api_key' in user
@@ -125,10 +149,12 @@ class wallet():
                         'description':None,
                         'secrets':{},
                         'watch_addresses':[]}
+        #print("account_data",account_data)
         if label == None:
             label = user['api_key']
         self.wallet[label] = account_data
-        user["some_data"] = "return"
+        #user["some_data"] = "return"
+        print("wallet",self.wallet)
         if format == 'json':
             user = json.dumps(user)
         return user
@@ -161,7 +187,7 @@ class wallet():
         except:
             return {'error':'could not encode secret as json'}
 
-        if getsizeof(a_string) > 1024/2:
+        if sys.getsizeof(a_string) > 1024/2:
             return {'error':'can not store a secret larger than 0.5kb'}
 
         self.wallet[label]['secrets'][sid] = sjson 
@@ -185,4 +211,88 @@ class wallet():
         return self.wallet
 
     def recover_user(self,private_key,format=None):
-        return crypto.generate_user_from_string(private_key,version='python-ecdsa-0.1')`;
+        return crypto.generate_user_from_string(private_key=private_key,version='python-ecdsa-0.1',format=format)
+
+    
+    
+    @staticmethod
+    def getpass(walletpath):
+        wallet_path = Path(walletpath)
+        wallet_dir = wallet_path.parent
+        #print(wallet_dir)
+        #print(os.getcwd())
+        # look for a properly named .filename.dec.password
+        password_file = wallet_dir / (wallet_path.stem + '.dec.password')
+        #print(password_file)
+        if not password_file.is_file():
+            # then look for a .password
+            password_file = wallet_dir / '.password'
+            if not password_file.is_file():
+                # use discover to find the password file
+                current_dir = Path(__file__).parent
+                wallet_infos = wallet.discover(current_dir)
+                for info in wallet_infos:
+                    if info['wallet'] == str(wallet_path):
+                        password_file = Path(info['passfile'])
+                        break
+                else:
+                    raise FileNotFoundError("Password file not found.")
+
+        # read the password from the file
+        with password_file.open('r') as f:
+            password = f.read().strip()
+
+        return password        
+        
+    @staticmethod
+    def discover(root="./", password=None):
+        root = Path(root)
+        original_root = root
+        wallet_infos = []
+
+        for depth in range(8):
+            current_dir = root.absolute()
+
+            # Check for all .dec files (potential wallets)
+            for file in current_dir.glob('*.dec'):
+                password_file = current_dir / (file.stem + '.dec.password')
+                if not password_file.is_file():
+                    password_file = current_dir / (file.stem + '.password')
+
+                wallet_info = {
+                    'wallet': str(file),
+                    'passfile': str(password_file) if password_file.is_file() else None
+                }
+
+                if password is not None:
+                    w = wallet()
+                    try:
+                        wallet_info['can_decrypt'] = w.load(file, password)
+                    except InvalidToken:
+                        wallet_info['can_decrypt'] = False
+
+                wallet_infos.append(wallet_info)
+
+            root = current_dir.parent  # Move up one directory level
+
+        root = original_root  # Reset root to the original directory
+
+        # Only look for orphaned password files if no password was provided
+        if password is None:
+            for depth in range(8):
+                current_dir = root.absolute()
+
+                # Check for all .password files (potential orphaned password files)
+                for password_file in current_dir.glob('*.password'):
+                    if password_file.stem:  # Exclude files literally named ".password"
+                        wallet_file = current_dir / password_file.stem
+                        if not wallet_file.with_suffix('.dec').is_file():
+                            wallet_infos.append({
+                                'wallet': None,
+                                'passfile': str(password_file)
+                            })
+
+                root = current_dir.parent  # Move up one directory level
+
+        return wallet_infos
+`;

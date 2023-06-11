@@ -38,14 +38,12 @@ class core:
     #            pass
     #    return {"error":"could not find .password and .wallet.dec in parent path"}
     
-    def load_wallet(self,data,password):
+    def load_wallet(self,data,password,mode='js'):
         assert type(data) == str
         assert type(password) == str
-        self.dw = wallet()
-        
-        success = self.dw.load(data=data, password=password)
+        self.dw = wallet()        
+        success = self.dw.load(data=data, password=password,mode=mode)
         return success
-        #return {"error":"could not find .password and .wallet.dec in parent path"}
     
     def __init__(self):
         self.net = network()

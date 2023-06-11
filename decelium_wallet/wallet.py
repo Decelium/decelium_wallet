@@ -12,22 +12,21 @@ from os.path import exists
 from cryptography.fernet import InvalidToken
 
 class wallet():
-    def __init__(self,mode="fs",fs=None):
-        self.mode=mode
-           
-    def load(self,path=None,password=None,data=None,format=None):
+    def __init__(self):
+        pass
+    def load(self,path=None,password=None,data=None,format=None,mode='fs'):
         if path == None and data != None:
-            self.mode = 'js'
+            mode = 'js'
         try:
-            if self.mode=="fs":
+            if mode=="fs":
                 return self.load_fs(str(path),password,data)
             else:
                 return self.load_js(str(path),password,data)
         except InvalidToken:
             return False
         
-    def save(self,path,password=None):
-        if self.mode=="fs":
+    def save(self,path,password=None,mode='fs'):
+        if mode=="fs":
             return self.save_fs(path,password)
         else:
             return self.save_js(path,password)        
@@ -41,16 +40,18 @@ class wallet():
             astr = crypto.do_encode_string(json.loads(data))
         else:
             astr = data
-        if password != None:
-            astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
+            if password != None:
+                astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
         
-        self.wallet= crypto.do_decode_string(astr )        
+        self.wallet= crypto.do_decode_string(astr )  
+        
         if type(self.wallet) == dict:
             return True
         return False
     
     def save_js(self,path,password=None):
-        print(self.wallet);
+        print("unimplemented")
+        #print(self.wallet);
         return True
         
     
@@ -134,6 +135,9 @@ class wallet():
 
 
     def create_account(self,user ,label,version='python-ecdsa-0.1',format=None):
+        #print("user",user)
+        #print("label",label)
+        #print("version",version)
         if user == None:
             user = crypto.generate_user(version=version)
         assert 'api_key' in user
@@ -145,10 +149,12 @@ class wallet():
                         'description':None,
                         'secrets':{},
                         'watch_addresses':[]}
+        #print("account_data",account_data)
         if label == None:
             label = user['api_key']
         self.wallet[label] = account_data
         #user["some_data"] = "return"
+        print("wallet",self.wallet)
         if format == 'json':
             user = json.dumps(user)
         return user
@@ -205,7 +211,7 @@ class wallet():
         return self.wallet
 
     def recover_user(self,private_key,format=None):
-        return crypto.generate_user_from_string(private_key,version='python-ecdsa-0.1')
+        return crypto.generate_user_from_string(private_key=private_key,version='python-ecdsa-0.1',format=format)
 
     
     

@@ -2,25 +2,32 @@ class IPythonWrapper {
 
 
     async bindMethods(temp_filename,modulename,classname,instanceName){
-    
-        const code_py = (await import  (`./${temp_filename}.py.js`)).default;
-        //console.log(code_py);
         
+        const code_py = (await import  (`./${temp_filename}.py.js`)).default;
         this.pyodide = this.core.pyodide;
         this.pyodide.globals.set(`${temp_filename}_py`, code_py);
-     
+        
+        //await this.pyodide.runPythonAsync(`import ${modulename}`);  
+        let maxAttempts = 5;
+        let attempts = 0;
+        let delay = 100; // initial delay of 0.1 seconds
+        await this.pyodide.runPythonAsync(`import sys, importlib`);
+
         await this.pyodide.runPythonAsync(`
         ${temp_filename}_py_bytes = codecs.encode(${temp_filename}_py, 'utf-8')
         with open("${modulename}.py", "wb") as f:
             f.write(${temp_filename}_py_bytes)
-            f.close()`);        
-        
-        await this.pyodide.runPythonAsync(`import ${modulename}`);              
+            f.close()`);
+        await this.pyodide.runPythonAsync(`mod_list = set(sys.modules.keys())`);
+        await this.pyodide.runPythonAsync(`import ${modulename}`);
+        //await this.pyodide.runPythonAsync(`importlib.import_module('${modulename}')`);
+        await this.pyodide.runPythonAsync(`
+        mod_list_new = set(sys.modules.keys())
+        new_mods = mod_list_new - mod_list
+        `);
         
         this.pyodide.runPython(instanceName+`= ${modulename}.${classname}()`);        
-        
         this.pyodide.runPython(`print(`+instanceName+`)`);        
-        
         
         const methodRegex = /def\s+(\w+)\s*\(/g;
         const instanceMethods = [];
@@ -32,10 +39,6 @@ class IPythonWrapper {
         
         instanceMethods.forEach(method=>
             this[method] = (args) => {
-                //console.log("CALLING method ", method);
-                //console.log("---------------------------------------");
-                //console.log(args);
-                //console.log("---------------------------------------");
             
                 const objectToPythonDict = (item) => {
                     if (item== null || item == undefined)
@@ -95,7 +98,7 @@ class IPythonWrapper {
                 //    argString=argString+key+'="'+args[key]+'",';
                 //}
                 argString='('+argString+'format="json")';
-                //console.log(instanceName+`.`+method+argString);
+                console.log(instanceName+`.`+method+argString);
                 let result = this.pyodide.runPython(instanceName+`.`+method+argString);
                 return JSON.parse(result); 
               } 
