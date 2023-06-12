@@ -57,8 +57,8 @@ class networkWrapped {
         const inst = this.sessions[session_id].instance;
         const method_to_call = inst[this.current_attr];
         let val =  await method_to_call(...args);
-        console.log("VAL FROM network");
-        console.log(val);
+        //console.log("VAL FROM network");
+        //console.log(val);
         
         return val;
     }
@@ -201,14 +201,14 @@ const proxyHandler = {
             //console.log (v);
             //return v;
             return async (...args) => {
-                console.log( "TEST STR");
+                //console.log( "TEST STR");
                 let v = target.__run_query(...args);
-                console.log( "-----v");
-                console.log(v);
+                //console.log( "-----v");
+                //console.log(v);
                 v = await v;
-                console.log( "-----await v");
-                console.log(v);
-                console.log(typeof v);
+                //console.log( "-----await v");
+                //console.log(v);
+                //console.log(typeof v);
                 return  v;
             };            
         }

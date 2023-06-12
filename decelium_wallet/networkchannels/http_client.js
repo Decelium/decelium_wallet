@@ -172,10 +172,10 @@ class http_client_wrapped {
         data['__str_encoded_query'] = this.do_encode_string(query);
 
         //if (show_url) {
-            console.log("QUERY REMOTE");
-            console.log(url_version);
-            console.log(query);
-            console.log(data);
+        //    console.log("QUERY REMOTE");
+        //    console.log(url_version);
+        //    console.log(query);
+        //    console.log(data);
         //}
         //console.log('query_remote----------------------');
         //console.log(url_version);
