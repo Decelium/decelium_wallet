@@ -1,7 +1,7 @@
 #contract=Command
 #version=0.1
 
-import sys, getpass,json
+import sys, getpass,json, os
 import uuid    
 sys.path.append('../../')
 try:
@@ -17,6 +17,7 @@ from os.path import exists
 class Command:
     def run(self,args):
         path = args[0:][0]
+        #print("display_wallet cwd", os.getcwd())
         password = decelium.getpass(path)
         dw = decelium.SimpleWallet()
         dw.load(path=path,password=password)

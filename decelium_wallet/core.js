@@ -7,11 +7,8 @@ class service {};
 //import fs from 'fs';
 //import path from 'path';
 let fs, path;
-if (typeof window === 'undefined') { // Check if in Node.js environment
-    fs = require('fs');
-    path = require('path');
-}
-
+fs = null;
+path = null;
 
 class Core {
     isNode()
@@ -27,6 +24,11 @@ class Core {
     async init() {
         if (this.init_done)
             return true;
+        
+        if (typeof window === 'undefined') { // Check if in Node.js environment
+            fs = await import('fs');
+            path = await import('path');
+        }        
         
         if (this.isNode())
         {
