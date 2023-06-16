@@ -201,7 +201,8 @@ class Core {
         let services = {};
         if (this.service.get_registry)
             services = this.service.get_registry('public');
-            
+        if (Object.keys(services).includes("error"))
+            services = {}            
         const q = this.net.gen_node_ping({
             name,
             api_key: this.dw.pubk(wallet_user),
