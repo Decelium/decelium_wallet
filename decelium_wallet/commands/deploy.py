@@ -105,7 +105,7 @@ class Deploy():
         #print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
         del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
         #print("_deploy_website DEBUG 2") # node index.js .env.test file_browser deploy-test
-        #print(del_fil)
+        print(del_fil,"del_fil")
         #print({
         #    'api_key':api_key,
         #    'path':remote_path_ipfs,
@@ -125,7 +125,7 @@ class Deploy():
         
         fil  = pq.create_entity(q,remote=True)
         #print(fil['traceback'])
-        #print("early upload response...  ",fil)
+        print("early upload response...  ",fil)
         if 'message' in fil and fil['message']=='Endpoint request timed out':
             time.sleep(5)
             for i in range (1,5):
@@ -135,7 +135,7 @@ class Deploy():
                 else:
                     fil = data_test['self_id']
                     break
-        #print("later upload response...  ",fil)
+        print("later upload response...  ",fil)
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
         sys.stdout = original_stdout 

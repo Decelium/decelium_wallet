@@ -65,7 +65,7 @@ class Chunk:
                 chunk = chunk_in.read()
                 #print(len(chunk))
                 complete_file = complete_file + chunk.strip()
-                assert file_index < 30
+                assert file_index < 60
         encoded_b = complete_file.encode("ascii")
         bts = base64.b64decode(encoded_b)  
         #print("reassebble the file.3"+to_file)
@@ -124,8 +124,12 @@ class Chunk:
                 delay = (time.time() - t)
                 #print("END DOING CREATE "+str(delay))
 
-                #print(fil)
-                assert 'obj' in fil
+                
+                try:
+                    assert 'obj' in fil
+                except Exception as e:
+                    print("Bad Chunk:",fil)
+                    raise e
         Chunk.obliterate(extract_path)
         
         
