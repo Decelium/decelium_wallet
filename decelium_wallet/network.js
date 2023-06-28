@@ -59,7 +59,12 @@ class networkWrapped {
         let val =  await method_to_call(...args);
         //console.log("VAL FROM network");
         //console.log(val);
-        
+
+        if (this.callback){
+            this.callback(args, val);
+        }
+
+
         return val;
     }
 
