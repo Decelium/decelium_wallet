@@ -375,14 +375,19 @@ class Core {
 
   async initial_connect(
     target_url = "https://dev.paxfinancial.ai/data/query",
-    target_user = "admin"
+    target_user,
+    api_key
   ) {
+    if (api_key === undefined) {
+      api_key = this.dw.pubk(target_user);
+    }
+
     this.primary_session_id = await this.net.connect(
       {
         type: "tcpip",
         url: target_url,
         port: 5000,
-        api_key: this.dw.pubk(target_user),
+        api_key: api_key,
       },
       this.handle_connection.bind(this)
     );
