@@ -1,3 +1,6 @@
+#contract=Command
+#version=0.1
+
 import os
 import sys
  
@@ -28,17 +31,13 @@ import pprint
 import shutil     
 import json
 import time
-
-def run(*args):
-    c = Deploy()
-    c.run(*args)    
-
-class Deploy():
-
+class Command:
     def explain(self):
         return "wallet_path target_user command secret_id secret_value secret_value"
 
-    def run(self,*args):
+    def run(self,args):
+        #print(args)
+        
         wallet_path = args[0]
         target_user = args[1]
         command = args[2]    
@@ -49,7 +48,7 @@ class Deploy():
         if len(args) > 4:
             secret_value = args[4]
 
-        password = crypto.getpass()
+        password = decelium.getpass(wallet_path)
         #print(password)
         #print(wallet_path)
         wallet = decelium.SimpleWallet()
@@ -60,35 +59,20 @@ class Deploy():
         assert target_user in accts   
         if command == "list":
             wallet.list_secrets(target_user)
-            print(wallet.list_secrets(target_user))
+            return json.dumps(wallet.list_secrets(target_user))
 
         if command == "add":
             shutil.copy(wallet_path, wallet_path+'.backup')        
             secret_passcode = wallet.set_secret(target_user, secret_id,secret_value)
-            wallet.save(wallet_path,password)
-            print(1)
-        
+            return json.dumps(wallet.save(wallet_path,password))
+
         if command == "view":
             secret_passcode = wallet.get_secret(target_user, secret_id)
-            print(secret_passcode)
+            return json.dumps(secret_passcode)
+
     
-    def get_password(self):
-        for prefix in ['./','../','../../']:
-            filename = prefix+".password"
-            #print(filename)
-            if os.path.exists(filename):
-                f = open(filename, 'r')
-                password = f.read()
-                f.close()
-                break
-        else:
-            password = crypto.getpass()
-       #print("password="+str(password))
-        return password        
-if __name__ == "__main__":
-    direc = '/'.join(__file__.split('/')[:-3]) +'/'
-    run(*sys.argv[1:])
-# python3 secret.py ../../../.wallet.dec admin view decelium_com_dns_code 
-# python3 secret.py ../../../.wallet.dec admin list 
-# python3 secret.py ../../../.wallet.dec admin add testdecelium_com_dns_code "NEW VAL"
-# python3 secret.py ../../../.wallet.dec admin add decelium_com_dns_code "NER VAL"
+
+    
+def run(*args):
+    c = Command()
+    return c.run (args)

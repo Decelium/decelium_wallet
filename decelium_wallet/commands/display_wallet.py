@@ -1,4 +1,7 @@
-import sys, getpass
+#contract=Command
+#version=0.1
+
+import sys, getpass,json, os
 import uuid    
 sys.path.append('../../')
 try:
@@ -11,15 +14,15 @@ except:
     from crypto import crypto
 from sys import getsizeof
 from os.path import exists
+class Command:
+    def run(self,args):
+        path = args[0:][0]
+        #print("display_wallet cwd", os.getcwd())
+        password = decelium.getpass(path)
+        dw = decelium.SimpleWallet()
+        dw.load(path=path,password=password)
+        return json.dumps(dw.get_raw())    
 
 def run(*args):
-    path = args[0:][0]
-    password = crypto.getpass()
-    dw = decelium.SimpleWallet()
-    dw.load(path=path,password=password)
-    import pprint
-    pprint.pprint(dw.get_raw())    
-
-if __name__ == "__main__":
-     run(*sys.argv[1:])
-
+    c = Command()
+    return c.run (args)

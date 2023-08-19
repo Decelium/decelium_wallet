@@ -1,9 +1,15 @@
-export default `import json
+import json
 import os
 from os.path import exists
 import datetime
 import pickle
 import base64
+from flask import Flask, request
+#from threading import Thread
+import logging
+from multiprocessing import Process, Pipe
+import threading
+
 class jsondateencode_local:
     def loads(dic):
         return json.loads(dic,object_hook=jsondateencode_local.datetime_parser)
@@ -28,15 +34,92 @@ class jsondateencode_local:
                     pass
         return dct
 
-class network():
-    def __init__(self,url_version=None,api_key=None):
+class httpws_client():
+    def __init__(self,url_version=None,api_key=None,port=None, handle=None):
         self.url_version = url_version
         self.api_key = api_key
+        #print("httpws_client")
+        #print(url_version)
+        #print(port)
         
+        #####
+        self.port = port
+        self.handle = handle
+        self.app = Flask(__name__)
+        self.shutdown_token = 'yyhhcthdjasif7'
+        self.server_process = None
+        
+        # Configure logging to suppress output
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.ERROR)
+        
+        self.parent_conn, self.child_conn = Pipe()        
+        
+        @self.app.route('/', methods=['GET', 'POST'])
+        @self.app.route('/<path:path>', methods=['GET', 'POST'])
+        def index(path='/'):
+            args = request.args if request.method == 'GET' else request.form
+            if self.handle == None:
+                return '''{"error":"no httpws_client handler assigned"}'''
+            ### THIS SHOULD BE CALLED IN THE PARENT. AND AWAITED.
+            # return self.handle(path, args.to_dict())
+            self.child_conn.send((path, args.to_dict()))
+            response = self.child_conn.recv()
+            return response
+        
+        @self.app.route('/disconnect', methods=['GET'])
+        def disconnect():
+            if self.shutdown_token is None:
+                return 'Shutdown endpoint is not secured'
+            if request.args.get('token') != self.shutdown_token:
+                return 'Unauthorized', 401
+            #self.app.stop()
+            raise Exception ("Time for me to die")
+            
+            return 'Server shutting down...'
+        
+        self.server = None        
+        
+    def listen(self,port):
+        self.server_process = Process(target=self.app.run, kwargs={'port': port})
+        self.server_process.start()        
+        return True
+
+    def listening(self):
+        return self.server_process is not None and self.server_process.is_alive()
+    
+    def process_requests(self):
+        while self.listening():
+            if self.parent_conn.poll():
+                path, args = self.parent_conn.recv()
+                response = self.handle(path, args)
+                self.parent_conn.send(response)
+    
+    def listen(self,port):
+        
+        self.process_requests_thread = threading.Thread(target=self.process_requests)        
+        self.server_process = Process(target=self.app.run, kwargs={'port': port})
+        self.server_process.start()        
+        self.process_requests_thread.start()        
+        
+        return True
+
+    def listening(self):
+        return self.server_process is not None and self.server_process.is_alive()
+
+    def disconnect(self):
+        if self.server_process:
+            self.server_process.terminate()
+            self.server_process.join()  
+            self.process_requests_thread.join()    
+    
+    
+    
+    
     def __getattr__(self,attr):
         self.current_attr = attr
         return self.__run_query
-    
+
     def __run_query(self,q,remote=True,wait_seconds = 120,re_query_delay=5,show_url=False):        
         if 'api_key' not in q or q['api_key']==None:
             q['api_key'] = self.api_key            
@@ -90,6 +173,8 @@ class network():
         data = {}
         data['qtype'] = source_id
         data['__encoded_query'] = self.do_encode(query)
+        
+        #print("attempt",url_version)
         r = requests.post(url_version, data = data)        
         try:
             dat = jsondateencode_local.loads(r.text)
@@ -152,7 +237,16 @@ class network():
         if remote == 'ws':
             return self.query_websocket(source_id,filter,url_version)
         if remote  in [True,'http','https']:
-            return self.query_remote(source_id,filter,url_version,show_url)
-        
+            #print("query--------------x>")
+            #print(source_id)
+            #print(filter)
+            #print(remote)
+            #print(url_version)
+                      
+            resp = self.query_remote(source_id,filter,url_version,show_url)
+            #print(resp)
+            #print("query--------------x>")
+            return resp
         return None    
-    `;
+
+

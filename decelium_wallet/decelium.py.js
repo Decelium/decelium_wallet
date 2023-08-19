@@ -43,7 +43,8 @@ try:
     from financialapi.APIConnection import LocalApiConn
     from financialapi.SystemComponents import AuthorizeSection
 except:
-    print("local mode only")
+    pass
+    #print("local mode only")
 
 import contextlib
 import sys
@@ -52,6 +53,8 @@ try:
     len(PaxFinancialAPIEndpointRegistry)
 except:
     PaxFinancialAPIEndpointRegistry = {}
+def getpass(path):
+    return wallet.getpass(path)
 
 def time_print_init():
     '''

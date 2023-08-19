@@ -1,3 +1,6 @@
+#contract=Deploy
+#version=0.1
+
 import os
 import sys
  
@@ -161,19 +164,8 @@ class Deploy():
         return fil
         print("Uploaded to "+fil)
 
-    def get_password():
-        for prefix in ['./','../','../../']:
-            filename = prefix+".password"
-            print(filename)
-            if os.path.exists(filename):
-                f = open(filename, 'r')
-                password = f.read()
-                f.close()
-                break
-        else:
-            password = crypto.getpass()
-        print("password="+str(password))
-        return password
+    def get_password(wallet_path):
+        password = decelium.getpass(wallet_path)
 
     def __deploy_contract(self,pq,api_key,path,name,target_contract_id,target_contract_path):    
         with open(target_contract_path,'r') as contract_py:
@@ -233,7 +225,7 @@ class Deploy():
                 if args[i] == 'json':
                     jsonOutputOnly = True
         
-        password = crypto.getpass()
+        password = decelium.getpass(wallet_path)
     
         root_path='/'.join(site_dir.split("/")[:-1])
         site_name = site_dir.split("/")[-1]
@@ -271,3 +263,7 @@ if __name__ == "__main__":
     from decelium import decelium
     c = Deploy()
     c.run(*sys.argv[1:])
+
+def run(*args):
+    c = Deploy()
+    return c.run (args)
