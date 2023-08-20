@@ -20,15 +20,14 @@ class Core {
     constructor(){
     }
     
-    
     async init() {
         if (this.init_done)
             return true;
         
-        if (typeof window === 'undefined') { // Check if in Node.js environment
-            fs = await import('fs');
-            path = await import('path');
-        }        
+        //if (typeof window === 'undefined') { // Check if in Node.js environment
+        //    fs = await import('fs');
+        //    path = await import('path');
+        //}        
         
         if (this.isNode())
         {
@@ -156,7 +155,6 @@ class Core {
         }
 
         root = original_root;
-
         if (password === null) {
             for (let depth = 0; depth < 8; depth++) {
                 const current_dir = path.resolve(root);
@@ -185,10 +183,6 @@ class Core {
     async load_wallet(data, password,mode='js') {
         
         if (typeof data !== 'string' || typeof password !== 'string') {
-            console.log("data");
-            console.log(data);
-            console.log("password");
-            console.log(data);
             throw new Error('Invalid argument types.');
         }
         this.dw = new wallet(this);
@@ -276,6 +270,7 @@ class Core {
         if ('error' in resp) {
             return resp;
         }
+        
         this.self_id = resp.self_id;
         resp.api_key = this.dw.pubk(wallet_user);
         this.net.listen(resp, this.handle_connection);
@@ -374,12 +369,21 @@ class Core {
         }
     }
 
-    async initial_connect(target_url = 'https://dev.paxfinancial.ai/data/query', target_user = 'admin') {
+    async initial_connect(target_url = 'https://dev.paxfinancial.ai/data/query', 
+                           target_user = undefined,
+                          api_key=undefined) 
+    {
+        let set_api_key =  api_key;
+        if (!set_api_key && target_user && this.dw)
+            set_api_key = this.dw.pubk(target_user);
+        if (!set_api_key)
+            throw new Error('No valid credentials provided');
+        
         this.primary_session_id = await this.net.connect({
             type: 'tcpip',
             url: target_url,
             port: 5000,
-            api_key: this.dw.pubk(target_user),
+            api_key: set_api_key,
         }, this.handle_connection.bind(this));
 
         if (!this.net.connected()) {
