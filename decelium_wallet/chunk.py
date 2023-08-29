@@ -16,6 +16,7 @@ class Chunk:
         raise Exception("could not remove object")
             
     def build(from_path,to_path):    
+        print("DOING BUILD")
         Chunk.build_zip(from_path,Chunk.tmp_file)
         Chunk.build_chunks(Chunk.tmp_file,to_path)
         Chunk.obliterate(Chunk.tmp_file)
@@ -26,7 +27,7 @@ class Chunk:
         Chunk.obliterate("extract_"+Chunk.tmp_file)
     
     def build_zip(from_path,to_file):
-        #print(from_path)
+        print(from_path)
         shutil.make_archive(to_file.replace(".zip",""), 'zip', from_path)
         remote=True
     
@@ -65,7 +66,7 @@ class Chunk:
                 chunk = chunk_in.read()
                 #print(len(chunk))
                 complete_file = complete_file + chunk.strip()
-                assert file_index < 30
+                assert file_index < 60
         encoded_b = complete_file.encode("ascii")
         bts = base64.b64decode(encoded_b)  
         #print("reassebble the file.3"+to_file)
@@ -124,8 +125,12 @@ class Chunk:
                 delay = (time.time() - t)
                 #print("END DOING CREATE "+str(delay))
 
-                #print(fil)
-                assert 'obj' in fil
+                
+                try:
+                    assert 'obj' in fil
+                except Exception as e:
+                    print("Bad Chunk:",fil)
+                    raise e
         Chunk.obliterate(extract_path)
         
         

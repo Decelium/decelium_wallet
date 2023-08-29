@@ -53,6 +53,8 @@ class core:
     def gen_node_ping(self,port,name,wallet_user):
         c = self
         services = self.service.get_registry('public')
+        if 'error' in services:
+            services = {}
         q = c.net.gen_node_ping({
                    'name': name, 
                    'api_key':self.dw.pubk(wallet_user),
@@ -142,9 +144,9 @@ class core:
 
         def run_pings_def():
             #if self.net.listening():
-            print("DOING PING")
+            #print("DOING PING")
             res = self.do_ping(port,name,wallet_user,public_handlers)
-            print(res)
+            #print(res)
         self.set_interval(run_pings_def,self.net.listening, 5)  # ping every 60 seconds
         return True
     

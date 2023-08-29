@@ -110,9 +110,9 @@ class wallet():
         '''
             Request a signature on a message from the user.
         '''
-        print("DOING SIG")
-        print(q)
-        print(user_ids)
+        #print("DOING SIG")
+        #print(q)
+        #print(user_ids)
         
         if q == None:
             return {"error":"sign_request can not use empty query"}

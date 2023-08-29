@@ -56,6 +56,17 @@ class Deploy():
         except:
             pass               
         assert fil == True or 'error' in fil
+        if not 'obj-' in target_id:
+            site_obj =pq.download_entity({'api_key':api_key,
+                                    'path':target_id,
+                                    'attrib':True,
+                                    },remote=remote)
+            if 'error' in site_obj:
+                return  site_obj
+            if not 'self_id' in site_obj:
+                return {"error":"could not download_entity "+str(site_obj)}
+            target_id = site_obj['self_id']
+        
         res_url =pq.create_entity({'api_key':api_key,
                                 'path':'/_dns/'+name,
                                 'name':name,
@@ -65,7 +76,7 @@ class Deploy():
                                             'target_id':target_id}
                                 },remote=remote)
         print(res_url)
-        assert 'obj-' in res_url
+        #assert 'obj-' in res_url
         return res_url
 
 
@@ -86,15 +97,11 @@ class Deploy():
     def explain(self):
         return "wallet_path target_user url_version target_id domain"
 
-    def run(self,*args):
+    def run(self,args):
         #raise Exception("not supported, please use deploy.py")
         dir_path = os.path.dirname(os.path.realpath(__file__))    
         os.chdir(dir_path)
-        #url_version = 'test.paxfinancial.ai'
-        #print(type(args))
-        #print(args)
-        #print(type(args[0]))
-        #print(args[0])
+
         wallet_path = args[0]
         target_user = args[1]
         url_version = args[2]    
@@ -111,34 +118,26 @@ class Deploy():
                     if self_id == None:
                         self_id = args[i]
         password = decelium.getpass(wallet_path)
-    
-        #---- begin
-        #root_path= site_dir
-        #site_name = upload_dir.split("/")[-1]
-        #website_path = '/'.join(upload_dir.split("/")[:-1])
-        #root_path='/'.join(site_dir.split("/")[:-1])
-        #site_name = site_dir.split("/")[-1]
-        #website_path = '/'.join(upload_dir.split("/")[:-1])
+
  
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open("/dev/null","w")
 
-        #print(root_path)
-        #print(site_name)
-        #print(website_path)
-        #return
         
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
         secret_passcode = wallet.get_secret(target_user, 'decelium_com_dns_code')
+        #print(secret_passcode)
+        if 'error' in secret_passcode:
+            return secret_passcode
         
         sys.stdout = original_stdout
         dns_id = self.deploy_dns(pq,api_key,domain,target_id,secret_passcode)
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open("/dev/null","w")        
-        print("dns_id ..."+dns_id)
-            
+        #print("dns_id ..."+str(dns_id))
+        return json.dumps(dns_id)
             
 if __name__ == "__main__":
     # if you import as a library, then the importer is in charge of these imports

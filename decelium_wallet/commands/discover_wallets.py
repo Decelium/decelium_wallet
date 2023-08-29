@@ -10,6 +10,7 @@ class Command:
         root = args[0] if len(args) > 0 else "./"
         password = args[1] if len(args) > 1 else None
         discovered_wallets = wallet.discover(root, password)
+        #print('discovered_wallets',discovered_wallets)
         return json.dumps(discovered_wallets)
     
 def run(*args):

@@ -87,11 +87,10 @@ class Deploy():
     def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
 
         original_stdout = sys.stdout
+        
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")
-            
-        #print(dir(Chunk))
-
+        #original_stdout = sys.stdout 
         from_path = source_path
         chunk_path = "remote_test"
         remote_path_ipfs = path
@@ -105,7 +104,7 @@ class Deploy():
         #print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
         del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
         #print("_deploy_website DEBUG 2") # node index.js .env.test file_browser deploy-test
-        #print(del_fil)
+        print(del_fil,"del_fil")
         #print({
         #    'api_key':api_key,
         #    'path':remote_path_ipfs,
@@ -125,7 +124,7 @@ class Deploy():
         
         fil  = pq.create_entity(q,remote=True)
         #print(fil['traceback'])
-        #print("early upload response...  ",fil)
+        print("early upload response...  ",fil)
         if 'message' in fil and fil['message']=='Endpoint request timed out':
             time.sleep(5)
             for i in range (1,5):
@@ -135,7 +134,7 @@ class Deploy():
                 else:
                     fil = data_test['self_id']
                     break
-        #print("later upload response...  ",fil)
+        print("later upload response...  ",fil)
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
         sys.stdout = original_stdout 
@@ -225,8 +224,8 @@ class Deploy():
         #website_path = '/'.join(upload_dir.split("/")[:-1])
         root_path='/'.join(site_dir.split("/")[:-1])
         site_name = site_dir.split("/")[-1]
-        website_path = '/'.join(upload_dir.split("/")[:-1])
- 
+        #website_path = '/'.join(upload_dir.split("/")[:-1])
+        website_path = upload_dir
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")
