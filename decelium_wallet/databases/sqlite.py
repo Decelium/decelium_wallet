@@ -2,8 +2,6 @@ import sqlite3, json
 
 '''
     elif  q['type'] == 'unset':
-
-    DRAFTED:
     elif q['type'] == 'count':
     if q['type'] == 'distinct':
     elif q['type'] == 'upsert':
@@ -12,11 +10,90 @@ import sqlite3, json
     elif q['type'] == 'find':
     elif q['type'] == 'insert_many':            
     elif q['type'] == 'delete':
+    
+    # Testing:
+    - insert
+    - find
+    - delete
+    
+    
+    -insert
+    -find
+    -update
+    *restart*
+    -find
+    -delete
+    
+    
+    -insert
+    -upsert
+    -delete
+    -upsert
+    -upsert
+    -insert (should fail)
+    
+    
+    -insert
+    -count
+    -insert
+    
+    -insert_many
+    
+    -distinct
+    -count
+    
 '''
 
 class nosqlite():
+    def table_exists(self, table_name):
+        query = f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
+        result = self.execute(query, (table_name,)).fetchone()  # Assuming self.execute executes the SQL query and returns the result
+        return bool(result)
 
+    def create_table(self, table_name):
+        query = f"CREATE TABLE {table_name} (value TEXT);"
+        self.execute(query)
+
+    def __init__(self):
+        # Connect to an in-memory SQLite database
+        self.conn = sqlite3.connect(':memory:')
+        self.conn.row_factory = sqlite3.Row  # Access rows as dictionaries instead of tuples
+        
+    def execute(self,qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
+        dat = self.build_query(qtype,source, filterval, setval, limit, offset, field)
+        return self.__execute(dat['query'],dat['args'])
+    
+    def __execute(self, query, args=None):
+        """Execute a SQL query."""
+        with self.conn:
+            cur = self.conn.cursor()
+            if args:
+                cur.execute(query, args)
+            else:
+                cur.execute(query)
+            
+            # Return all rows if it's a SELECT; else, return nothing
+            if query.lstrip().upper().startswith('SELECT'):
+                rows = []
+                for row_in in cur.fetchall():
+                    try:
+                        row = json.loads(row_in[1])
+                    except:
+                        row = {"__db_error":"could not unpack row","content":row_in[1]}
+                    row['__id'] = row_in[0]
+                    rows.append(row)
+                return rows
+    def ensure_table_exists(self, table_name):
+        """Ensure a table exists or create it if not."""
+        # This method only creates the table if it doesn't exist already
+        create_table_query = f'''CREATE TABLE IF NOT EXISTS {table_name} (
+                                    id INTEGER PRIMARY KEY,
+                                    value TEXT NOT NULL
+                                 )'''
+        self.__execute(create_table_query)
+    
     def build_query(self, qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
+        self.ensure_table_exists(source)
         print(qtype)
         if qtype == 'find':
             return self.sqlite_find( source, filterval, setval, limit, offset, field)
@@ -314,6 +391,7 @@ class nosqlite():
     
 if __name__=="__main__":
     db = nosqlite()
+    '''
     q = {}
     q = {'qtype': "find",
         'source' : "transactions",
@@ -361,4 +439,19 @@ if __name__=="__main__":
          }
     sql = db.build_query( **q)    
     print(sql)    
-    print(sql)
+    '''
+    q = {'qtype': "insert",
+         'source' : "transactions",
+         'setval' : {"id": 15, "name": "travis", "amount": 200}
+         }
+    db.execute(**q)
+    q = {'qtype': "find",
+        'source' : "transactions",
+        'filterval' : {"id":{"$gt":10}},
+        'setval' : None,
+        'limit' : None,
+        'offset' : None,
+        'field' : None
+        }
+    recs = db.execute( **q)
+    print(recs)
