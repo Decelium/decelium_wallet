@@ -86,9 +86,9 @@ class Deploy():
 
     def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
 
-        original_stdout = sys.stdout
-        if jsonOutputOnly:
-            sys.stdout = open(os.devnull,"w")
+        #original_stdout = sys.stdout
+        #if jsonOutputOnly:
+        #    sys.stdout = open(os.devnull,"w")
             
         #print(dir(Chunk))
 
@@ -99,7 +99,8 @@ class Deploy():
         remote=True
 
         dir_fil = Chunk.upload(pq,api_key,remote,from_path,chunk_path)
-        #print(dir_fil) # node index.js .env.test file_browser deploy-test
+        print("uploading") 
+        print(dir_fil) # node index.js .env.test file_browser deploy-test
         assert 'obj-' in dir_fil or 'dir-' in dir_fil
 
         #print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
@@ -138,7 +139,7 @@ class Deploy():
         print("later upload response...  ",fil)
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
-        sys.stdout = original_stdout 
+        #sys.stdout = original_stdout 
         #print(json.dumps(data))
         return fil
     
@@ -193,7 +194,7 @@ class Deploy():
         return "wallet_path url_version site_dir dec_path"
 
     def run(self,args):
-
+        print("IN DEPLOY!")
         wallet_path = args[0]
         target_user = args[1]
         url_version = args[2]    
@@ -228,8 +229,8 @@ class Deploy():
         website_path = '/'.join(upload_dir.split("/")[:-1])
  
         original_stdout = sys.stdout
-        if jsonOutputOnly:
-            sys.stdout = open(os.devnull,"w")
+        #if jsonOutputOnly:
+        #    sys.stdout = open(os.devnull,"w")
 
         #print(root_path)
         #print(site_name)
@@ -238,7 +239,7 @@ class Deploy():
         
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
         secret_passcode = wallet.get_secret(target_user, dns_secret_location)
-        
+        print("Deploying")
         sys.stdout = original_stdout
         website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
         original_stdout = sys.stdout

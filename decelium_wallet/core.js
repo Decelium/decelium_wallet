@@ -374,7 +374,16 @@ class Core {
         }
     }
 
-    async initial_connect(target_url = 'https://dev.paxfinancial.ai/data/query', target_user = 'admin') {
+    async initial_connect(target_url = 'https://dev.paxfinancial.ai/data/query', 
+                           target_user = undefined,
+                          api_key=undefined) 
+    {
+        let set_api_key =  api_key;
+        if (!set_api_key && target_user && this.dw)
+            set_api_key = this.dw.pubk(target_user);
+        if (!set_api_key)
+            throw new Error('No valid credentials provided');
+        
         this.primary_session_id = await this.net.connect({
             type: 'tcpip',
             url: target_url,
