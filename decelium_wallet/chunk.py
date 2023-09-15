@@ -16,6 +16,7 @@ class Chunk:
         raise Exception("could not remove object")
             
     def build(from_path,to_path):    
+        print("DOING BUILD")
         Chunk.build_zip(from_path,Chunk.tmp_file)
         Chunk.build_chunks(Chunk.tmp_file,to_path)
         Chunk.obliterate(Chunk.tmp_file)
@@ -26,7 +27,7 @@ class Chunk:
         Chunk.obliterate("extract_"+Chunk.tmp_file)
     
     def build_zip(from_path,to_file):
-        #print(from_path)
+        print(from_path)
         shutil.make_archive(to_file.replace(".zip",""), 'zip', from_path)
         remote=True
     

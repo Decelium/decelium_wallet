@@ -86,12 +86,12 @@ class Deploy():
 
     def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
 
-        #original_stdout = sys.stdout
-        #if jsonOutputOnly:
-        #    sys.stdout = open(os.devnull,"w")
-            
-        #print(dir(Chunk))
 
+        original_stdout = sys.stdout
+        
+        if jsonOutputOnly:
+            sys.stdout = open(os.devnull,"w")
+        #original_stdout = sys.stdout 
         from_path = source_path
         chunk_path = "remote_test"
         remote_path_ipfs = path
@@ -226,8 +226,8 @@ class Deploy():
         #website_path = '/'.join(upload_dir.split("/")[:-1])
         root_path='/'.join(site_dir.split("/")[:-1])
         site_name = site_dir.split("/")[-1]
-        website_path = '/'.join(upload_dir.split("/")[:-1])
- 
+        #website_path = '/'.join(upload_dir.split("/")[:-1])
+        website_path = upload_dir
         original_stdout = sys.stdout
         #if jsonOutputOnly:
         #    sys.stdout = open(os.devnull,"w")
