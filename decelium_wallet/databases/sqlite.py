@@ -11,36 +11,7 @@ import sqlite3, json
     elif q['type'] == 'insert_many':            
     elif q['type'] == 'delete':
     
-    # Testing:
-    - insert
-    - find
-    - delete
-    
-    
-    -insert
-    -find
-    -update
-    *restart*
-    -find
-    -delete
-    
-    
-    -insert
-    -upsert
-    -delete
-    -upsert
-    -upsert
-    -insert (should fail)
-    
-    
-    -insert
-    -count
-    -insert
-    
-    -insert_many
-    
-    -distinct
-    -count
+
     
 '''
 
@@ -102,8 +73,9 @@ class nosqlite():
         if qtype == 'delete':
             return self.sqlite_delete_many( source, filterval, setval, limit, offset, field)
         if qtype == 'insert':
-            return self.sqlite_insert(source, setval)        
+            return self.sqlite_insert(source, filterval, setval, limit, offset, field)        
         return {}
+    
     def sqlite_unset(self, source, filterval, setval):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
 
@@ -187,7 +159,7 @@ class nosqlite():
 
         return {"query": query, "args": tuple(args)}
     
-    def sqlite_delete_many(self, source, filterval):
+    def sqlite_delete_many(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
 
         query = f"DELETE FROM {table_name}"
@@ -218,7 +190,7 @@ class nosqlite():
 
             where_str = " AND ".join(where_conditions)
             query += f" WHERE {where_str}"
-
+        print (query,args)
         return {"query": query, "args": tuple(args)}
     
     def sqlite_update_many(self, source, filterval, setval, limit, offset, field):
@@ -270,7 +242,7 @@ class nosqlite():
 
         return {"query": query, "args": tuple(args)}
     
-    def sqlite_insert(self, source, setval):
+    def sqlite_insert(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
 
         # Constructing the INSERT clause
@@ -388,70 +360,181 @@ class nosqlite():
                 distinct_results.append(result)
 
         return distinct_results    
-    
-if __name__=="__main__":
-    db = nosqlite()
-    '''
-    q = {}
-    q = {'qtype': "find",
-        'source' : "transactions",
-        'filterval' : {"id":{"$gt":10}},
-        'setval' : None,
-        'limit' : None,
-        'offset' : None,
-        'field' : None
-        }
-    sql = db.build_query( **q)
-    print(sql)
-    
-    q = {'qtype': "find",
-        'source' : "transactions",
-        'filterval' : {"id":{"$gt":10}},
-        'setval' : None,
-        'limit' : 10,
-        'offset' : 4,
-        'field' : None
-        }
-    sql = db.build_query( **q)
-    print(sql)
-    
-    q = {'qtype': "find",
-        'source' : "transactions",
-        'filterval' : {"id":{"$gt":10}},
-        'setval' : None,
-        'limit' : 10,
-        'offset' : 4,
-        'field' : None
-        }
-    sql = db.build_query( **q)
-    
-    q = {'qtype': "update",
-        'source' : "transactions",
-        'filterval' : {"id":{"$gt":10}},
-        'setval' : {"name":"travis"},
-        'field' : None
-        }
-    sql = db.build_query( **q)    
-    
-    q = {'qtype': "insert",
-         'source' : "transactions",
-         'setval' : {"id": 15, "name": "travis", "amount": 200}
-         }
-    sql = db.build_query( **q)    
-    print(sql)    
-    '''
-    q = {'qtype': "insert",
-         'source' : "transactions",
-         'setval' : {"id": 15, "name": "travis", "amount": 200}
-         }
-    db.execute(**q)
-    q = {'qtype': "find",
-        'source' : "transactions",
-        'filterval' : {"id":{"$gt":10}},
-        'setval' : None,
-        'limit' : None,
-        'offset' : None,
-        'field' : None
-        }
-    recs = db.execute( **q)
-    print(recs)
+class TestSqliteConnector():    
+    def test_init(self):
+        db = nosqlite()
+        '''
+        q = {}
+        q = {'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":10}},
+            'setval' : None,
+            'limit' : None,
+            'offset' : None,
+            'field' : None
+            }
+        sql = db.build_query( **q)
+        print(sql)
+
+        q = {'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":10}},
+            'setval' : None,
+            'limit' : 10,
+            'offset' : 4,
+            'field' : None
+            }
+        sql = db.build_query( **q)
+        print(sql)
+
+        q = {'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":10}},
+            'setval' : None,
+            'limit' : 10,
+            'offset' : 4,
+            'field' : None
+            }
+        sql = db.build_query( **q)
+
+        q = {'qtype': "update",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":10}},
+            'setval' : {"name":"travis"},
+            'field' : None
+            }
+        sql = db.build_query( **q)    
+
+        q = {'qtype': "insert",
+             'source' : "transactions",
+             'setval' : {"id": 15, "name": "travis", "amount": 200}
+             }
+        sql = db.build_query( **q)    
+        print(sql)    
+        '''
+
+        db.execute(**{'qtype': "insert",
+             'source' : "transactions",
+             'setval' : {"id": 15, "name": "travis", "amount": 200}
+             })
+        q = {'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":10}},
+            'setval' : None,
+            'limit' : None,
+            'offset' : None,
+            'field' : None
+            }
+        recs = db.execute( **q)
+        print(recs)
+        
+    def test_insert(self):
+        # Test string, int, datetime,
+        print("test_insert ...")
+        '''
+            # Testing:
+            - insert
+            - find
+            - delete
+        '''
+        db = nosqlite()
+        db.execute(**{'qtype': "insert",
+             'source' : "transactions",
+             'setval' : {"id": 15, "name": "travis", "amount": 200}
+             })
+        db.execute(**{'qtype': "insert",
+             'source' : "transactions",
+             'setval' : {"id": 9, "name": "travis", "amount": 200}
+             })
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {}})        
+        assert len(res) == 2
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":9}}
+            })
+        assert len(res) == 1
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gte":9}}
+            })
+        assert len(res) == 2
+        db.execute(**{'qtype': "delete",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":9}}
+            })
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$gt":9}}
+            })
+        assert len(res) == 0
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$lte":9}}
+            })
+        assert len(res) == 1
+        rec = res[0]
+        print(rec)
+        db.execute(**{'qtype': "delete",
+            'source' : "transactions",
+            'filterval' : {"__id":rec["__id"]}
+            })        
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":{"$lte":9}}
+            })
+        assert len(res) == 0
+        
+        print(" pass")
+        
+        
+    def test_save_restart(self):
+        '''    
+            -insert
+            -find
+            -update
+            *restart*
+            -find
+            -delete
+        '''
+        db = nosqlite()
+        
+    def test_upsert(self):
+        '''    
+            -insert
+            -upsert
+            -delete
+            -upsert
+            -upsert
+            -insert (should fail)
+        '''
+        db = nosqlite()
+        
+    def test_count(self):
+        '''    
+            -insert
+            -count
+            -insert
+        '''
+        db = nosqlite()
+        
+    def test_insert_many(self):
+        '''
+            -insert_many
+        '''
+        db = nosqlite()
+        
+    def test_distinct(self):
+        '''
+            -distinct
+        '''
+        db = nosqlite()
+        
+    def test_save_load(self):
+        db = nosqlite()        
+        
+if __name__=="__main__": 
+    tester = TestSqliteConnector()
+    #tester.test_init()
+    tester.test_insert()
