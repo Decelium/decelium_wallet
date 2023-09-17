@@ -1,4 +1,5 @@
 import sqlite3, json,uuid,datetime
+from functools import reduce
 class jsonwithdate:
     def loads(dic):
         return json.loads(dic,object_hook=jsonwithdate.date_load)
@@ -31,16 +32,6 @@ class jsonwithdate:
 
 class nosqlite():
 
-
-    def table_exists(self, table_name):
-        query = f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
-        result = self.execute(query, (table_name,)).fetchone()  # Assuming self.execute executes the SQL query and returns the result
-        return bool(result)
-
-    #def create_table(self, table_name):
-    #    query = f"CREATE TABLE {table_name} (value TEXT);"
-    #    self.execute(query)
-
     def __init__(self,path=None):
         # Connect to an in-memory SQLite database
         self.ID_FIELD = "_id"
@@ -48,10 +39,12 @@ class nosqlite():
         self.conn.row_factory = sqlite3.Row  # Access rows as dictionaries instead of tuples        
     
     def execute(self,qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
-        dat = self.build_query(qtype,source, filterval, setval, limit, offset, field)
-        print(dat['query'])
-        print(dat['args'])
-        return self.__execute(dat['query'],dat['args'])
+        if qtype == 'distinct':
+            # Unfortunately, distinct breaks the pattern and has to operate manually in memory, not directly as a query
+            return self.execute_sqlite_distinct(source, filterval, setval, limit, offset, field)    
+        else:
+            dat = self.build_query(qtype,source, filterval, setval, limit, offset, field)
+            return self.__execute(dat['query'],dat['args'])
     
     def __execute(self, query, args_raw=None):
         """Execute a SQL query."""
@@ -69,7 +62,6 @@ class nosqlite():
                 try:
                     cur.execute(query, args)
                 except:
-                    print("Could not execute Query," +str(query) + "," + str(args))
                     raise Exception("Could not execute Query :: " +str(query) + " :: " + str(args))
             else:
                 cur.execute(query)
@@ -93,15 +85,41 @@ class nosqlite():
                         import traceback as tb
                         val = {"__db_error":"could not unpack row content "+tb.format_exc()}
                     return val
-    
+            try:
+                self.conn.commit()
+            except:
+                pass
     def ensure_table_exists(self, table_name):
-        """Ensure a table exists or create it if not."""
-        # This method only creates the table if it doesn't exist already
         create_table_query = f'''CREATE TABLE IF NOT EXISTS {table_name} (
                                 '''+self.ID_FIELD+''' TEXT PRIMARY KEY UNIQUE,
                                 value TEXT NOT NULL
                              )'''
         self.__execute(create_table_query)
+        
+    def sqlite_insert_many(self, source, filterval, setval, limit=None, offset=None, field=None):
+        table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
+
+        # Preparing the multi-row insert
+        args = []
+        queries = []
+        assert type(setval) == list
+        for record in setval:
+            json_data = {}
+            if not self.ID_FIELD in record:
+                record[self.ID_FIELD] = str(uuid.uuid4())
+
+            for k, v in record.items():
+                json_data[k] = v
+
+            queries.append(f"(?, ?)")
+            args.append(record[self.ID_FIELD])
+            args.append(jsonwithdate.dumps(json_data))  # Convert the dict to a JSON string
+
+        insert_placeholders = ', '.join(queries)
+        query = f"INSERT INTO {source} ({self.ID_FIELD}, value) VALUES {insert_placeholders}"
+        return {"query": query, "args": tuple(args)}
+    
+    
     
     def build_query(self, qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
         self.ensure_table_exists(source)
@@ -115,11 +133,15 @@ class nosqlite():
             return self.sqlite_delete_many( source, filterval, setval, limit, offset, field)
         if qtype == 'insert':
             return self.sqlite_insert(source, filterval, setval, limit, offset, field)    
+        if qtype == 'insert_many':
+            return self.sqlite_insert_many(source, filterval, setval, limit, offset, field)    
         if qtype == 'count':
             return self.sqlite_count(source, filterval, setval, limit, offset, field)    
+        if qtype == 'unset':
+            return self.sqlite_unset(source, filterval, setval, limit, offset, field)    
         raise Exception("No Query Selected")
     
-    def sqlite_unset(self, source, filterval, setval):
+    def sqlite_unset(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
 
         # Constructing the UNSET (remove) clause
@@ -372,103 +394,34 @@ class nosqlite():
             return self.sqlite_insert(source, filterval, setval, limit, offset, field)
     
     def get_by_path(self, root, items):
-        """Fetch nested key from dictionary using dot notation."""
         return reduce(lambda d, k: d[k], items, root)
+    
+    def execute_sqlite_distinct(self, source, filterval, setval, limit, offset, field):
+        if not field or not isinstance(field, str):
+            return {"error": "Please include a field as a string"}
 
-    def sqlite_distinct_find(self, source, filterval, setval, limit, offset, field):
-        # First, fetch all results
-        results = self.sqlite_find(source, filterval, setval, limit, offset, field)
+        # Fetch all the records from the table
+        find_result = self.sqlite_find(source, filterval, None, limit, offset, field)
+        query = find_result["query"]
+        args = find_result["args"]
 
-        # If a field for distinct is not specified, return the fetched results
-        if not field:
-            return results
+        existing_records = self.__execute(query, args)
 
-        distinct_vals = set()
-        distinct_results = []
-
-        for result in results:
-            # Extract the field's value using dot notation
-            value = self.get_by_path(result, field.split('.'))
-
-            # Convert the value to string to make it hashable for the set
-            str_value = jsonwithdate.dumps(value, sort_keys=True)
-
-            if str_value not in distinct_vals:
-                distinct_vals.add(str_value)
-                distinct_results.append(result)
-
-        return distinct_results   
+        distinct_values = set()
+        keys = field.split('.')  # Convert dot-notation to list
+        for record in existing_records:
+            try:
+                value = self.get_by_path(record, keys)
+                distinct_values.add(value)
+            except KeyError:
+                pass
+        return list(distinct_values)
+    
 
 class TestSqliteConnector():    
-    def test_init(self):
-        db = nosqlite()
-        '''
-        q = {}
-        q = {'qtype': "find",
-            'source' : "transactions",
-            'filterval' : {"id":{"$gt":10}},
-            'setval' : None,
-            'limit' : None,
-            'offset' : None,
-            'field' : None
-            }
-        sql = db.build_query( **q)
-        print(sql)
-
-        q = {'qtype': "find",
-            'source' : "transactions",
-            'filterval' : {"id":{"$gt":10}},
-            'setval' : None,
-            'limit' : 10,
-            'offset' : 4,
-            'field' : None
-            }
-        sql = db.build_query( **q)
-        print(sql)
-
-        q = {'qtype': "find",
-            'source' : "transactions",
-            'filterval' : {"id":{"$gt":10}},
-            'setval' : None,
-            'limit' : 10,
-            'offset' : 4,
-            'field' : None
-            }
-        sql = db.build_query( **q)
-
-        q = {'qtype': "update",
-            'source' : "transactions",
-            'filterval' : {"id":{"$gt":10}},
-            'setval' : {"name":"travis"},
-            'field' : None
-            }
-        sql = db.build_query( **q)    
-
-        q = {'qtype': "insert",
-             'source' : "transactions",
-             'setval' : {"id": 15, "name": "travis", "amount": 200}
-             }
-        sql = db.build_query( **q)    
-        print(sql)    
-        '''
-
-        db.execute(**{'qtype': "insert",
-             'source' : "transactions",
-             'setval' : {"id": 15, "name": "travis", "amount": 200}
-             })
-        q = {'qtype': "find",
-            'source' : "transactions",
-            'filterval' : {"id":{"$gt":10}},
-            'setval' : None,
-            'limit' : None,
-            'offset' : None,
-            'field' : None
-            }
-        recs = db.execute( **q)
         
     def test_insert(self):
         # Test string, int, datetime,
-        print("test_insert ...")
         db = nosqlite()
         db.execute(**{'qtype': "insert",
              'source' : "transactions",
@@ -507,7 +460,6 @@ class TestSqliteConnector():
             })
         assert len(res) == 1
         rec = res[0]
-        print(rec)
         db.execute(**{'qtype': "delete",
             'source' : "transactions",
             'filterval' : {"_id":rec["_id"]}
@@ -523,10 +475,8 @@ class TestSqliteConnector():
             })
         assert len(res) == 0
         del(db)
-        print(" pass")
 
     def test_date(self):
-        print("test_insert ...")
         db = nosqlite()
         dt = datetime.datetime.utcnow()
         db.execute(**{'qtype': "insert",
@@ -553,7 +503,6 @@ class TestSqliteConnector():
             'source' : "transactions",
             'filterval' : {"date":{"$lt":datetime.datetime.utcnow()}}})
         assert len(res) == 1
-        print("pass")
         del(db)
         
     def test_save_restart(self):
@@ -585,11 +534,9 @@ class TestSqliteConnector():
             'source' : "transactions",
             'filterval' : {}})
         assert len(res) == 0
-        print("pass")
         
     def test_update(self):
         db = nosqlite()
-        print("test_insert ...")
         db = nosqlite()
         db.execute(**{'qtype': "insert",
              'source' : "transactions",
@@ -610,7 +557,6 @@ class TestSqliteConnector():
         
     def test_upsert(self):
         db = nosqlite()
-        print("test_insert ...")
         db = nosqlite()
         db.execute(**{'qtype': "insert",
              'source' : "transactions",
@@ -661,7 +607,6 @@ class TestSqliteConnector():
         
     def test_count(self):
         db = nosqlite()
-        print("test_insert ...")
         db = nosqlite()
         db.execute(**{'qtype': "insert",
              'source' : "transactions",
@@ -683,25 +628,76 @@ class TestSqliteConnector():
         
         
     def test_insert_many(self):
-        '''
-            -insert_many
-        '''
         db = nosqlite()
+        db.execute(**{'qtype': "insert_many",
+             'source' : "transactions",
+             'setval' : [
+                         {"id": 9, "name": "travis", "amount": 200},
+                         {"id": 10, "name": "bravis", "amount": 300},
+                         {"id": 11, "name": "cravis", "amount": 400}
+                        ]
+             })
+        res = db.execute(**{'qtype': "count",
+            'source' : "transactions",
+            'filterval' : {}})
+        assert res == 3
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"id":10}})  
+        assert res[0]["name"] == "bravis"
+        del(db)
+        
         
     def test_distinct(self):
-        '''
-            -distinct
-        '''
         db = nosqlite()
+        db.execute(**{'qtype': "insert_many",
+             'source' : "transactions",
+             'setval' : [
+                         {"id": 9, "category": "a", "amount": 200},
+                         {"id": 10, "category": "a", "amount": 300},
+                         {"id": 11, "category": "a", "amount": 300},
+                         {"id": 12, "category": "b", "amount": 300},
+                         {"id": 13, "category": "b", "amount": 300},
+                         {"id": 14, "category": "b", "amount": 400}
+                        ]
+             })
+        res = db.execute(**{'qtype': "distinct",
+            'source' : "transactions",
+            'filterval' : {"category":"a"},
+            'field':"amount"})    
+        assert len(res) == 2
+        assert 200 in res
+        assert 300 in res
         
-      
+    def test_unset(self):
+        db = nosqlite()
+        db.execute(**{'qtype': "insert_many",
+             'source' : "transactions",
+             'setval' : [
+                         {"id": 9, "category": "a", "amount": 200},
+                         {"id": 10, "category": "a", "amount": 300},
+                         {"id": 11, "category": "a", "amount": 300},
+                         {"id": 12, "category": "b", "amount": 300},
+                         {"id": 13, "category": "b", "amount": 300},
+                         {"id": 14, "category": "b", "amount": 400}
+                        ]
+             })
+        db.execute(**{'qtype': "unset",
+            'source' : "transactions",
+            'setval':{"amount":None},
+            'filterval' : {"category":"a"}}) 
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {"category":"a"}})          
         
 if __name__=="__main__": 
-    tester = TestSqliteConnector()
-    #tester.test_init()
-    #tester.test_insert()
-    #tester.test_date()
-    #tester.test_save_restart()
-    #tester.test_update()
-    #tester.test_upsert()
-    tester.test_count()
+    conTester = TestSqliteConnector()
+    conTester.test_insert()
+    conTester.test_date()
+    conTester.test_save_restart()
+    conTester.test_update()
+    conTester.test_upsert()
+    conTester.test_count()
+    conTester.test_insert_many()
+    conTester.test_distinct()    
+    conTester.test_unset()
