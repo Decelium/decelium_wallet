@@ -15,9 +15,24 @@ class SystemTests():
     def __init(self):
         pass
     
-    def run_simple(self):
+    def run_simple_py(self):
         try:
             cmd = ['python3','./python/test_python.py','python','dev.paxfinancial.ai']
+            print(' '.join(cmd ),end="...")
+            output = subprocess.check_output(
+                cmd,
+                #shell=True,
+                cwd='./',
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+            return {"result": True, "output": output}
+        except subprocess.CalledProcessError as e:
+            return {"result": False, "output": e.output}
+    
+    def run_simple_cli(self):
+        try:
+            cmd = ['python3','./python/test_python.py','decw','dev.paxfinancial.ai']
             print(' '.join(cmd ),end="...")
             output = subprocess.check_output(
                 cmd,
@@ -137,7 +152,8 @@ class SystemTests():
 
 if __name__=="__main__":
     st = SystemTests()
-    meths = [st.run_simple,
+    meths = [st.run_simple_py,
+             st.run_simple_cli,
              st.run_py_network_alone,
              st.run_js_network_alone,
              st.run_py_network_together,

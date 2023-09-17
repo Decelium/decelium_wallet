@@ -81,17 +81,19 @@ class Chunk:
         
             
     def upload(pq,api_key,remote,from_path,remote_path,extract_path = "chunk_test"):        
-        #print("Starts Here")
+        print("Starts Here")
         
         Chunk.build(from_path,extract_path)    
-        #print("Also Also Not Ends  Here")
         chunks = pq.list({'api_key':api_key, 'path':remote_path, },remote=remote)
-        #print("Also Not Ends  Here")
-        
+        print(chunks)
         if 'error' not in chunks:
             for fileobj in chunks:        
                 fil  = pq.delete_entity({'api_key':api_key,  'path':remote_path, 'name':fileobj['dir_name'], },remote=remote)
+                print("Deleting chunk")
+                print(fil)
         fil  = pq.delete_entity({'api_key':api_key,  'path':remote_path,},remote=remote) # show_url=True to debug
+        print("Deleting chunk End")
+        print(fil)
         
         dir_obj_id  = pq.create_directory({
             'api_key':api_key,
@@ -101,18 +103,18 @@ class Chunk:
         chunks = [name for name in os.listdir(extract_path)]
         for filename in chunks:
             t = time.time()
-            #print("DOING DELETE")
+            print("DOING DELETE")
             fil  = pq.delete_entity({'api_key':api_key, 
                                     'path':remote_path, 
                                     'name':filename, 
                                     },remote=remote) # show_url=True to debug
-            #print(fil)
+            print(fil)
             
             delay = (time.time() - t)
-            #print("END DOING DELETE"+ str(delay))
+            print("END DOING DELETE"+ str(delay))
             with open(extract_path+"/"+filename,'r') as f:
                 t = time.time()
-                #print("DOING CREATE")
+                print("DOING CREATE")
 
                 fil  = pq.create_entity({
                     'api_key':api_key,
@@ -121,7 +123,7 @@ class Chunk:
                     'file_type':'ipfs',
                     'payload':f.read()},remote=remote)
                 #t = time.time()
-                #print("DOING CREATE")
+                print("DOING CREATE 2")
                 delay = (time.time() - t)
                 #print("END DOING CREATE "+str(delay))
 

@@ -20,7 +20,7 @@ except IndexError:
 
 def run_command(command, *args):
     cmd = [ command] + list(args)
-    #print(' '.join(cmd))
+    print(' '.join(cmd))
     if mode == 'decw':
         return run_decw_cmd(command, *args)
     elif mode == 'python':
@@ -29,13 +29,14 @@ def run_command(command, *args):
         raise Exception(f"Invalid mode: {mode}")
 
 def run_decw_cmd(command, *args):
-    cmd = ["python3", "../../decelium_wallet/decw.py", command] + list(args)
-    #print(' '.join(cmd))
+    #print(os.getcwd())
+    cmd = ["python3", "../../decelium_wallet/decelium_wallet/decw.py", command] + list(args)
+    print(' '.join(cmd))
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise Exception(f"Command {cmd} failed with error: {result.stderr}")
     try:
-        return json.loads(result.stdout)
+        return result.stdout
     except:
         print ("ERR: COULD NOT DECODE")
         print(result.stdout)
@@ -150,12 +151,12 @@ try:
     test_password = user_info['password']
     user_id = user_info['self_id']
         
-    balance = check_wallet_balance(wallet_path, "test_user", node)
+    balance = int(check_wallet_balance(wallet_path, "test_user", node)) #hard cast, could fail. Is test. good.
     if balance < 10:
         fund_result = run_command("fund", wallet_path, "test_user", node)
         assert fund_result and not 'error' in  fund_result
 
-    balance = run_command("check_balance", wallet_path, "test_user", node)
+    balance = int(run_command("check_balance", wallet_path, "test_user", node))
     assert balance > 10    
 
     website_data = run_command("deploy", wallet_path, "test_user", node, "test/example_small_website.ipfs", "./website/")

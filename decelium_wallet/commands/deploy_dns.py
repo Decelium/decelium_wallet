@@ -99,8 +99,8 @@ class Deploy():
 
     def run(self,args):
         #raise Exception("not supported, please use deploy.py")
-        dir_path = os.path.dirname(os.path.realpath(__file__))    
-        os.chdir(dir_path)
+        #dir_path = os.path.dirname(os.path.realpath(__file__))    
+        #os.chdir(dir_path)
 
         wallet_path = args[0]
         target_user = args[1]
