@@ -17,7 +17,8 @@ from threading import Timer
 
 class core:
     def discover_wallet(self,root="./",password=None):
-        return wallet.discover(root,password)
+        res = wallet.discover(root,password)
+        return res
     #def load_wallet_from_disk(self):
     #    # TODO - Add in loading OP
     #    
@@ -41,7 +42,7 @@ class core:
     def load_wallet(self,data,password,mode='js'):
         assert type(data) == str
         assert type(password) == str
-        self.dw = wallet()        
+        self.dw = wallet()      
         success = self.dw.load(data=data, password=password,mode=mode)
         return success
     
@@ -116,13 +117,29 @@ class core:
             return {"error":"gen_node_ping response is invalid: "+ str(resp)}
         
         
+    def complete_node_ping(self, port, name, wallet_user="admin"):
+        # Generate node ping message
+        node_ping_msg = self.gen_node_ping(port, name, wallet_user)
+
+        print("-----node_ping_msg-----",node_ping_msg)
+
+        # Sign the node ping message
+        signed_msg = self.dw.sign_request(node_ping_msg , [wallet_user])
+        if "error" in signed_msg:
+            return signed_msg
         
+        # Send the signed node ping message to the network
+        resp = self.net.node_ping(signed_msg)
+        
+        if "error" in resp:
+            resp["error"] += " with message "+str(signed_msg)
+            
+        return resp
 
-
-    def set_interval(self,func,keep_running, sec, *args, **kwargs):
+    def set_interval(self, func, keep_running, sec, *args, **kwargs):
         def func_wrapper():
             if keep_running():
-                self.set_interval(func, keep_running,sec, *args, **kwargs)
+                self.set_interval(func, keep_running, sec, *args, **kwargs)
                 func(*args, **kwargs)
             else:
                 print("ENDING TIMER FOR "+str(func))
@@ -131,10 +148,11 @@ class core:
         return t    
     
     def listen(self,port,name,wallet_user="admin",public_handlers = []):
+        ("-----LISTEN----")
         resp = self.do_ping(port,name,wallet_user,public_handlers)
         if "error" in resp:
             return resp
-
+        ("-----LISTEN_RESP----", resp)
         self.self_id = resp['self_id']
         resp['api_key']=self.dw.pubk(wallet_user)
         self.net.listen(resp,self.handle_connection) # Begin listening with the requested configuration!
@@ -148,9 +166,8 @@ class core:
             res = self.do_ping(port,name,wallet_user,public_handlers)
             #print(res)
         self.set_interval(run_pings_def,self.net.listening, 5)  # ping every 60 seconds
+
         return True
-    
-    
     
     def sync_node_list(self):
         # TODO, choose who to sync with
@@ -158,7 +175,7 @@ class core:
         self.nodes = self.net.node_list() # Where are we pulling this list from?
         #import pprint
         #pprint.pprint(self.nodes)
-        
+        print("------self.nodes----", self.nodes)
         found = False
         for n in self.nodes:            
             if n['self_id'] == self.self_id:
@@ -167,8 +184,11 @@ class core:
                 if 'test_id' in n['connect_data']['meta']:
                     self.node_peer_list.append(n)
                     print("passed inspection" + n['self_id'] )
-                    
-                    
+
+    # TODO : This code is a temporary solution and may need to be revised
+    def set_self_id(self, resp):
+        self.self_id = resp['self_id'] 
+                             
     def node_list(self):
         if self.node_peer_list == None:
             self.sync_node_list()
