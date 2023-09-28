@@ -29,7 +29,7 @@ class jsonwithdate:
                     except ValueError:
                         pass
         return dct    
-
+import copy
 class nosqlite():
 
     def __init__(self,path=None):
@@ -39,6 +39,19 @@ class nosqlite():
         self.conn.row_factory = sqlite3.Row  # Access rows as dictionaries instead of tuples        
     
     def execute(self,qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
+        print(" ")
+        print("Executing: "+ qtype)
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        
+        try:
+            filterval = copy.deepcopy(filterval)
+        except:
+            pass
+        try:
+            setval = copy.deepcopy(setval)
+        except:
+            pass
+        
         if qtype == 'distinct':
             # Unfortunately, distinct breaks the pattern and has to operate manually in memory, not directly as a query
             return self.execute_sqlite_distinct(source, filterval, setval, limit, offset, field)    
@@ -53,18 +66,36 @@ class nosqlite():
             for a in args_raw:
                 if type(a) == datetime.datetime:
                     args.append(jsonwithdate.date_dump(a)) 
+                elif type(a) == dict:
+                    args.append(jsonwithdate.dumps(a)) 
+                elif type(a) == list:
+                    args.append(jsonwithdate.dumps(a)) 
+                elif type(a) == str:
+                    args.append(a) 
                 else:
                     args.append(a) 
-
+        for b in args:
+            try:
+                assert (b is None) or (type(b) in [str,int,float])
+            except Exception as e:
+                print("Found an invalid argument "+ str(b) + " of type " + str(type(b)))
+                raise e
         with self.conn:
             cur = self.conn.cursor()
             if args:
                 try:
-                    cur.execute(query, args)
+                    print("EXECUTING A")
+                    print(query)
+                    print(args)
+                    res = cur.execute(query, args)
+                    print(res)
                 except:
-                    raise Exception("Could not execute Query :: " +str(query) + " :: " + str(args))
+                    raise Exception("Could not execute Query :: " +str(query) + " :: " + str(args_raw))
             else:
-                cur.execute(query)
+                print("EXECUTING B")
+                print(query)
+                res = cur.execute(query)
+                print(res)
             
             # Return all rows if it's a SELECT; else, return nothing
             if query.lstrip().upper().startswith('SELECT') and not query.lstrip().upper().startswith('SELECT COUNT'):
@@ -388,6 +419,7 @@ class nosqlite():
         args = find_result["args"]
 
         existing_records = self.__execute(query, args)
+        #print("FINDING RECORDS" + str(existing_records) + " for "+str(filterval))
         if len(existing_records) > 0:
             return self.sqlite_update_many( source, filterval, setval, limit, offset, field)
         else:
