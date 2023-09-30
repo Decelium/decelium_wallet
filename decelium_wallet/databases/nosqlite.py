@@ -1,5 +1,6 @@
 import sqlite3, json,uuid,datetime
 from functools import reduce
+import re
 class jsonwithdate:
     def loads(dic):
         return json.loads(dic,object_hook=jsonwithdate.date_load)
@@ -17,8 +18,11 @@ class jsonwithdate:
     def date_load(dct):
         DATE_FORMAT_WITH_MS = '%Y-%m-%dT%H:%M:%S.%f'
         DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+        ISO_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$')
+        
         for k, v in dct.items():
-            if isinstance(v, str) and "T" in v:
+            #if isinstance(v, str) and "T" in v:
+            if isinstance(v, str) and ISO_REGEX.match(v):
                 try:
                     dct[k] = datetime.datetime.strptime(v, DATE_FORMAT_WITH_MS)
                 except ValueError:  # If the first format doesn't work, try the second one
@@ -29,37 +33,63 @@ class jsonwithdate:
                     except ValueError:
                         pass
         return dct    
-import copy
-class nosqlite():
 
+
+import copy,threading,queue
+
+class NosqlThread():
+    worker_thread = None
+    
+    def Instance():
+        if NosqlThread.worker_thread == None:
+             NosqlThread.worker_thread = NosqlThread()
+        return NosqlThread.worker_thread
+
+    def threaded_execute(self, query, args_raw=None,path = None):
+        """Execute a SQL query on the worker thread."""
+        correlation_id = str(uuid.uuid4())  # Generate a unique ID
+        local_result_queue = queue.Queue()
+        self.result_queues[correlation_id] = local_result_queue
+        self.command_queue.put(("execute", (query, args_raw, correlation_id, path)))
+
+        result = local_result_queue.get()  # Block until result is available
+        del self.result_queues[correlation_id]  # Cleanup
+
+        return result
+        
+    def threaded_close(self,path=None):
+        """Execute a SQL query on the worker thread."""
+        correlation_id = str(uuid.uuid4())  # Generate a unique ID
+        local_result_queue = queue.Queue()
+        self.result_queues[correlation_id] = local_result_queue
+        self.command_queue.put(("terminate", (None, None, correlation_id,path)))
+
+        result = local_result_queue.get()  # Block until result is available
+        del self.result_queues[correlation_id]  # Cleanup
+        return result
+        
+    def _worker(self):
+        """Dedicated worker thread for executing SQLite operations."""
+        while True:
+            command, args = self.command_queue.get()
+            if command == "terminate":
+                query, args_raw, correlation_id,path = args
+                self.result_queues[correlation_id].put(True)
+                break
+            elif command == "execute":
+                query, args_raw, correlation_id,path = args
+                result = self.__execute(query, args_raw,path)
+                self.result_queues[correlation_id].put(result)
+
+    
     def __init__(self,path=None):
-        # Connect to an in-memory SQLite database
-        self.ID_FIELD = "_id"
-        self.conn = sqlite3.connect(path if path else ':memory:')
-        self.conn.row_factory = sqlite3.Row  # Access rows as dictionaries instead of tuples        
+        self.command_queue = queue.Queue()
+        self.result_queues = {}
+        self.worker_thread = threading.Thread(target=self._worker)
+        self.worker_thread.start()
+        self.conns = {}        
     
-    def execute(self,qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
-        print(" ")
-        print("Executing: "+ qtype)
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-        
-        try:
-            filterval = copy.deepcopy(filterval)
-        except:
-            pass
-        try:
-            setval = copy.deepcopy(setval)
-        except:
-            pass
-        
-        if qtype == 'distinct':
-            # Unfortunately, distinct breaks the pattern and has to operate manually in memory, not directly as a query
-            return self.execute_sqlite_distinct(source, filterval, setval, limit, offset, field)    
-        else:
-            dat = self.build_query(qtype,source, filterval, setval, limit, offset, field)
-            return self.__execute(dat['query'],dat['args'])
-    
-    def __execute(self, query, args_raw=None):
+    def __execute(self, query, args_raw=None,path=None):
         """Execute a SQL query."""
         args = []
         if args_raw:
@@ -80,8 +110,14 @@ class nosqlite():
             except Exception as e:
                 print("Found an invalid argument "+ str(b) + " of type " + str(type(b)))
                 raise e
-        with self.conn:
-            cur = self.conn.cursor()
+        if path == None:
+            path = ':memory:'
+        if path not in self.conns:
+            self.conns[path] = sqlite3.connect(path)
+            self.conns[path].row_factory = sqlite3.Row
+        conn = self.conns[path]
+        with conn:
+            cur = conn.cursor()
             if args:
                 try:
                     print("EXECUTING A")
@@ -117,9 +153,49 @@ class nosqlite():
                         val = {"__db_error":"could not unpack row content "+tb.format_exc()}
                     return val
             try:
-                self.conn.commit()
+                conn.commit()
             except:
                 pass
+
+class nosqlite():
+
+    def __init__(self,path=None):
+        self.ID_FIELD = "_id"
+        self.kernel = NosqlThread()
+        self.path = path
+    
+    def __execute(self, query, args_raw=None):
+        """Execute a SQL query."""
+        return self.kernel.threaded_execute(query=query, args_raw=args_raw,path=self.path)
+        
+    def __close(self):
+        """Execute a SQL query."""
+        return self.kernel.threaded_close(path=self.path)
+        
+    def close(self):
+        return self.__close()
+        
+    def execute(self,qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
+        print(" ")
+        print("Executing: "+ qtype)
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        
+        try:
+            filterval = copy.deepcopy(filterval)
+        except:
+            pass
+        try:
+            setval = copy.deepcopy(setval)
+        except:
+            pass
+        
+        if qtype == 'distinct':
+            # Unfortunately, distinct breaks the pattern and has to operate manually in memory, not directly as a query
+            return self.execute_sqlite_distinct(source, filterval, setval, limit, offset, field)    
+        else:
+            dat = self.build_query(qtype,source, filterval, setval, limit, offset, field)
+            return self.__execute(dat['query'],dat['args'])
+                
     def ensure_table_exists(self, table_name):
         create_table_query = f'''CREATE TABLE IF NOT EXISTS {table_name} (
                                 '''+self.ID_FIELD+''' TEXT PRIMARY KEY UNIQUE,
@@ -149,8 +225,6 @@ class nosqlite():
         insert_placeholders = ', '.join(queries)
         query = f"INSERT INTO {source} ({self.ID_FIELD}, value) VALUES {insert_placeholders}"
         return {"query": query, "args": tuple(args)}
-    
-    
     
     def build_query(self, qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
         self.ensure_table_exists(source)
