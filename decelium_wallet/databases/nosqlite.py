@@ -86,6 +86,7 @@ class NosqlThread():
         self.command_queue = queue.Queue()
         self.result_queues = {}
         self.worker_thread = threading.Thread(target=self._worker)
+        self.worker_thread.daemon = True
         self.worker_thread.start()
         self.conns = {}        
     
