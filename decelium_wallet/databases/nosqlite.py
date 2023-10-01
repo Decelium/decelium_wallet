@@ -121,18 +121,18 @@ class NosqlThread():
             cur = conn.cursor()
             if args:
                 try:
-                    print("EXECUTING A")
-                    print(query)
-                    print(args)
+                    #print("EXECUTING A")
+                    #print(query)
+                    #print(args)
                     res = cur.execute(query, args)
-                    print(res)
+                    #print(res)
                 except:
                     raise Exception("Could not execute Query :: " +str(query) + " :: " + str(args_raw))
             else:
-                print("EXECUTING B")
-                print(query)
+                #print("EXECUTING B")
+                #print(query)
                 res = cur.execute(query)
-                print(res)
+                #print(res)
             
             # Return all rows if it's a SELECT; else, return nothing
             if query.lstrip().upper().startswith('SELECT') and not query.lstrip().upper().startswith('SELECT COUNT'):
@@ -177,9 +177,9 @@ class nosqlite():
         return self.__close()
         
     def execute(self,qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
-        print(" ")
-        print("Executing: "+ qtype)
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        #print(" ")
+        #print("Executing: "+ qtype)
+        #print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
         
         try:
             filterval = copy.deepcopy(filterval)
