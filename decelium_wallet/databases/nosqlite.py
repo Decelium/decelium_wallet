@@ -93,18 +93,23 @@ class NosqlThread():
     def __execute(self, query, args_raw=None,path=None):
         """Execute a SQL query."""
         args = []
+        assign_a_temp = []
+        cnt = 0
         if args_raw:
             for a in args_raw:
                 if type(a) == datetime.datetime:
                     args.append(jsonwithdate.date_dump(a)) 
                 elif type(a) == dict:
                     args.append(jsonwithdate.dumps(a)) 
+                    assign_a_temp.append(cnt)
                 elif type(a) == list:
                     args.append(jsonwithdate.dumps(a)) 
+                    assign_a_temp.append(cnt)
                 elif type(a) == str:
                     args.append(a) 
                 else:
                     args.append(a) 
+                cnt = cnt + 1
         for b in args:
             try:
                 assert (b is None) or (type(b) in [str,int,float])
@@ -121,9 +126,9 @@ class NosqlThread():
             cur = conn.cursor()
             if args:
                 try:
-                    #print("EXECUTING A")
-                    #print(query)
-                    #print(args)
+                    print("EXECUTING A")
+                    print(query)
+                    print(args)
                     res = cur.execute(query, args)
                     #print(res)
                 except:
@@ -194,8 +199,7 @@ class nosqlite():
             # Unfortunately, distinct breaks the pattern and has to operate manually in memory, not directly as a query
             return self.execute_sqlite_distinct(source, filterval, setval, limit, offset, field)    
         else:
-            dat = self.build_query(qtype,source, filterval, setval, limit, offset, field)
-            return self.__execute(dat['query'],dat['args'])
+            return self.run_query(qtype,source, filterval, setval, limit, offset, field)
                 
     def ensure_table_exists(self, table_name):
         create_table_query = f'''CREATE TABLE IF NOT EXISTS {table_name} (
@@ -225,12 +229,16 @@ class nosqlite():
 
         insert_placeholders = ', '.join(queries)
         query = f"INSERT INTO {source} ({self.ID_FIELD}, value) VALUES {insert_placeholders}"
-        return {"query": query, "args": tuple(args)}
+        
+        return self.__execute(query,tuple(args))    
+        #return {"query": query, "args": tuple(args)}
     
-    def build_query(self, qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
+    def run_query(self, qtype, source, filterval=None, setval=None, limit=None, offset=None, field=None):
         self.ensure_table_exists(source)
+        #             return self.__execute(dat['query'],dat['args'])
+
         if qtype == 'find':
-            return self.sqlite_find( source, filterval, setval, limit, offset, field)
+            return self.sqlite_find( source, filterval, setval, limit, offset, field)#
         if qtype == 'update':
             return self.sqlite_update_many( source, filterval, setval, limit, offset, field)
         if qtype == 'upsert':        
@@ -292,8 +300,8 @@ class nosqlite():
 
         # Finalizing the UPDATE query
         query = f"UPDATE {table_name} SET value = {unset_str} WHERE {where_str}"
-        
-        return {"query": query, "args": tuple(args)}
+        return self.__execute(query,tuple(args)) 
+        #return {"query": query, "args": tuple(args)}
     
     def sqlite_count(self,  source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
@@ -330,8 +338,8 @@ class nosqlite():
         else:
             query += f" WHERE 1"
             
-
-        return {"query": query, "args": tuple(args)}
+        return self.__execute(query,tuple(args)) 
+        #return {"query": query, "args": tuple(args)}
     
     def sqlite_delete_many(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
@@ -364,7 +372,52 @@ class nosqlite():
 
             where_str = " AND ".join(where_conditions)
             query += f" WHERE {where_str}"
-        return {"query": query, "args": tuple(args)}
+        return self.__execute(query,tuple(args))    
+        # return {"query": query, "args": tuple(args)}
+    def extract_leaves(self,data):
+        leaves = []
+        
+        if isinstance(data, dict):
+            for key, value in data.items():
+                leaves.extend(self.extract_leaves(value))
+        elif isinstance(data, list):
+            for item in data:
+                leaves.extend(self.extract_leaves(item))
+        else:
+            leaves.append(data)
+        
+        return leaves
+    def replace_leaves_with_placeholder(self,data):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if isinstance(value, (dict, list)):
+                    self.replace_leaves_with_placeholder(value)
+                else:
+                    data[key] = "?"
+        elif isinstance(data, list):
+            for i in range(len(data)):
+                if isinstance(data[i], (dict, list)):
+                    self.replace_leaves_with_placeholder(data[i])
+                else:
+                    data[i] = "?"
+        else:
+            return "?"
+    
+        return data    
+
+    def convert_json_to_sqlite(self,a):
+        obj = copy.deepcopy(a)
+        leaves = self.extract_leaves(obj)
+        obj = self.replace_leaves_with_placeholder(obj)
+        obj = jsonwithdate.dumps(obj)
+        obj = obj.replace('"',"'")
+        obj = obj.replace("{","json_object(")
+        obj = obj.replace("}",")")
+        obj = obj.replace("[","json_array(")
+        obj = obj.replace("]",")")
+        obj = obj.replace("'?'","?")
+        obj = obj.replace(":",",")
+        return obj,leaves
 
     def sqlite_update_many(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
@@ -373,11 +426,27 @@ class nosqlite():
         set_conditions = ["value = json_set(value"]
         args = []
 
-        for k, v in setval.items():
-            # Since all keys are paths within the JSON, we always update within the JSON "value" column
-            set_conditions.append(f"'$.{k}', ?")
-            args.append(v)
-
+        for k, a in setval.items():
+            if type(a) == datetime.datetime:
+                set_conditions.append(f"'$.{k}', ?")
+                args.append(a) 
+            elif type(a) == dict:
+                obj, leaves = self.convert_json_to_sqlite(a)                
+                set_conditions.append(f"'$.{k}', "+obj)
+                for l in leaves:
+                    args.append(l) 
+            elif type(a) == list:
+                obj, leaves = self.convert_json_to_sqlite(a)                
+                set_conditions.append(f"'$.{k}', "+obj)
+                for l in leaves:
+                    args.append(l) 
+            elif type(a) == str:
+                set_conditions.append(f"'$.{k}', ?")
+                args.append(a) 
+            else:
+                set_conditions.append(f"'$.{k}', ?")      
+                args.append(a) 
+        
         set_str = ", ".join(set_conditions) + ")"  # closing bracket for json_set is appended here
 
         # Constructing the WHERE clause
@@ -410,9 +479,13 @@ class nosqlite():
             where_str = "1"  # If no filter is provided, default to true condition (this means all records will be updated)
 
         # Finalizing the UPDATE query
+        
         query = f"UPDATE {table_name} SET {set_str} WHERE {where_str}"
+        print("nosqlite CREATING UPDATE MANY")
+        print(query)
+        print(args)
+        return self.__execute(query,tuple(args))
 
-        return {"query": query, "args": tuple(args)}
 
     
     def sqlite_insert(self, source, filterval, setval, limit, offset, field):
@@ -431,8 +504,8 @@ class nosqlite():
         query = f"INSERT INTO {table_name} ("+self.ID_FIELD+", value) VALUES (?, ?)"
         args.append(setval[self.ID_FIELD])
         args.append(jsonwithdate.dumps(json_data))  # Convert the dict to a JSON string
-
-        return {"query": query, "args": tuple(args)}    
+        return self.__execute(query,tuple(args))
+        #return {"query": query, "args": tuple(args)}    
     
     def sqlite_find(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
@@ -474,8 +547,8 @@ class nosqlite():
         if offset:
             query += f" OFFSET ?"
             args.append(offset)
-
-        return {"query": query, "args": tuple(args)}
+            
+        return self.__execute(query,tuple(args))
 
 
     def merge_dicts(self, d1, d2):
@@ -489,12 +562,8 @@ class nosqlite():
 
     def sqlite_upsert(self, source, filterval, setval, limit, offset, field):
         # First, attempt to retrieve the existing record
-        find_result = self.sqlite_find(source, filterval, None, None, None, None)
-        query = find_result["query"]
-        args = find_result["args"]
+        existing_records = self.sqlite_find(source, filterval, None, None, None, None)
 
-        existing_records = self.__execute(query, args)
-        #print("FINDING RECORDS" + str(existing_records) + " for "+str(filterval))
         if len(existing_records) > 0:
             return self.sqlite_update_many( source, filterval, setval, limit, offset, field)
         else:
@@ -508,11 +577,7 @@ class nosqlite():
             return {"error": "Please include a field as a string"}
 
         # Fetch all the records from the table
-        find_result = self.sqlite_find(source, filterval, None, limit, offset, field)
-        query = find_result["query"]
-        args = find_result["args"]
-
-        existing_records = self.__execute(query, args)
+        existing_records = self.sqlite_find(source, filterval, None, limit, offset, field)
 
         distinct_values = set()
         keys = field.split('.')  # Convert dot-notation to list
@@ -661,9 +726,46 @@ class TestSqliteConnector():
         assert res[0]["amount"] == 500
         assert res[0]["name"] == "travis"
 
-        
-    def test_upsert(self):
+    def test_update_dict(self): 
         db = nosqlite()
+        update_settings = {'ipfs_cid': 'QmQDcMyPKqYZmnoVu8VyGTuCW4oYfX4JPEECJRN4VhxfbZ', 'ipfs_name': 'obj-c4e11714-d35a-44a6-bd20-fa9bb608460a' }    
+        db.execute(**{'qtype': "insert",
+             'source' : "transactions",
+             'setval' : {"id": 9, "name": "travis", "amount": 200}
+             })
+        db.execute(**{'qtype': "update",
+             'source' : "transactions",
+             'filterval':{"id": 9},
+             'setval' : {"settings":update_settings }
+             })
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {}})   
+
+        import pprint
+        pprint.pprint(res)
+        assert len(res) == 1
+        assert res[0]["amount"] == 200
+        assert res[0]["name"] == "travis"
+        print(type(res[0]["settings"]))
+        assert type(res[0]["settings"]) == dict
+        assert res[0]["settings"]["ipfs_cid"] == "QmQDcMyPKqYZmnoVu8VyGTuCW4oYfX4JPEECJRN4VhxfbZ"
+             
+        db.execute(**{'qtype': "update",
+             'source' : "transactions",
+             'filterval':{"id": 9},
+             'setval' : {"settings.ipfs_cid":[10,20,30] }
+             })
+        res = db.execute(**{'qtype': "find",
+            'source' : "transactions",
+            'filterval' : {}})     
+
+        print(res)
+        assert type(res[0]["settings"]) == dict
+        assert type(res[0]["settings"]["ipfs_cid"]) == list
+        assert res[0]["settings"]["ipfs_cid"][0] == 10
+
+    def test_upsert(self):
         db = nosqlite()
         db.execute(**{'qtype': "insert",
              'source' : "transactions",
@@ -799,12 +901,15 @@ class TestSqliteConnector():
         
 if __name__=="__main__": 
     conTester = TestSqliteConnector()
-    conTester.test_insert()
-    conTester.test_date()
-    conTester.test_save_restart()
-    conTester.test_update()
-    conTester.test_upsert()
-    conTester.test_count()
-    conTester.test_insert_many()
-    conTester.test_distinct()    
-    conTester.test_unset()
+    
+    #conTester.test_insert()
+    #conTester.test_date()
+    #conTester.test_save_restart()
+    #conTester.test_update()
+    #conTester.test_upsert()
+    #conTester.test_count()
+    #conTester.test_insert_many()
+    #conTester.test_distinct()    
+    #conTester.test_unset()
+    
+    conTester.test_update_dict()
