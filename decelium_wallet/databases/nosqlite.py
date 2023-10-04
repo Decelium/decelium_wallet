@@ -1,6 +1,8 @@
 import sqlite3, json,uuid,datetime
 from functools import reduce
 import re
+from collections import deque
+
 class jsonwithdate:
     def loads(dic):
         return json.loads(dic,object_hook=jsonwithdate.date_load)
@@ -126,13 +128,14 @@ class NosqlThread():
             cur = conn.cursor()
             if args:
                 try:
-                    print("EXECUTING A")
-                    print(query)
-                    print(args)
+                    #print("EXECUTING A")
+                    #print(query)
+                    #print(args)
                     res = cur.execute(query, args)
                     #print(res)
-                except:
-                    raise Exception("Could not execute Query :: " +str(query) + " :: " + str(args_raw))
+                except Exception as e:
+                    print("Could not execute Query :: " +str(query) + " :: " + str(args))
+                    raise e
             else:
                 #print("EXECUTING B")
                 #print(query)
@@ -420,6 +423,14 @@ class nosqlite():
         return obj,leaves
 
     def sqlite_update_many(self, source, filterval, setval, limit, offset, field):
+        existing_records = self.sqlite_find(source, filterval, None, None, None, None)
+        for rec in existing_records:
+            new_rec = self.merge_dicts(rec,setval)
+            self.sqlite_delete_many(source, {"_id":rec["_id"]}, None, None, None, None)
+            self.sqlite_insert(source, None, new_rec, None, None, None)
+        return True
+    
+    def sqlite_update_many_old(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
 
         # Constructing the SET clause
@@ -481,9 +492,9 @@ class nosqlite():
         # Finalizing the UPDATE query
         
         query = f"UPDATE {table_name} SET {set_str} WHERE {where_str}"
-        print("nosqlite CREATING UPDATE MANY")
-        print(query)
-        print(args)
+        #print("nosqlite CREATING UPDATE MANY")
+        #print(query)
+        #print(args)
         return self.__execute(query,tuple(args))
 
 
@@ -902,14 +913,13 @@ class TestSqliteConnector():
 if __name__=="__main__": 
     conTester = TestSqliteConnector()
     
-    #conTester.test_insert()
-    #conTester.test_date()
-    #conTester.test_save_restart()
-    #conTester.test_update()
-    #conTester.test_upsert()
-    #conTester.test_count()
-    #conTester.test_insert_many()
-    #conTester.test_distinct()    
-    #conTester.test_unset()
-    
+    conTester.test_insert()
+    conTester.test_date()
+    conTester.test_save_restart()
+    conTester.test_update()
+    conTester.test_upsert()
+    conTester.test_count()
+    conTester.test_insert_many()
+    conTester.test_distinct()    
+    conTester.test_unset()
     conTester.test_update_dict()
