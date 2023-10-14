@@ -104,9 +104,18 @@ class Deploy():
         assert 'obj-' in dir_fil or 'dir-' in dir_fil
 
         #print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
-        del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
-        #print("_deploy_website DEBUG 2") # node index.js .env.test file_browser deploy-test
-        print(del_fil,"del_fil")
+        for i in range (1,5):
+            print("removing . . . "+str(i)+"/5")
+            del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
+            print(del_fil,"del_fil")
+            if del_fil == True or 'error' in del_fil:
+                break
+            time.sleep(2)
+        try:
+            assert del_fil == True or 'error' in del_fil
+        except Exception as e:
+            print("Could not remove old website before proceeding")
+            raise e
         #print({
         #    'api_key':api_key,
         #    'path':remote_path_ipfs,
@@ -126,13 +135,15 @@ class Deploy():
         
         fil  = pq.create_entity(q,remote=True)
         #print(fil['traceback'])
+        
         print("early upload response...  ",fil)
         if 'message' in fil and fil['message']=='Endpoint request timed out':
             time.sleep(5)
             for i in range (1,5):
+                print("uploading . . . "+str(i)+"/5")
                 data_test  = pq.download_entity({'api_key':api_key,'path':remote_path_ipfs+"/"+name , 'attrib':True},remote=True)
                 if not 'self_id' in data_test: 
-                    time.sleep(i)
+                    time.sleep(i*5)
                 else:
                     fil = data_test['self_id']
                     break
@@ -263,6 +274,8 @@ if __name__ == "__main__":
     direc = '/'.join(__file__.split('/')[:-3]) +'/'
 
     run(*sys.argv[1:])
+    print("finished. Waiting . . .")
+    time.sleep(10)
     
 def run(*args):
     c = Deploy()

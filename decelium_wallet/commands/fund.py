@@ -40,7 +40,7 @@ class Command:
 
         faucet_contract_id = "obj-24f598c9-71a8-4038-88f4-4fedac22acc1"
         cpu_symbol = "CPU"
-
+        print({'api_key':api_key ,'self_id':faucet_contract_id,'func':'send','args':{'dst_id': api_key}})
         response  = pq.execute_entity({'api_key':api_key ,'self_id':faucet_contract_id,'func':'send','args':{'dst_id': api_key}},remote=True)
         #print("FUNDING RESPONSE",response)   
         return json.dumps(response)
