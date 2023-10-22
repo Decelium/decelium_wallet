@@ -4,6 +4,8 @@ import pickle
 import base64
 import requests
 import time
+import ipfshttpclient
+
 
 class jsondateencode_local:
     def loads(dic):
@@ -45,8 +47,36 @@ class http_client():
         return self.query(q, self.current_attr, remote=remote, url_version=self.url_version, 
                           wait_seconds=wait_seconds, re_query_delay=re_query_delay, show_url=show_url)
     
+    def apply_alternate_processing(self,filter,source_id):
+        print("PROCESSING")
+        print(source_id)
+        print(filter)
+        
+        if source_id == "create_ipfs" and 'file_type' in filter and filter['file_type'] == 'ipfs' and 'payload_type' in filter and filter['payload_type'] ==  'local_path':
+            print("PROCESSING IPFS IN PaxFinancialAPI")
+            print(filter['payload'])
+            print(os.path.basename(filter['payload']))
+            api = ipfshttpclient.connect(filter['ipfs_url']) #TODO Implement a proper path
+            api.extra_args = ['token=sampletoken1'] 
+            res = api.add(filter['payload'],recursive=True)
+            try:
+                dict_list = [{'name': res['Name'], 'cid': res['Hash'], 'size': res['Size']}]
+            except:
+                dict_list = [{'name': item['Name'], 'cid': item['Hash'], 'size': item['Size']} for item in res]
+            print(dict_list) 
+            root = {}
+            for item in dict_list:
+                if item['name'] == os.path.basename(filter['payload']):
+                    item['root'] = True
+                    break
+            return dict_list
+        return None
     def query(self, filter, source_id, remote=False, url_version='dev',  wait_seconds = 120, re_query_delay=5, show_url=False):
         time_start = datetime.datetime.utcnow()
+        filter_result = self.apply_alternate_processing(filter,source_id)
+        if filter_result:
+            return filter_result        
+        
         while (datetime.datetime.utcnow() - time_start).total_seconds() < wait_seconds:
             resp = self.query_wait(filter, source_id, remote, url_version, show_url)
             if type(resp) == dict and 'state' in resp and resp['state'] == 'updating':

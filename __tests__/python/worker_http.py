@@ -1,6 +1,7 @@
 import sys
 import time,datetime
 sys.path.append("../")
+sys.path.append("../../")
 from decelium_wallet.core import core
 import uuid
 import io
@@ -35,6 +36,7 @@ class WorkerHTTP():
         ret = {}
         wallets = self.core.discover_wallet()
         #look for a wallet named "test wallet" and load its contents
+        print(wallets)
         for wal in wallets:
             if 'test_wallet' in wal['wallet']:
                 with open(wal['wallet'],'r') as f:
@@ -47,9 +49,13 @@ class WorkerHTTP():
                 
         return {"error":"could not find .password and .wallet.dec in parent path"}
     
+    #############################
+    ###
+    ###  1 Setup
+    ###    
     def stage_init(self):
         raw_wallet = self.load_wallet_strings_from_disk()
-        #print(raw_wallet)
+        print(raw_wallet)
         success = self.core.load_wallet(data=raw_wallet['data'],
                                         password=raw_wallet['password'])
         print("success",success)
@@ -58,7 +64,33 @@ class WorkerHTTP():
         assert self.core.initial_connect(target_url="https://"+self.node_address+"/data/query",
                           target_user="test_user") == True
         return True
-    
+        
+    #############################
+    ###
+    ###  2 Upload a IPFS website, and ensure upload works
+    ###  
+    def stage_ipfs_test(self):
+        self.sessions=[]
+        del_fil  = self.core.net.delete_entity({'api_key':api_key,'path':'/test_website/website.ipfs'},remote=remote,show_errors=True)
+        assert del_fil == True or 'error' in del_fil
+
+        dict_list  = self.core.net.create_ipfs({
+            'api_key':api_key,
+            'file_type':'ipfs',
+            'ipfs_url':"/dns/ipfs/tcp/5001/http",
+            'payload_type':'local_path',
+            'payload':'/app/paxdatascience/example_site'},remote=remote,show_errors=True)
+
+        fil  = self.core.net.create_entity({
+            'api_key':api_key,
+            'path':'test_website',
+            'name':'website.ipfs',
+            'file_type':'ipfs',
+            'payload_type':'ipfs_pin_list',
+            'payload':dict_list},remote=remote,show_errors=True)
+        assert 'obj-' in fil
+        return True 
+
     #############################
     ###
     ###  2. Broadcast that you are ready for connections
@@ -111,6 +143,10 @@ class WorkerHTTP():
             raise e
         return found
 
+
+
+
+    
     #############################
     ###
     ###  4. Connect to every remote peer in a P2P manner. For each, set a value
@@ -166,7 +202,35 @@ class WorkerHTTP():
         self.core.net.disconnect()
         return True
     
+def run_ipfs_tests(worker_id,node,peers):
+    worker = WorkerHTTP(core(),node,peers)
     
+    steps = [
+        worker.stage_init,
+        worker.stage_ipfs_test,
+    ]
+    results = []
+    for i, step in enumerate(steps):
+        print(step)
+        print("----------------------------------------------------------")
+        print(f"[{i}] Worker {worker_id}: {step.__name__}")
+        result = False
+        try:
+            result = step()
+        except Exception as e:
+            import traceback as tb
+            result = tb.format_exc()
+            try:
+                print("forcing shutdown . . .", end="")
+                worker.stage_shutdown()
+                print(" done")
+            except:
+                pass
+        print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
+        if not result == True:
+            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(result))
+        if result != True:
+            break    
 def run_all_tests(worker_id,node,peers):
     
     worker = WorkerHTTP(core(),node,peers)
@@ -204,6 +268,7 @@ def run_all_tests(worker_id,node,peers):
             break
 
 if __name__ == "__main__":
+    # python3 worker_http.py 1 http://http://35.167.170.96:5000 [1]
     print("running "+str(sys.argv[1])+" on "+sys.argv[2]+" with peers "+sys.argv[2])
     worker_id = int(sys.argv[1])
     node = sys.argv[2]
@@ -211,4 +276,7 @@ if __name__ == "__main__":
         peers = json.loads(json.loads(sys.argv[3]))
     except:
         peers = json.loads(sys.argv[3])
-    run_all_tests(worker_id,node,peers)
+    #run_all_tests(worker_id,node,peers)
+    run_ipfs_tests(worker_id,node,peers)
+
+
