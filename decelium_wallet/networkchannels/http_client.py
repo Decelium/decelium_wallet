@@ -5,6 +5,7 @@ import base64
 import requests
 import time
 import ipfshttpclient
+import os
 
 
 class jsondateencode_local:
@@ -99,7 +100,7 @@ class http_client():
         if remote in [True, 'http', 'https']:
             resp = self.query_remote(source_id, filter, url_version, show_url)
             return resp
-        return None
+        return {"error":"No query processed"}
 
     def query_remote(self, source_id, query, url_version='dev', show_url=False):
         data = {}

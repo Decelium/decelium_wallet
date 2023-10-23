@@ -55,14 +55,14 @@ class WorkerHTTP():
     ###    
     def stage_init(self):
         raw_wallet = self.load_wallet_strings_from_disk()
-        print(raw_wallet)
+        
         success = self.core.load_wallet(data=raw_wallet['data'],
                                         password=raw_wallet['password'])
         print("success",success)
         assert success == True
         # The initial connection is to a miner and relay. Through this system, a user can download addresses of even more public access points.
-        assert self.core.initial_connect(target_url="https://"+self.node_address+"/data/query",
-                          target_user="test_user") == True
+        assert self.core.initial_connect(target_url=self.node_address,
+                          target_user="admin") == True
         return True
         
     #############################
@@ -71,23 +71,29 @@ class WorkerHTTP():
     ###  
     def stage_ipfs_test(self):
         self.sessions=[]
-        del_fil  = self.core.net.delete_entity({'api_key':api_key,'path':'/test_website/website.ipfs'},remote=remote,show_errors=True)
+        del_fil  = self.core.net.delete_entity(self.core.dw.sr({'api_key':self.core.dw.pubk("admin"),
+                                                                'path':'/test_website/website.ipfs'},["admin"]),
+                                               remote=True,
+                                               show_url=True)
+        #print("del_fil",del_fil)
         assert del_fil == True or 'error' in del_fil
 
         dict_list  = self.core.net.create_ipfs({
-            'api_key':api_key,
+            'api_key':self.core.dw.pubk("admin"),
             'file_type':'ipfs',
             'ipfs_url':"/dns/ipfs/tcp/5001/http",
             'payload_type':'local_path',
-            'payload':'/app/paxdatascience/example_site'},remote=remote,show_errors=True)
-
-        fil  = self.core.net.create_entity({
-            'api_key':api_key,
+            'payload':'/app/paxdatascience/example_site'},remote=True,show_url=True)
+        print("dict_list",dict_list)
+        q = {'api_key':self.core.dw.pubk("admin"),
             'path':'test_website',
             'name':'website.ipfs',
             'file_type':'ipfs',
             'payload_type':'ipfs_pin_list',
-            'payload':dict_list},remote=remote,show_errors=True)
+            'payload':dict_list}
+        q_signed = self.core.dw.sign_request(q,["admin"])
+        fil  = self.core.net.create_entity(q_signed,remote=True,show_url=True)
+        print("fil",fil)
         assert 'obj-' in fil
         return True 
 
@@ -110,7 +116,7 @@ class WorkerHTTP():
                     ("do_echo",do_echo)]
         
         
-        resp = self.core.listen(port,name,"test_user",public_handlers)
+        resp = self.core.listen(port,name,"admin",public_handlers)
         if resp not in [True, False, None] and "error" in resp:
             return resp
         time.sleep(10)
@@ -155,14 +161,14 @@ class WorkerHTTP():
         self.sessions=[]
         for peer_connect_data in self.core.node_peers():
             connect_data = peer_connect_data
-            connect_data['api_key'] = self.core.dw.pubk("test_user")
+            connect_data['api_key'] = self.core.dw.pubk("admin")
             sid = self.core.net.connect(connect_data,self.core.handle_connection)
 
             val = str(uuid.uuid4())
-            respset = self.core.net.set_value({'api_key':self.core.dw.pubk("test_user") ,
+            respset = self.core.net.set_value({'api_key':self.core.dw.pubk("admin") ,
                                   'key':"test"+str(worker_id),
                                    'val':val},session_id=sid)
-            respget = self.core.net.get_value({'api_key':self.core.dw.pubk("test_user") ,
+            respget = self.core.net.get_value({'api_key':self.core.dw.pubk("admin") ,
                                   'key':"test"+str(worker_id),},session_id=sid)
             
             print('set',respset)
@@ -250,11 +256,12 @@ def run_all_tests(worker_id,node,peers):
         print("----------------------------------------------------------")
         print(f"[{i}] Worker {worker_id}: {step.__name__}")
         result = False
+        message = ""
         try:
             result = step()
         except Exception as e:
             import traceback as tb
-            result = tb.format_exc()
+            message = tb.format_exc()
             try:
                 print("forcing shutdown . . .", end="")
                 worker.stage_shutdown()
@@ -263,20 +270,25 @@ def run_all_tests(worker_id,node,peers):
                 pass
         print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
         if not result == True:
-            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(result))
+            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(message))
         if result != True:
             break
 
 if __name__ == "__main__":
-    # python3 worker_http.py 1 http://http://35.167.170.96:5000 [1]
-    print("running "+str(sys.argv[1])+" on "+sys.argv[2]+" with peers "+sys.argv[2])
-    worker_id = int(sys.argv[1])
-    node = sys.argv[2]
+    # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
+    # python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
+    print("running "+str(sys.argv[2])+" on "+sys.argv[4]+" with peers "+sys.argv[4])
+    mode = sys.argv[1]
+    worker_id = int(sys.argv[2])
+    node = sys.argv[3]
     try:
-        peers = json.loads(json.loads(sys.argv[3]))
+        peers = json.loads(json.loads(sys.argv[4]))
     except:
-        peers = json.loads(sys.argv[3])
-    #run_all_tests(worker_id,node,peers)
-    run_ipfs_tests(worker_id,node,peers)
+        peers = json.loads(sys.argv[4])
+    if mode == "full":
+        run_all_tests(worker_id,node,peers)
+    
+    if mode == "ipfs":
+        run_ipfs_tests(worker_id,node,peers)
 
 
