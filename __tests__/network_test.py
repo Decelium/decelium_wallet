@@ -1,5 +1,7 @@
 import subprocess
 import time
+import sys
+# python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
 
 workers = [
     ("./python/worker_http.py", "python"),
@@ -18,7 +20,10 @@ workers = [
 processes = []
 for i, (worker_file, interpreter) in enumerate(workers):
     worker_id = f"{worker_file}_{i}"
-    cmd = [interpreter, worker_file, str(i)]
+    peers = list(range(0,len(workers)))
+    peers.pop(i)
+    # python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
+    cmd = [interpreter, worker_file,"full", str(i),"http://35.167.170.96:5000/data/query",str(peers)]
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     processes.append(process)
     print(f"Launched {worker_file} with ID: {worker_id}")
