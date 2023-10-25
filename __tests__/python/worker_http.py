@@ -55,7 +55,6 @@ class WorkerHTTP():
     ###    
     def stage_init(self):
         raw_wallet = self.load_wallet_strings_from_disk()
-        
         success = self.core.load_wallet(data=raw_wallet['data'],
                                         password=raw_wallet['password'])
         print("success",success)
@@ -81,9 +80,9 @@ class WorkerHTTP():
         dict_list  = self.core.net.create_ipfs({
             'api_key':self.core.dw.pubk("admin"),
             'file_type':'ipfs',
-            'ipfs_url':"/dns/ipfs/tcp/5001/http",
+            'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
             'payload_type':'local_path',
-            'payload':'/app/paxdatascience/example_site'},remote=True,show_url=True)
+            'payload':'./example_site'},remote=True,show_url=True)
         print("dict_list",dict_list)
         q = {'api_key':self.core.dw.pubk("admin"),
             'path':'test_website',
@@ -221,11 +220,12 @@ def run_ipfs_tests(worker_id,node,peers):
         print("----------------------------------------------------------")
         print(f"[{i}] Worker {worker_id}: {step.__name__}")
         result = False
+        message = ""
         try:
             result = step()
         except Exception as e:
             import traceback as tb
-            result = tb.format_exc()
+            message = tb.format_exc()
             try:
                 print("forcing shutdown . . .", end="")
                 worker.stage_shutdown()
@@ -234,9 +234,9 @@ def run_ipfs_tests(worker_id,node,peers):
                 pass
         print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
         if not result == True:
-            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(result))
+            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(message))
         if result != True:
-            break    
+            break   
 def run_all_tests(worker_id,node,peers):
     
     worker = WorkerHTTP(core(),node,peers)
