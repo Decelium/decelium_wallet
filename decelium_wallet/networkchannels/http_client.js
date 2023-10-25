@@ -113,12 +113,6 @@ class http_client_wrapped {
         this.port = port;
     }
 
-//    __run_query(q, remote = true, wait_seconds = 120, re_query_delay = 5, show_url = false) {
-//        if (!('api_key' in q) || q['api_key'] === null) {
-//            q['api_key'] = this.api_key;
-//        }
-//        return this.query(q, this.current_attr, {remote, url_version: this.url_version, wait_seconds, re_query_delay, show_url});
-//    }
     __run_query(q, remote = true, wait_seconds = 120, re_query_delay = 5, show_url = false) {
         if (!('api_key' in q) || q['api_key'] === null) {
             q['api_key'] = this.api_key;
@@ -126,10 +120,90 @@ class http_client_wrapped {
         return this.query(q, this.current_attr, {remote, url_version: this.url_version, wait_seconds, re_query_delay, show_url});
     }
     
+    async loadFileData (path) {
+        let itemsToAdd = [];
+        // This function will get all the files recursively from a directory
+        const getFilesRecursive = (dir) => {
+            let results = [];
+            const list = fs.readdirSync(dir);
+            list.forEach((file) => {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+                if (stat && stat.isDirectory()) {
+                    results = results.concat(getFilesRecursive(filePath));
+                } else {
+                    results.push(filePath);
+                }
+            });
+            return results;
+        };
+
+        let itemsToAdd = [];
+        if (fs.statSync(path).isDirectory()) {
+            const allFiles = getFilesRecursive(path);
+            for (const filePath of allFiles) {
+                const relativePath = path.relative(path, filePath);
+                const fileContent = fs.readFileSync(filePath);
+                itemsToAdd.push({
+                    path: relativePath,
+                    content: fileContent
+                });
+            }
+        } else {
+            const fileContent = fs.readFileSync(path);
+            itemsToAdd.push({
+                path: this.getBasename(path),
+                content: fileContent
+            });
+        }    
+        return itemsToAdd;
+    }
+    
+   async applyAlternateProcessing(filter, sourceId) {
+        console.log("PROCESSING");
+        console.log(sourceId);
+        console.log(filter);
+
+        if (sourceId === "create_ipfs" 
+            && 'file_type' in filter && filter['file_type'] === 'ipfs' 
+            && 'payload_type' in filter && filter['payload_type'] === 'local_path') {
+            
+            console.log("PROCESSING IPFS IN PaxFinancialAPI");
+            console.log(filter['payload']);
+            console.log(getBasename(filter['payload'])); 
+            
+            const api = IPFS.create({ 
+                host: '35.167.170.96', 
+                port: '5001', 
+                protocol: 'http',
+            });
+
+            let itemsToAdd = await this.loadFileData(filter['payload']);
+
+            try {
+                const addedItems = await api.add(itemsToAdd);
+                console.log(addedItems);
+                return addedItems;
+            } catch (error) {
+                console.error('Error adding to IPFS:', error);
+                return undefined;
+            }
+        } else {
+            return undefined;
+        }
+    }
+
+    getBasename(path) {
+        return path.split('/').pop();
+    } 
     
     async query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false}) {
         const time_start = Date.now();
         let resp = undefined;
+        resp = this.applyAlternateProcessing(filter, source_id);
+        if (resp!= undefined)
+            return resp;
+        
         while ((Date.now() - time_start) / 1000 < wait_seconds) {
             resp = await this.query_wait(filter, source_id, {remote, url_version, show_url});
             if (resp && typeof resp === 'object' && 'state' in resp && resp['state'] === 'updating') {

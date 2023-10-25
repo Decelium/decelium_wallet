@@ -62,22 +62,18 @@ class WorkerHTTP {
 
     async stage_init() {
         await this.core.init();
-        //console.log ("FINISHED INIT");
-        //console.log (this.core.pyodide);
         const raw_wallet = await this.load_wallet_strings_from_disk();
-        //console.log ("disk");
         if (raw_wallet.error)
             throw new Error('Failed to load wallet fron disk: '+raw_wallet.error);
             
         const success = this.core.load_wallet(raw_wallet.data, raw_wallet.password);
-        //console.log('success', success);
         if (success !== true) {
             throw new Error('Failed to load wallet');
         }
 
         const connected = await this.core.initial_connect(
             'https://'+this.node_address+'/data/query',
-            'test_user'
+            'admin'
         );
         if (connected !== true) {
             throw new Error('Failed to connect');
@@ -86,8 +82,38 @@ class WorkerHTTP {
         return true;
     }
 
+    // query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false})
+    async stage_ipfs_upload() {
+        let signed_del = await this.core.dw.sr({'api_key':this.core.dw.pubk("admin"),
+                                   'path':'/test_website/website.ipfs'},["admin"])
+        
+        let del_fil  = this.core.net.delete_entity(signed_del,{ remote:true, show_url:true});
+        if (del_fil !== true && !Object.keys(del_fil).includes("error")) {
+            throw new Error('Failed to connect');
+        }
+        dict_list  = this.core.net.create_ipfs({
+            'api_key':this.core.dw.pubk("admin"),
+            'file_type':'ipfs',
+            'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
+            'payload_type':'local_path',
+            'payload':'./example_site'},{remote=true,show_url=true})
+        console.log({dict_list});
+        let q = {'api_key':self.core.dw.pubk("admin"),
+            'path':'test_website',
+            'name':'website.ipfs',
+            'file_type':'ipfs',
+            'payload_type':'ipfs_pin_list',
+            'payload':dict_list}
+        let q_signed = this.core.dw.sign_request(q,["admin"]);
+        fil  = this.core.net.create_entity(q_signed,{remote:true,show_url=true});
+        console.log({fil});
+        if (!fil.includes('obj-')) {
+            throw new Error("'obj-' not found in fil");
+        }  
+        
+    }
+    
     async stage_broadcast() {
-        //return true;
         const mimi = new MiniGetterSetter();
 
         const port = 5003 + parseInt(workerId);
@@ -99,60 +125,13 @@ class WorkerHTTP {
             ['do_echo', (args) => args],
         ];
 
-        const resp = await this.core.listen(port, name,"test_user", public_handlers);
+        const resp = await this.core.listen(port, name,"admin", public_handlers);
         console.log("Listening");
         await new Promise(resolve => setTimeout(resolve, 10000));
         console.log("Done");
         return resp;
     }
-    /*
-    #############################
-    ###
-    ###  3. List all remote nodes. Ensure you can connect
-    ###
-    def stage_list_nodes(self):
-        time.sleep(0.5)
-        nodes = self.core.node_list()
-        found = False
-        count = 0
-        for n in nodes:            
-            if n['self_id'] == self.core.self_id:
-                print ("found self")
-                found = True
-            else:
-                if 'test_id' in n['connect_data']['meta']:
-                    count = count + 1
-                    print("py passed inspection" + n['self_id'] )
-        try:
-            assert len(self.peer_ids) == count
-        except Exception as e:
-            print("self.peer_ids",len(self.peer_ids))
-            print("count",count)
-            pprint(nodes)
-            raise e
-        return found    
-    
-    */
-    /*
-    async stage_list_nodes() {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const nodes = await this.core.node_list();
-        let found = true; // True until we implement broadcast
-
-        for (const n of nodes) {
-            if (n.self_id === this.core.self_id) {
-                console.log('found self');
-                found = true;
-            } else {
-                let x = 0;
-                if ('test_id' in n.connect_data.meta) {
-                    console.log('js passed inspection' + x.toString()+n.self_id);
-                }
-            }
-        }
-
-        return found;
-    }*/
+ 
     async stage_list_nodes() {
         console.log("IN STAGE LIST NODES");
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -186,7 +165,7 @@ class WorkerHTTP {
         this.sessions = [];
         for (const peer_connect_data of await this.core.node_peers()) {
             const connect_data = peer_connect_data;
-            connect_data.api_key = this.core.dw.pubk('test_user');
+            connect_data.api_key = this.core.dw.pubk('admin');
             const sid = await this.core.net.connect(
                 connect_data,
                 this.core.handle_connection.bind(this.core)
@@ -198,7 +177,7 @@ class WorkerHTTP {
             console.log(this.core.net.set_value);
             const respset = await this.core.net.set_value(
                 {
-                    api_key: this.core.dw.pubk('test_user'),
+                    api_key: this.core.dw.pubk('admin'),
                     key: 'test' + workerId,
                     val,
                 },
@@ -206,7 +185,7 @@ class WorkerHTTP {
             );
             const respget = await this.core.net.get_value(
                 {
-                    api_key: this.core.dw.pubk('test_user'),
+                    api_key: this.core.dw.pubk('admin'),
                     key: 'test' + workerId,
                 },
                 { session_id: sid }
