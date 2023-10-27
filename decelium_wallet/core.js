@@ -85,7 +85,7 @@ class Core {
         
         this.init_done = true;
         this.dw = new wallet(this);
-        this.net = new network();
+        if (!this.net) this.net = new network();
         this.service = new service();
         this.node_peer_list = null;
         //console.log("FINISHED INIT 1");
@@ -374,6 +374,7 @@ class Core {
                            target_user = undefined,
                           api_key=undefined) 
     {
+        if (!this.net) this.net = new network();
         let set_api_key =  api_key;
         if (!set_api_key && target_user && this.dw)
             set_api_key = this.dw.pubk(target_user);
