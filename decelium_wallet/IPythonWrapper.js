@@ -76,7 +76,7 @@ class IPythonWrapper {
                 }
                 else
                 {
-                    if (Array.isArray(args)) {
+                    if (Array.isArray(args) &&  args.length ==1) {
                         //console.log("AM ARRAY");
                         // args is an array, join elements with commas
                         for (const val of args) {
@@ -86,6 +86,7 @@ class IPythonWrapper {
                         //argString += args.join(',') + ',';
                     } else {
                         //console.log("AM NOT ARRAY");
+                        //console.log(args);
                         // args is an object, join key-value pairs with commas
                         for (const key in args) {
                             //console.log(key);
@@ -98,8 +99,13 @@ class IPythonWrapper {
                 //    argString=argString+key+'="'+args[key]+'",';
                 //}
                 argString='('+argString+'format="json")';
-                console.log(instanceName+`.`+method+argString);
+                // console.log(instanceName+`.`+method+argString);
+                //instanceName+`.`+method+argString
+                //throw new Error(instanceName+`.`+method+argString);
                 let result = this.pyodide.runPython(instanceName+`.`+method+argString);
+                //console.log("wallet result");
+                //console.log({result});
+            
                 return JSON.parse(result); 
               } 
         );            

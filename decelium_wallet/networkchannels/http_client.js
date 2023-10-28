@@ -1,5 +1,13 @@
 //import axios from 'axios';
 import fetch from 'cross-fetch';
+import * as IPFS from 'ipfs-core';
+let fs = undefined;
+let path = undefined;
+let base58btc= undefined;
+let encode= undefined;
+let CID=  undefined;
+//const ipfs = await IPFS.create()
+
 //node worker_http.js 1 > debug.txt
 
 /*
@@ -40,10 +48,10 @@ class jsondateencode_local {
 
 class jsondateencode_local {
     static loads(dic) {
-        console.log("DECODING");
-        console.log(dic);
-        console.log(typeof dic);
-        console.log("DECODING2");
+        //console.log("DECODING");
+        //console.log(dic);
+        //console.log(typeof dic);
+        //console.log("DECODING2");
         let p;
         if (typeof dic === 'string') {
             if (this.isJsonString(dic)) {
@@ -60,8 +68,8 @@ class jsondateencode_local {
         {
             p = dic;
         }
-        console.log("DECODING3");
-        console.log(p);
+        //console.log("DECODING3");
+        //console.log(p);
         return p;
     }
 
@@ -111,17 +119,20 @@ class http_client_wrapped {
         this.url_version = url_version;
         this.api_key = api_key;
         this.port = port;
+        
     }
 
-    __run_query(q, remote = true, wait_seconds = 120, re_query_delay = 5, show_url = false) {
+    __run_query(q, remote = true, show_url = false) {
+        let wait_seconds = 120; 
+        let re_query_delay = 5;
         if (!('api_key' in q) || q['api_key'] === null) {
             q['api_key'] = this.api_key;
         }
         return this.query(q, this.current_attr, {remote, url_version: this.url_version, wait_seconds, re_query_delay, show_url});
     }
     
-    async loadFileData (path) {
-        let itemsToAdd = [];
+    async loadFileData (path_in) {
+        //let itemsToAdd = [];
         // This function will get all the files recursively from a directory
         const getFilesRecursive = (dir) => {
             let results = [];
@@ -139,10 +150,10 @@ class http_client_wrapped {
         };
 
         let itemsToAdd = [];
-        if (fs.statSync(path).isDirectory()) {
-            const allFiles = getFilesRecursive(path);
+        if (fs.statSync(path_in).isDirectory()) {
+            const allFiles = getFilesRecursive(path_in);
             for (const filePath of allFiles) {
-                const relativePath = path.relative(path, filePath);
+                const relativePath = path.relative(path_in, filePath);
                 const fileContent = fs.readFileSync(filePath);
                 itemsToAdd.push({
                     path: relativePath,
@@ -150,39 +161,81 @@ class http_client_wrapped {
                 });
             }
         } else {
-            const fileContent = fs.readFileSync(path);
+            const fileContent = fs.readFileSync(path_in);
             itemsToAdd.push({
-                path: this.getBasename(path),
-                content: fileContent
+                "path": this.getBasename(path_in),
+                "content": fileContent
             });
         }    
         return itemsToAdd;
     }
+
+
+    async convertFilesToDicts(files) {
+        if(base58btc == undefined)
+        {
+            let base58Module = await import('multiformats/bases/base58');
+            let digestModule = await import('multiformats/hashes/digest');
+            let cidModule = await import('multiformats/cid');
+
+            base58btc = base58Module.base58btc;
+            encode = digestModule.encode;
+            CID = cidModule.CID;
+        }
+        return files.map(file => {
+            // Convert the digest object to Uint8Array
+            const digestArray = Object.values(file.cid.multihash.digest);
+            const digestBytes = Uint8Array.from(digestArray);
+
+            // Create the multihash and then the CID
+            const mh = encode('sha2-256', digestBytes);
+            const cid = CID.create(0, 112, mh);
+
+            // Convert the CID to a base58-encoded string
+            const cidString = cid.toString(base58btc);
+
+            return {
+                path: file.path,
+                cid: cidString
+            };
+        });
+    }
+
+
+
     
    async applyAlternateProcessing(filter, sourceId) {
-        console.log("PROCESSING");
-        console.log(sourceId);
-        console.log(filter);
-
+        if (fs == undefined)
+        {
+            path = await import('path');
+            fs = await import('fs');
+        }
         if (sourceId === "create_ipfs" 
             && 'file_type' in filter && filter['file_type'] === 'ipfs' 
             && 'payload_type' in filter && filter['payload_type'] === 'local_path') {
             
-            console.log("PROCESSING IPFS IN PaxFinancialAPI");
+            console.log("PROCESSING IPFS IN PaxFinancialAPI-------------------------------");
             console.log(filter['payload']);
-            console.log(getBasename(filter['payload'])); 
+            console.log(this.getBasename(filter['payload'])); 
             
-            const api = IPFS.create({ 
-                host: '35.167.170.96', 
-                port: '5001', 
-                protocol: 'http',
-            });
-
+            //const api = IPFS.create({ 
+            //    host: '35.167.170.96', 
+            //    port: '5001', 
+            //    protocol: 'http',
+            //});
+            const api = await IPFS.create({url: "http://35.167.170.96:5001/api/v0" });
+  
             let itemsToAdd = await this.loadFileData(filter['payload']);
 
             try {
-                const addedItems = await api.add(itemsToAdd);
-                console.log(addedItems);
+                let generator = await api.addAll(itemsToAdd);
+                let addedItems = [];
+
+                for await (const item of generator) {
+                    item.cid = item.cid.toString();
+                    addedItems.push(item);
+
+                }
                 return addedItems;
             } catch (error) {
                 console.error('Error adding to IPFS:', error);
@@ -198,11 +251,15 @@ class http_client_wrapped {
     } 
     
     async query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false}) {
+
+        
         const time_start = Date.now();
         let resp = undefined;
-        resp = this.applyAlternateProcessing(filter, source_id);
+        resp = await this.applyAlternateProcessing(filter, source_id);
         if (resp!= undefined)
+        {
             return resp;
+        }
         
         while ((Date.now() - time_start) / 1000 < wait_seconds) {
             resp = await this.query_wait(filter, source_id, {remote, url_version, show_url});
@@ -218,14 +275,16 @@ class http_client_wrapped {
                 break;
             }
         }
-         //    console.log("GETTING DATA3");
-         //   console.log(resp);
-       
-        
+        if(show_url === true)
+        {
+            console.log("RETURN FROM QUERY()");
+            console.log(resp);
+        }
         return resp;
     }
 
     async query_wait(filter, source_id, {remote = false, url_version = 'dev', show_url = false}) {
+        
         if ('__encoded_query' in filter) {
             let dic = this.do_decode(filter['__encoded_query']);
             filter = {...filter, ...dic};
@@ -241,16 +300,17 @@ class http_client_wrapped {
     }
 
     async query_remote(source_id, query, url_version = 'dev', show_url = false) {
+        
         let data = {};
         data['qtype'] = source_id;
         data['__str_encoded_query'] = this.do_encode_string(query);
 
-        //if (show_url) {
-        //    console.log("QUERY REMOTE");
-        //    console.log(url_version);
-        //    console.log(query);
-        //    console.log(data);
-        //}
+        if (show_url) {
+            console.log("show_url QUERY REMOTE");
+            console.log(url_version);
+            console.log(query);
+            console.log(data);
+        }
         //console.log('query_remote----------------------');
         //console.log(url_version);
         //console.log(data);
@@ -282,6 +342,11 @@ class http_client_wrapped {
         try {
             let rText = await r.text();
             try {
+                if (show_url) {
+                    console.log("show_url return text:");
+                    console.log(rText);
+                }
+                
                 rData = JSON.parse(rText);
             } catch (e) {
                 console.log("Response is not JSON:", e);
@@ -301,6 +366,10 @@ class http_client_wrapped {
             dat = rData;
         }        
             
+        if (show_url) {
+            console.log("show_url return val:");
+            console.log(dat);
+        }
         
         return dat;
         

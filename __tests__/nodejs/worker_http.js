@@ -66,7 +66,7 @@ class WorkerHTTP {
         if (raw_wallet.error)
             throw new Error('Failed to load wallet fron disk: '+raw_wallet.error);
             
-        const success = this.core.load_wallet(raw_wallet.data, raw_wallet.password);
+        const success = await this.core.load_wallet(raw_wallet.data, raw_wallet.password);
         if (success !== true) {
             throw new Error('Failed to load wallet');
         }
@@ -84,32 +84,62 @@ class WorkerHTTP {
 
     // query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false})
     async stage_ipfs_upload() {
-        let signed_del = await this.core.dw.sr({'api_key':this.core.dw.pubk("admin"),
-                                   'path':'/test_website/website.ipfs'},["admin"])
+        // sr(self,q,user_ids,format=None):
+        let signed_del = await this.core.dw.sr({q: {'api_key':await this.core.dw.pubk("admin"),
+                                   'path':'/test_website/website.ipfs'},user_ids:["admin"]})
         
-        let del_fil  = this.core.net.delete_entity(signed_del,{ remote:true, show_url:true});
-        if (del_fil !== true && !Object.keys(del_fil).includes("error")) {
-            throw new Error('Failed to connect');
+        let del_fil  = await this.core.net.delete_entity(signed_del);
+        if (typeof del_fil === 'object' && del_fil.error) {
+            console.log("delete warning:"+del_fil.error );
+            del_fil = true;
         }
-        dict_list  = this.core.net.create_ipfs({
-            'api_key':this.core.dw.pubk("admin"),
+
+        if (del_fil != true) {
+            throw new Error("Could not delete old website :"+del_fil );
+        }
+        console.log("1) ------------ REMOVED OLD FILE!")
+        let dict_list  = await this.core.net.create_ipfs({
+            'api_key':await this.core.dw.pubk("admin"),
             'file_type':'ipfs',
             'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
             'payload_type':'local_path',
-            'payload':'./example_site'},{remote=true,show_url=true})
+            'payload':'./example_site'});
         console.log({dict_list});
-        let q = {'api_key':self.core.dw.pubk("admin"),
+        if (dict_list===undefined) 
+            throw new Error("COULD NOT PIN");
+        if( typeof dict_list != "object")
+            throw new Error("Did not get a list of pins back");
+        if( dict_list.length != 1)
+            throw new Error("wrong number of files returned");
+        dict_list.forEach((item) =>{
+            if( item.cid ==undefined)
+                throw new Error("Did not get a CID back");
+            if( item.path ==undefined)
+                throw new Error("Did not get a path back");
+            if( typeof item.cid != 'string')
+                throw new Error("Invalid CID");
+            if( typeof item.path != 'string')
+                throw new Error("Invalid path");
+        });
+        // TODO check for root item label
+        console.log("2) ------------ UPLOADED TO IPFS!")
+        let q = {'api_key':this.core.dw.pubk("admin"),
             'path':'test_website',
             'name':'website.ipfs',
             'file_type':'ipfs',
             'payload_type':'ipfs_pin_list',
             'payload':dict_list}
-        let q_signed = this.core.dw.sign_request(q,["admin"]);
-        fil  = this.core.net.create_entity(q_signed,{remote:true,show_url=true});
+        let q_signed = await this.core.dw.sign_request({q,user_ids:["admin"]});
+        let fil  = await this.core.net.create_entity(q_signed);
+        console.log("CREATE IS FAILING");
         console.log({fil});
-        if (!fil.includes('obj-')) {
-            throw new Error("'obj-' not found in fil");
-        }  
+        if (typeof fil === 'object' && fil.error) {
+            throw new Error('Failed to connect:'+ fil.error);
+        }
+
+        if (typeof fil === 'string' && !fil.includes('obj-')) {
+            throw new Error("'obj-' not found in fil:"+fil );
+        } 
         
     }
     
@@ -218,103 +248,6 @@ class WorkerHTTP {
     }
 }
 
-/*
-
-def run_all_tests(worker_id,node,peers):
-    
-    worker = WorkerHTTP(core(),node,peers)
-    
-    steps = [
-        worker.stage_init,
-        worker.stage_broadcast,
-        worker.stage_list_nodes,
-        worker.stage_set,
-        worker.stage_verify,
-        worker.stage_shutdown,
-    ]
-
-    results = []
-    for i, step in enumerate(steps):
-        print(step)
-        print("----------------------------------------------------------")
-        print(f"[{i}] Worker {worker_id}: {step.__name__}")
-        result = False
-        try:
-            result = step()
-        except Exception as e:
-            import traceback as tb
-            result = tb.format_exc()
-            try:
-                print("forcing shutdown . . .", end="")
-                worker.stage_shutdown()
-                print(" done")
-            except:
-                pass
-        print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
-        if not result == True:
-            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(result))
-        if result != True:
-            break
-            
-if __name__ == "__main__":
-    print("running "+str(sys.argv[1])+" on "+sys.argv[2])
-    worker_id = int(sys.argv[1])
-    node = sys.argv[2]
-    peers = json.loads(json.loads(sys.argv[3]))
-    
-    run_all_tests(worker_id,node,peers)
-*/
-
-
-
-/*
-async function run_all_tests() {
-    const worker = new WorkerHTTP(new Core());
-
-    const steps = [
-        worker.stage_init.bind(worker),
-        worker.stage_broadcast.bind(worker),
-        worker.stage_list_nodes.bind(worker),
-        worker.stage_set.bind(worker),
-        //worker.stage_verify.bind(worker),
-        worker.stage_shutdown.bind(worker),
-    ];
-
-    const results = [];
-    for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        console.log(`----------------------------------------------------------`);
-        console.log(`[${i}] Worker ${workerId}: ${step.name}`);
-
-        let result = false;
-        try {
-            result = await step();
-        } catch (err) {
-            console.error(err);
-        }
-
-        if (result !== true) {
-            console.log(result);
-        }
-        results.push(result);
-        console.log(`worker_http.js_${workerId}: Step ${step.name} ${result ? 'succeeded' : 'failed'}`);
-
-        if (result !== true) {
-            break;
-        }
-    }
-
-    await fs.writeFile(`worker${workerId}_output.txt`, results.join('\n'));
-}
-
-//if (require.main === module) { THIS CAUSED BUGS
-console.log('running ' + process.argv[2]);
-const workerId = parseInt(process.argv[2]);
-run_all_tests();
-//}
-*/
-
-
 
 async function run_all_tests(workerId, node, peers) {
     const worker = new WorkerHTTP(new Core(), node, peers);
@@ -355,6 +288,43 @@ async function run_all_tests(workerId, node, peers) {
     }
 }
 
+
+
+async function run_ipfs_tests(workerId, node, peers) {
+    const worker = new WorkerHTTP(new Core(), node, peers);
+
+    const steps = [
+        worker.stage_init.bind(worker),
+        worker.stage_ipfs_upload.bind(worker),
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        console.log(`----------------------------------------------------------`);
+        console.log(`[${i}] Worker ${workerId}: ${step.name}`);
+
+        let result = false;
+        try {
+            result = await step();
+        } catch (err) {
+            console.error(`Error: ${err}`);
+            result = err.stack;
+            try {
+                console.log("forcing shutdown . . .");
+                await worker.stage_shutdown();
+                console.log("done");
+            } catch (e) {
+                console.error("Shutdown failed: ", e);
+            }
+        }
+
+        console.log(`worker_http.js_${workerId}: Step ${step.name} ${result === true ? 'succeeded' : 'failed'}`);
+        if (result !== true) {
+            throw new Error(`[${i}] Worker ${workerId}: ${step.name} ${result}`);
+        }
+    }
+}
+
 //if (require.main === module) {
 if (!process.argv[2] || !process.argv[3] || !process.argv[4]) {
     console.error('Required arguments not provided');
@@ -366,5 +336,8 @@ const workerId = parseInt(process.argv[2]);
 const node = process.argv[3];
 const peers = JSON.parse(process.argv[4]);
 
-run_all_tests(workerId, node, peers).catch(e => console.error(e));
+//run_all_tests(workerId, node, peers).catch(e => console.error(e));
+run_ipfs_tests(workerId, node, peers).catch(e => console.error(e));
+
 //} node ./nodejs/worker_http.js 1 dev.paxfinancial.ai "[]"
+// node ./worker_http.js 1 dev.paxfinancial.ai "[]"

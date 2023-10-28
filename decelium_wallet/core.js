@@ -13,7 +13,7 @@ path = null;
 class Core {
   isNode() {
     if (typeof window === "undefined") return true;
-    return false;
+        return false;
   }
 
   constructor() {}
@@ -21,10 +21,10 @@ class Core {
   async init() {
     if (this.init_done) return true;
 
-    //if (typeof window === 'undefined') { // Check if in Node.js environment
-    //    fs = await import('fs');
-    //    path = await import('path');
-    //}
+    if (typeof window === 'undefined') { // Check if in Node.js environment
+        fs = await import('fs');
+        path = await import('path');
+    }
 
     if (this.isNode()) {
       //const { loadPyodide } = require("pyodide");
@@ -189,8 +189,14 @@ class Core {
     if (typeof data !== "string" || typeof password !== "string") {
       throw new Error("Invalid argument types.");
     }
+    //throw new Error(`STOP HERE 2`);
     this.dw = new wallet(this);
+    //throw new Error(`STOP HERE 1`);
     await this.dw.init();
+    //throw new Error(`STOP HERE`);
+    //console.log({data});
+    //throw new Error(`STOP HERE:`+ data);
+      
     const success = this.dw.load({ data, password, mode });
     return success;
   }
