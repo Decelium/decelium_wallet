@@ -47,6 +47,10 @@ class IPythonWrapper {
                         return `'${item}'`;
                     } else if (typeof item === 'number') {
                         return item;
+                    } else if (item === true) {
+                        return "True";
+                    } else if  (item === false) {
+                        return "False";
                     } else if (typeof item === 'object') {
                         if (Array.isArray(item)) {
                             return '[' + item.map(objectToPythonDict).join(', ') + ']';

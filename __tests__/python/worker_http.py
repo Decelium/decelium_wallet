@@ -277,6 +277,8 @@ def run_all_tests(worker_id,node,peers):
 if __name__ == "__main__":
     # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
     # python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
+    # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query []
+    
     print("running "+str(sys.argv[2])+" on "+sys.argv[4]+" with peers "+sys.argv[4])
     mode = sys.argv[1]
     worker_id = int(sys.argv[2])

@@ -6,52 +6,10 @@ let path = undefined;
 let base58btc= undefined;
 let encode= undefined;
 let CID=  undefined;
-//const ipfs = await IPFS.create()
-
-//node worker_http.js 1 > debug.txt
-
-/*
-class jsondateencode_local {
-    static loads(dic) {
-        console.log("DECODING");
-        console.log(dic);
-        console.log("DECODING2");
-        let p =  JSON.parse(dic, this.datetime_parser);
-        console.log("DECODING3");
-
-    }
-
-    static dumps(dic) {
-        return JSON.stringify(dic, this.datedefault);
-    }
-
-    static datedefault(key, val) {
-        if (Array.isArray(val) && val[0] === '__ref') {
-            return ['__ref', ...val.slice(1)];
-        }
-        if (val instanceof Date) {
-            return val.toISOString();
-        }
-        return val;
-    }
-
-    static datetime_parser(key, val) {
-        if (typeof val === 'string' && val.includes('T')) {
-            const date = moment(val, 'YYYY-MM-DDTHH:mm:ss', true);
-            if (date.isValid()) {
-                return date.toDate();
-            }
-        }
-        return val;
-    }
-}*/
 
 class jsondateencode_local {
     static loads(dic) {
-        //console.log("DECODING");
-        //console.log(dic);
-        //console.log(typeof dic);
-        //console.log("DECODING2");
+
         let p;
         if (typeof dic === 'string') {
             if (this.isJsonString(dic)) {
@@ -68,8 +26,7 @@ class jsondateencode_local {
         {
             p = dic;
         }
-        //console.log("DECODING3");
-        //console.log(p);
+
         return p;
     }
 
@@ -132,6 +89,8 @@ class http_client_wrapped {
     }
     
     async loadFileData (path_in) {
+        // TODO - Correctly create sub directory
+        // TODO - Correstly assign root element
         //let itemsToAdd = [];
         // This function will get all the files recursively from a directory
         const getFilesRecursive = (dir) => {
@@ -151,6 +110,10 @@ class http_client_wrapped {
 
         let itemsToAdd = [];
         if (fs.statSync(path_in).isDirectory()) {
+            //itemsToAdd.push({
+            //    path: 'root',
+            //    content: Buffer.from('')  // Representing empty content for root dir
+            //});            
             const allFiles = getFilesRecursive(path_in);
             for (const filePath of allFiles) {
                 const relativePath = path.relative(path_in, filePath);
@@ -164,7 +127,8 @@ class http_client_wrapped {
             const fileContent = fs.readFileSync(path_in);
             itemsToAdd.push({
                 "path": this.getBasename(path_in),
-                "content": fileContent
+                "content": fileContent,
+                "root":true
             });
         }    
         return itemsToAdd;
@@ -183,15 +147,11 @@ class http_client_wrapped {
             CID = cidModule.CID;
         }
         return files.map(file => {
-            // Convert the digest object to Uint8Array
             const digestArray = Object.values(file.cid.multihash.digest);
             const digestBytes = Uint8Array.from(digestArray);
-
-            // Create the multihash and then the CID
             const mh = encode('sha2-256', digestBytes);
             const cid = CID.create(0, 112, mh);
 
-            // Convert the CID to a base58-encoded string
             const cidString = cid.toString(base58btc);
 
             return {
@@ -214,25 +174,27 @@ class http_client_wrapped {
             && 'file_type' in filter && filter['file_type'] === 'ipfs' 
             && 'payload_type' in filter && filter['payload_type'] === 'local_path') {
             
-            console.log("PROCESSING IPFS IN PaxFinancialAPI-------------------------------");
-            console.log(filter['payload']);
-            console.log(this.getBasename(filter['payload'])); 
-            
-            //const api = IPFS.create({ 
-            //    host: '35.167.170.96', 
-            //    port: '5001', 
-            //    protocol: 'http',
-            //});
-            const api = await IPFS.create({url: "http://35.167.170.96:5001/api/v0" });
+            const api = await IPFS.create({url: "http://35.167.170.96:5001/api/v0" }); // TODO generalize 
   
             let itemsToAdd = await this.loadFileData(filter['payload']);
 
             try {
-                let generator = await api.addAll(itemsToAdd);
+                console.log("itemsToAdd");
+                console.log(itemsToAdd);
+                //let generator = await api.addAll(itemsToAdd);
+                let generator = await api.addAll(itemsToAdd,{ wrapWithDirectory: true });
+                
                 let addedItems = [];
 
                 for await (const item of generator) {
+                    //console.log("raw item");
+                    //console.log(item);
                     item.cid = item.cid.toString();
+                    item.name = item.path.toString();
+                    if (item.name == "")
+                    {
+                        item.root = true;
+                    }
                     addedItems.push(item);
 
                 }

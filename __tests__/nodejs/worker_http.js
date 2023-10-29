@@ -13,22 +13,7 @@ class WorkerHTTP {
         this.node_address = node;
         this.peer_ids = peers;        
     }
-    /*
-    async load_wallet_strings_from_disk() {
-        for (const root of ['./', '../', '../../', '../../../', '../../../../']) {
-            try {
-                const password = await fs.readFile(root + '.password', 'utf-8');
-                const walletstr = await fs.readFile(root + '.wallet.dec', 'utf-8');
-                return {
-                    password: password.trim(),
-                    data: walletstr.trim(),
-                };
-            } catch (err) {
-                // ignore errors
-            }
-        }
-        return { error: 'could not find .password and .wallet.dec in parent path' };
-    }*/
+
     load_wallet_strings_from_disk() {
         let ret = {};
         const wallets = this.core.discover_wallet();
@@ -109,8 +94,9 @@ class WorkerHTTP {
             throw new Error("COULD NOT PIN");
         if( typeof dict_list != "object")
             throw new Error("Did not get a list of pins back");
-        if( dict_list.length != 1)
+        if( dict_list.length != 5)
             throw new Error("wrong number of files returned");
+        
         dict_list.forEach((item) =>{
             if( item.cid ==undefined)
                 throw new Error("Did not get a CID back");
@@ -140,7 +126,7 @@ class WorkerHTTP {
         if (typeof fil === 'string' && !fil.includes('obj-')) {
             throw new Error("'obj-' not found in fil:"+fil );
         } 
-        
+        return true;
     }
     
     async stage_broadcast() {
