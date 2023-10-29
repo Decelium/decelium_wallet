@@ -222,13 +222,15 @@ class http_client_wrapped {
         {
             return resp;
         }
-        
+        if(show_url === true)
+        {
+            console.log("THE RAW  QUERY()");
+            console.log({source_id,url_version,filter});
+        }        
         while ((Date.now() - time_start) / 1000 < wait_seconds) {
             resp = await this.query_wait(filter, source_id, {remote, url_version, show_url});
             if (resp && typeof resp === 'object' && 'state' in resp && resp['state'] === 'updating') {
-                //console.log(filter);
-                //console.log(resp);
-                //console.log('.');
+
                 await new Promise(resolve => setTimeout(resolve, re_query_delay * 1000));
                 if ('force_refresh' in filter) {
                     delete filter['force_refresh'];
