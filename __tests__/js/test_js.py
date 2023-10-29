@@ -13,6 +13,8 @@ import psutil,os
 # apt-get install -f
 # google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222
 # which google-chrome-stable
+
+# /app/projects/decelium_wallet../decelium_wallet/__tests__/js/hello.html
 def kill_existing_processes(*process_names):
     """
     Search and terminate processes with the specified names.
@@ -48,7 +50,7 @@ async def main():
     try:
         print("starting flask")
         process = subprocess.Popen(
-            ['python', 'local_flask_server.py', './'],
+            ['python', 'local_flask_server.py', '/'],
             cwd='../../',
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -85,7 +87,7 @@ async def main():
         print("opening browser page")
         page = await browser.newPage()
         print("navigating browser page")
-        await page.goto('http://localhost:5000/decelium_wallet/__tests__/js/index.html')
+        await page.goto('http://localhost:5000/__tests__/js/hello.html')
         print("navigating browser to body")
         await page.waitForSelector('body')
 
@@ -97,6 +99,7 @@ async def main():
         print("verifying document.body.textContent")
         # Assert some information about the body
         expected_text = 'Hello World!!'
+        print(text)
         if expected_text in text:
             print(f'Body contains "{expected_text}"')
         else:
