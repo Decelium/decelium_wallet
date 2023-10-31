@@ -1,0 +1,16 @@
+{
+  "name": "test_website",
+  "version": "1.0.0",
+  "description": "a decelium test website for validating web features",
+  "main": "index.html",
+  "scripts": {
+    "flask": "./run_flask.sh",
+    "parcel": "PORT=5000 ./node_modules/.bin/parcel index.html -p 5000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "parcel-bundler": "^1.12.5"
+  }
+}
