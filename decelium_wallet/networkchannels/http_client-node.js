@@ -1,11 +1,77 @@
+//import axios from 'axios';
 import fetch from 'cross-fetch';
-import * as ipfsClient from 'ipfs-http-client';
-
+//import * as IPFS from 'ipfs-core';
+//import * as IPFS from 'ipfs-core';
+//import { create } from 'ipfs-core';
 let fs = undefined;
 let path = undefined;
 let base58btc= undefined;
 let encode= undefined;
 let CID=  undefined;
+
+class jsondateencode_local {
+    static loads(dic) {
+
+        let p;
+        if (typeof dic === 'string') {
+            if (this.isJsonString(dic)) {
+                p = JSON.parse(dic, this.datetime_parser);
+            } else if (!isNaN(dic)) {
+                p = Number(dic);
+            } else {
+                p = dic;
+            }
+        } else if (typeof dic === 'object') {
+            p = this.datetime_parser('', dic);
+        }
+        else
+        {
+            p = dic;
+        }
+
+        return p;
+    }
+
+    static isJsonString(str) {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+    static dumps(dic) {
+        return JSON.stringify(dic, this.datedefault);
+    }
+
+    static datedefault(key, val) {
+        if (Array.isArray(val) && val[0] === '__ref') {
+            return ['__ref', ...val.slice(1)];
+        }
+        if (val instanceof Date) {
+            return val.toISOString();
+        }
+        return val;
+    }
+
+    static datetime_parser(key, val) {
+        if (typeof val === 'string' && val.includes('T')) {
+            const date = new Date(val);
+            if (!isNaN(date)) {
+                return date;
+            }
+        } else if (typeof val === 'object') {
+            for (let k in val) {
+                val[k] = this.datetime_parser(k, val[k]);
+            }
+        }
+        return val;
+    }
+}
+
+
+
 
 class http_client_wrapped {
     constructor(url_version = null, api_key = null, port = null) {
@@ -13,60 +79,8 @@ class http_client_wrapped {
         this.api_key = api_key;
         this.port = port;
         
-        // Instantiate IPFS HTTP client directly
-        console.log(ipfsClient);
-        //this.ipfs = ipfsClient({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-        this.ipfs = ipfsClient.create({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-
     }
-    
-   async applyAlternateProcessing(filter, sourceId) {
-        if (fs == undefined)
-        {
-            path = await import('path');
-            fs = await import('fs');
-        }
-        if (sourceId === "create_ipfs" 
-            && 'file_type' in filter && filter['file_type'] === 'ipfs' 
-            && 'payload_type' in filter && filter['payload_type'] === 'local_path') {
-            
-            let itemsToAdd = await this.loadFileData(filter['payload']);
 
-            try {
-                console.log("itemsToAdd");
-                console.log(itemsToAdd);
-                
-
-                let generator = await this.ipfs.addAll(itemsToAdd, { wrapWithDirectory: true });
-
-                
-                let addedItems = [];
-
-                for await (const item of generator) {
-                    //console.log("raw item");
-                    //console.log(item);
-                    item.cid = item.cid.toString();
-                    item.name = item.path.toString();
-                    if (item.name == "")
-                    {
-                        item.root = true;
-                    }
-                    addedItems.push(item);
-
-                }
-                console.log("addedItems")
-                console.log(addedItems)
-                
-                return addedItems;
-            } catch (error) {
-                console.error('Error adding to IPFS:', error);
-                return undefined;
-            }
-        } else {
-            return undefined;
-        }
-    }
-    
     __run_query(q, remote = true, show_url = false) {
         let wait_seconds = 120; 
         let re_query_delay = 5;
@@ -151,7 +165,50 @@ class http_client_wrapped {
 
 
 
+    
+   async applyAlternateProcessing(filter, sourceId) {
+        if (fs == undefined)
+        {
+            path = await import('path');
+            fs = await import('fs');
+        }
+        if (sourceId === "create_ipfs" 
+            && 'file_type' in filter && filter['file_type'] === 'ipfs' 
+            && 'payload_type' in filter && filter['payload_type'] === 'local_path') {
+            
+            const api = await IPFS.create({url: "http://35.167.170.96:5001/api/v0" }); // TODO generalize 
+  
+            let itemsToAdd = await this.loadFileData(filter['payload']);
 
+            try {
+                console.log("itemsToAdd");
+                console.log(itemsToAdd);
+                //let generator = await api.addAll(itemsToAdd);
+                let generator = await api.addAll(itemsToAdd,{ wrapWithDirectory: true });
+                
+                let addedItems = [];
+
+                for await (const item of generator) {
+                    //console.log("raw item");
+                    //console.log(item);
+                    item.cid = item.cid.toString();
+                    item.name = item.path.toString();
+                    if (item.name == "")
+                    {
+                        item.root = true;
+                    }
+                    addedItems.push(item);
+
+                }
+                return addedItems;
+            } catch (error) {
+                console.error('Error adding to IPFS:', error);
+                return undefined;
+            }
+        } else {
+            return undefined;
+        }
+    }
 
     getBasename(path) {
         return path.split('/').pop();
@@ -319,68 +376,6 @@ const proxyHandler = {
         }
     }
 };
-
-class jsondateencode_local {
-    static loads(dic) {
-
-        let p;
-        if (typeof dic === 'string') {
-            if (this.isJsonString(dic)) {
-                p = JSON.parse(dic, this.datetime_parser);
-            } else if (!isNaN(dic)) {
-                p = Number(dic);
-            } else {
-                p = dic;
-            }
-        } else if (typeof dic === 'object') {
-            p = this.datetime_parser('', dic);
-        }
-        else
-        {
-            p = dic;
-        }
-
-        return p;
-    }
-
-    static isJsonString(str) {
-        try {
-            JSON.parse(str);
-        } catch (e) {
-            return false;
-        }
-        return true;
-    }
-
-    static dumps(dic) {
-        return JSON.stringify(dic, this.datedefault);
-    }
-
-    static datedefault(key, val) {
-        if (Array.isArray(val) && val[0] === '__ref') {
-            return ['__ref', ...val.slice(1)];
-        }
-        if (val instanceof Date) {
-            return val.toISOString();
-        }
-        return val;
-    }
-
-    static datetime_parser(key, val) {
-        if (typeof val === 'string' && val.includes('T')) {
-            const date = new Date(val);
-            if (!isNaN(date)) {
-                return date;
-            }
-        } else if (typeof val === 'object') {
-            for (let k in val) {
-                val[k] = this.datetime_parser(k, val[k]);
-            }
-        }
-        return val;
-    }
-}
-
 
 function http_client(url_version = null, api_key = null, port = null) {
     const client = new http_client_wrapped(url_version, api_key, port);
