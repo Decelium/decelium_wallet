@@ -1,0 +1,7 @@
+- Refactor pyodide, so it always loads
+- pyodide binaries should be self hosted
+- ipfs connection string should be configurable
+- ipfs, on upload, should create an obj- for every file (not just root)
+- ipfs, on upload, should allow file traversal
+- /ipfs/ should be a working URL on decelium
+- endpoint speed should be improved. p
