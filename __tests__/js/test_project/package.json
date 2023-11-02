@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "flask": "./run_flask.sh",
-    "parcel": "PORT=5000 ./node_modules/.bin/parcel serve index.html -p 5000",
+    "parcel": "rm -rf .parcel-cache && PORT=5000 ./node_modules/.bin/parcel serve index.html -p 5000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "@parcel/resolver-default": {

@@ -1,9 +1,16 @@
+
+
 class IPythonWrapper {
 
 
-    async bindMethods(temp_filename,modulename,classname,instanceName){
+    async bindMethods(temp_filename,modulename,classname,instanceName,py_data){
+        console.log("Importing .... "+`${__dirname}/${temp_filename}.py.js`);
+        //const code_py = (await import  (`./${temp_filename}.py.js`)).default;
+        //const code_py = (await import  (`${__dirname}/${temp_filename}.py.js`)).default;
+        //console.log(py_data);
+        const code_py = py_data;
+        console.log("imported");
         
-        const code_py = (await import  (`./${temp_filename}.py.js`)).default;
         this.pyodide = this.core.pyodide;
         this.pyodide.globals.set(`${temp_filename}_py`, code_py);
         

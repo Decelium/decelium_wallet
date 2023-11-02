@@ -16,7 +16,19 @@ class http_client_wrapped {
         // Instantiate IPFS HTTP client directly
         console.log(ipfsClient);
         //this.ipfs = ipfsClient({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-        this.ipfs = ipfsClient.create({ host: '35.167.170.96', port: '5001', protocol: 'http' });
+        //this.ipfs = ipfsClient.create({ host: '35.167.170.96', port: '5001', protocol: 'http' });
+        const auth =
+          'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64');
+
+        this.ipfs = ipfsClient.create({
+          host: 'ipfs.infura.io',
+          port: 5001,
+          protocol: 'https',
+          headers: {
+            authorization: auth,
+          },
+        });
+        
 
     }
     
@@ -26,13 +38,21 @@ class http_client_wrapped {
             path = await import('path');
             fs = await import('fs');
         }
-        if (sourceId === "create_ipfs" 
-            && 'file_type' in filter && filter['file_type'] === 'ipfs' 
-            && 'payload_type' in filter && filter['payload_type'] === 'local_path') {
-            
-            let itemsToAdd = await this.loadFileData(filter['payload']);
-
+        if (sourceId === "create_ipfs" && filter['file_type'] === 'ipfs' )
+        {
+            if (filter['payload_type'] != 'local_path' && filter['payload_type'] != 'raw_file_list')
+                return {error:"only payload_type local_path and raw_file_list is accepted with create_ipfs"}
+        }
+        console.log("Considering create "+sourceId);
+        if (sourceId === "create_ipfs"  && 'file_type' in filter && filter['file_type'] === 'ipfs' && 'payload_type' in filter) {
+            console.log("IN create_ipfs");
             try {
+                let itemsToAdd = [];
+                if (filter['payload_type'] === 'local_path')
+                    itemsToAdd = await this.loadFileData(filter['payload']);
+                if (filter['payload_type'] === 'raw_file_list')
+                    itemsToAdd =filter['payload'];
+                    
                 console.log("itemsToAdd");
                 console.log(itemsToAdd);
                 
@@ -56,12 +76,15 @@ class http_client_wrapped {
                 }
                 console.log("addedItems")
                 console.log(addedItems)
-                
+                console.log("DONE create_ipfs");
+
                 return addedItems;
             } catch (error) {
                 console.error('Error adding to IPFS:', error);
-                return undefined;
+                throw error;
+                
             }
+            
         } else {
             return undefined;
         }
@@ -159,14 +182,15 @@ class http_client_wrapped {
     
     async query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false}) {
 
-        
+        console.log("PROCESSING QUERY"+source_id);
         const time_start = Date.now();
         let resp = undefined;
         resp = await this.applyAlternateProcessing(filter, source_id);
-        if (resp!= undefined)
+        if (resp!== undefined)
         {
             return resp;
         }
+        console.log("PROCESSING QUERY REMOTE"+source_id);
         if(show_url === true)
         {
             console.log("THE RAW  QUERY()");
