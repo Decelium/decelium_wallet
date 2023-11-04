@@ -2,37 +2,9 @@
 
 class IPythonWrapper {
 
-
-    async bindMethods(temp_filename,modulename,classname,instanceName){
-        console.log("Importing .... "+`${__dirname}/${temp_filename}.py.js`);
-        //const code_py = (await import  (`./${temp_filename}.py.js`)).default;
-        //const code_py = (await import  (`${__dirname}/${temp_filename}.py.js`)).default;
-        //console.log(py_data);
-        const code_py = py_data;
-        console.log("imported");
-        
-        this.pyodide = this.core.pyodide;
-        this.pyodide.globals.set(`${temp_filename}_py`, code_py);
-        
-        //await this.pyodide.runPythonAsync(`import ${modulename}`);  
-        let maxAttempts = 5;
-        let attempts = 0;
-        let delay = 100; // initial delay of 0.1 seconds
-        await this.pyodide.runPythonAsync(`import sys, importlib`);
-
-        await this.pyodide.runPythonAsync(`
-        ${temp_filename}_py_bytes = codecs.encode(${temp_filename}_py, 'utf-8')
-        with open("${modulename}.py", "wb") as f:
-            f.write(${temp_filename}_py_bytes)
-            f.close()`);
-        await this.pyodide.runPythonAsync(`mod_list = set(sys.modules.keys())`);
-        await this.pyodide.runPythonAsync(`import ${modulename}`);
-        //await this.pyodide.runPythonAsync(`importlib.import_module('${modulename}')`);
-        await this.pyodide.runPythonAsync(`
-        mod_list_new = set(sys.modules.keys())
-        new_mods = mod_list_new - mod_list
-        `);
-        
+    async bindMethods(code_py,modulename,classname,instanceName){
+        console.log("in bind");
+        console.log(this.pyodide);
         this.pyodide.runPython(instanceName+`= ${modulename}.${classname}()`);        
         this.pyodide.runPython(`print(`+instanceName+`)`);        
         

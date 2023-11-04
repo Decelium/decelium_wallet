@@ -9,6 +9,8 @@ class service {}
 let fs, path;
 fs = null;
 path = null;
+import code_py from './py_bundle.py.js';
+const BUNDLE_NAME = "py_bundle";
 
 class Core {
   isNode() {
@@ -18,8 +20,36 @@ class Core {
 
   constructor() {}
 
+  async import_python_bundle(bundle_name){
+      console.log("IMPORTING BUNDLE");
+        let temp_filename = bundle_name;
+        let modulename = bundle_name;
+        //const code_py = (await import  (`${__dirname}/${temp_filename}.py.js`)).default;
+        
+        console.log("imported");
+        this.pyodide.globals.set(`${temp_filename}_py`, code_py);
+        await this.pyodide.runPythonAsync(`import sys, importlib`);
+
+        await this.pyodide.runPythonAsync(`
+        ${temp_filename}_py_bytes = codecs.encode(${temp_filename}_py, 'utf-8')
+        with open("${modulename}.py", "wb") as f:
+            f.write(${temp_filename}_py_bytes)
+            f.close()`);
+        console.log("IMPORTED BUNDLE");
+        console.log(modulename);
+        console.log(this);
+        console.log(this.pyodide);
+        console.log(this.pyodide.runPythonAsync);
+        
+        //await this.pyodide.runPythonAsync(`mod_list = set(sys.modules.keys())`);
+        await this.pyodide.runPythonAsync(`import ${modulename}`);
+        console.log("FINISHED IMPORT BUNDLE");
+  
+  }
+    
   async init() {
     if (this.init_done) return true;
+      console.log("Phase 0----------------- ");
 
     if (typeof window === 'undefined') { // Check if in Node.js environment
         fs = await import('fs');
@@ -50,9 +80,11 @@ class Core {
     }
 
     ////
+      console.log("Phase 1 ");
 
     await this.pyodide.runPythonAsync(`
         import codecs`);
+      console.log("Phase 2 ");
 
     await this.pyodide.loadPackage("micropip");
     await this.pyodide.runPythonAsync(`
@@ -75,18 +107,30 @@ class Core {
     await micropip.install("ecdsa");
     //await micropip.install('sys');
     await micropip.install("cryptography");
+    console.log("Phase 3 ");
+    this.bundle_name = BUNDLE_NAME;
+    await this.import_python_bundle(this.bundle_name);
 
-    this.init_done = true;
+    console.log("Phase 3.1 ");
     this.dw = new wallet(this);
+    console.log("Phase 3.2 ");
     if (!this.net) this.net = new network();
+    console.log("Phase 3.3 ");
     this.service = new service();
+    console.log("Phase 3.4 ");
     this.node_peer_list = null;
     //console.log("FINISHED INIT 1");
-
+      
     await this.dw.init();
     console.log("Phase 6");
-
+    console.log("Phase 7");
+      
+    this.init_done = true;
     return true;
+  }
+  get_bundle_name_for(module_name)
+  {
+    return this.bundle_name;
   }
 
   getpass(walletpath) {
