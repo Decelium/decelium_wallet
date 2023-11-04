@@ -20,7 +20,7 @@ class WorkerHTTP {
     load_wallet_strings_from_disk() {
         let ret = {};
         const wallets = this.core.discover_wallet();
-        console.log(wallets);
+        //console.log(wallets);
         for (let wal of wallets) {
             if (wal['wallet'].includes('test_wallet')) {
                 try {
@@ -49,7 +49,7 @@ class WorkerHTTP {
     
 
     async stage_init() {
-        console.log( this.data_in );
+        //console.log( this.data_in );
         await this.core.init();
         let raw_wallet = {}
         if (Object.keys(this.data_in).includes("wallet"))
@@ -63,35 +63,35 @@ class WorkerHTTP {
         }
         
         
-        console.log("---------------------");
+        //console.log("---------------------");
         let password = "1234";
         let encryption = await this.core.dw.crypto.encode({'content':"testmessage",'password':password});
-        console.log("encrypted data :"+encryption);
+        //console.log("encrypted data :"+encryption);
         let decrypted = await this.core.dw.crypto.decode({'payload':encryption,'password':password});
-        console.log("decrypted data :"+decrypted);
-        console.log("---------------------");
+        //console.log("decrypted data :"+decrypted);
+        //console.log("---------------------");
         
-        console.log( "INIT 2" );
+        //console.log( "INIT 2" );
         if (raw_wallet.error)
             throw new Error('Failed to load wallet fron disk: '+raw_wallet.error);
-        console.log( "INIT 3" );
-        console.log({raw_wallet})
+        //console.log( "INIT 3" );
+        //console.log({raw_wallet})
         const success = await this.core.load_wallet(raw_wallet.data, raw_wallet.password);
         if (success !== true) {
             throw new Error('Failed to load wallet');
         }
-        console.log( "INIT 4" );
+        //console.log( "INIT 4" );
 
         const connected = await this.core.initial_connect(
             'https://'+this.node_address+'/data/query',
             'admin'
         );
-        console.log( "INIT 5" );
+        //console.log( "INIT 5" );
         
         if (connected !== true) {
             throw new Error('Failed to connect');
         }
-        console.log( "INIT 6" );
+        //console.log( "INIT 6" );
         
         //console.log(this.core.dw.get_raw())
         return true;
@@ -101,9 +101,9 @@ class WorkerHTTP {
     async stage_ipfs_upload() {
         // sr(self,q,user_ids,format=None):
         
-        console.log("0) ------------ ENTERING UPLOAD");
-        console.log({core:this.core});
-        console.log({dw:this.core.dw});
+        //console.log("0) ------------ ENTERING UPLOAD");
+        //console.log({core:this.core});
+        //console.log({dw:this.core.dw});
        
         
         let signed_del = await this.core.dw.sr({q: {'api_key':await this.core.dw.pubk("admin"),
@@ -119,24 +119,35 @@ class WorkerHTTP {
         }
         console.log("1) ------------ REMOVED OLD FILE!");
         let dict_list = [];
+        let connection_settings = {
+          host: 'ipfs.infura.io',
+          port: 5001,
+          protocol: 'https',
+          headers: {
+            authorization: 'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64'),
+          },
+        };           
         if (Object.keys(this.data_in).includes("files"))
         {
+         
             console.log("UPLOADING BYTES (browser and nodejs)");
              dict_list  = await this.core.net.create_ipfs({
                 'api_key':await this.core.dw.pubk("admin"),
+                'connection_settings':connection_settings,
                 'file_type':'ipfs',
-                'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
+             //   'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
                 'payload_type':'raw_file_list',
                 'payload':this.data_in.files});          
-            console.log(dict_list);
+            //console.log(dict_list);
         }
         else
         {
             console.log("UPLOADING DIRECTORY (nodjs only)");
              dict_list  = await this.core.net.create_ipfs({
                 'api_key':await this.core.dw.pubk("admin"),
+                'connection_settings':connection_settings,                 
                 'file_type':'ipfs',
-                'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
+             //   'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
                 'payload_type':'local_path',
                 'payload':'./example_site'});          
             console.log(dict_list);

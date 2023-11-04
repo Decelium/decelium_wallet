@@ -7,6 +7,7 @@ import uuid
 import io
 import json
 from pprint import pprint
+import base64
 
 class WorkerHTTP():
     def __init__(self,core,node,peers):
@@ -76,11 +77,27 @@ class WorkerHTTP():
                                                show_url=True)
         #print("del_fil",del_fil)
         assert del_fil == True or 'error' in del_fil
-
+        '''
+        connection_settings = {
+            'host': 'ipfs.infura.io',
+            'port': 5001,
+            'protocol': 'https',
+            'headers': {
+                'authorization': 'Basic ' + base64.b64encode(b'2X4hcFqmM5QyWMj7aR9rQcthN5q:686773513d65eeb2d7d22dfdc79d230f').decode('utf-8')
+            },
+        }
+        '''
+        connection_settings = {
+            'host': '35.167.170.96',
+            'port': 5001,
+            'protocol': 'http',
+        }
+        
         dict_list  = self.core.net.create_ipfs({
             'api_key':self.core.dw.pubk("admin"),
             'file_type':'ipfs',
-            'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
+            'connection_settings':connection_settings,
+            #'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
             'payload_type':'local_path',
             'payload':'./example_site'},remote=True,show_url=True)
         print("dict_list",dict_list)
@@ -275,6 +292,7 @@ def run_all_tests(worker_id,node,peers):
             break
 
 if __name__ == "__main__":
+    # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
     # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
     # python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
     # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query []

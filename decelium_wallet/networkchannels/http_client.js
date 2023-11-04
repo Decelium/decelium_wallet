@@ -17,18 +17,7 @@ class http_client_wrapped {
         console.log(ipfsClient);
         //this.ipfs = ipfsClient({ host: '35.167.170.96', port: '5001', protocol: 'http' });
         //this.ipfs = ipfsClient.create({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-        const auth =
-          'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64');
-
-        this.ipfs = ipfsClient.create({
-          host: 'ipfs.infura.io',
-          port: 5001,
-          protocol: 'https',
-          headers: {
-            authorization: auth,
-          },
-        });
-        
+      
 
     }
     
@@ -55,11 +44,18 @@ class http_client_wrapped {
                     
                 console.log("itemsToAdd");
                 console.log(itemsToAdd);
+                if (filter.connection_settings == undefined) return {"error":"connection_settings argument required i.e. {host:str,port:int,protocol:str,headers:{authorization:str}}"};
+                let connection_settings = filter.connection_settings;
                 
+                if (connection_settings.host == undefined) return {"error":"ipfs host must be specified in connection_settings"};
+                if (connection_settings.port == undefined) return {"error":"ipfs port must be specified in connection_settings"};
+                if (connection_settings.protocol == undefined) return {"error":"ipfs protocol must be specified in connection_settings"};
+                if (connection_settings.headers == undefined)
+                    connection_settings.headers = {};
+                
+                this.ipfs = ipfsClient.create(connection_settings);                  
 
                 let generator = await this.ipfs.addAll(itemsToAdd, { wrapWithDirectory: true });
-
-                
                 let addedItems = [];
 
                 for await (const item of generator) {

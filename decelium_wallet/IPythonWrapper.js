@@ -3,8 +3,8 @@
 class IPythonWrapper {
 
     async bindMethods(code_py,modulename,classname,instanceName){
-        console.log("in bind");
-        console.log(this.pyodide);
+        //console.log("in bind");
+        //console.log(this.pyodide);
         this.pyodide.runPython(instanceName+`= ${modulename}.${classname}()`);        
         this.pyodide.runPython(`print(`+instanceName+`)`);        
         

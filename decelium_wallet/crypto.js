@@ -15,9 +15,9 @@ class crypto extends IPythonWrapper {
         const instanceName = "crypto";
         if (this.done_init)
             return true;
-        console.log("crypto 1");
+        //console.log("crypto 1");
         await this.bindMethods(code_py,modulename,classname,instanceName);
-        console.log("crypto 2");
+        //console.log("crypto 2");
         
         this.done_init = true;
         return true;

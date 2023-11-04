@@ -35,21 +35,21 @@ class Core {
         with open("${modulename}.py", "wb") as f:
             f.write(${temp_filename}_py_bytes)
             f.close()`);
-        console.log("IMPORTED BUNDLE");
-        console.log(modulename);
-        console.log(this);
-        console.log(this.pyodide);
-        console.log(this.pyodide.runPythonAsync);
+        //console.log("IMPORTED BUNDLE");
+        //console.log(modulename);
+        //console.log(this);
+        //console.log(this.pyodide);
+        //console.log(this.pyodide.runPythonAsync);
         
         //await this.pyodide.runPythonAsync(`mod_list = set(sys.modules.keys())`);
         await this.pyodide.runPythonAsync(`import ${modulename}`);
-        console.log("FINISHED IMPORT BUNDLE");
+        //console.log("FINISHED IMPORT BUNDLE");
   
   }
     
   async init() {
     if (this.init_done) return true;
-      console.log("Phase 0----------------- ");
+      //console.log("Phase 0----------------- ");
 
     if (typeof window === 'undefined') { // Check if in Node.js environment
         fs = await import('fs');
@@ -64,7 +64,7 @@ class Core {
       //};
 
       const { loadPyodide } = await import("pyodide");
-      console.log(loadPyodide);
+      //console.log(loadPyodide);
       this.pyodide = await loadPyodide({
         indexURL: "/app/projects/decelium_wallet/node_modules/pyodide/",
       });
@@ -80,11 +80,11 @@ class Core {
     }
 
     ////
-      console.log("Phase 1 ");
+      //console.log("Phase 1 ");
 
     await this.pyodide.runPythonAsync(`
         import codecs`);
-      console.log("Phase 2 ");
+      //console.log("Phase 2 ");
 
     await this.pyodide.loadPackage("micropip");
     await this.pyodide.runPythonAsync(`
@@ -107,23 +107,23 @@ class Core {
     await micropip.install("ecdsa");
     //await micropip.install('sys');
     await micropip.install("cryptography");
-    console.log("Phase 3 ");
+    //console.log("Phase 3 ");
     this.bundle_name = BUNDLE_NAME;
     await this.import_python_bundle(this.bundle_name);
 
-    console.log("Phase 3.1 ");
+    //console.log("Phase 3.1 ");
     this.dw = new wallet(this);
-    console.log("Phase 3.2 ");
+    //console.log("Phase 3.2 ");
     if (!this.net) this.net = new network();
-    console.log("Phase 3.3 ");
+    //console.log("Phase 3.3 ");
     this.service = new service();
-    console.log("Phase 3.4 ");
+    //console.log("Phase 3.4 ");
     this.node_peer_list = null;
     //console.log("FINISHED INIT 1");
       
     await this.dw.init();
-    console.log("Phase 6");
-    console.log("Phase 7");
+    //console.log("Phase 6");
+    //console.log("Phase 7");
       
     this.init_done = true;
     return true;
@@ -332,9 +332,9 @@ class Core {
     }
 
     const run_pings_def = async () => {
-      console.log("DOING PING");
+      //console.log("DOING PING");
       resp = await this.do_ping(port, name, wallet_user);
-      console.log(resp);
+      //console.log(resp);
     };
 
     this.setInterval(run_pings_def, () => this.net.listening(), 5); // ping every 5 seconds
