@@ -1,5 +1,4 @@
 import {crypto} from './crypto.js';
-import py_data from './wallet.py.js'
 import {IPythonWrapper} from './IPythonWrapper.js';
 
 class wallet extends IPythonWrapper {
@@ -19,7 +18,7 @@ class wallet extends IPythonWrapper {
         if (this.done_init)
             return true;
         await this.crypto.init();
-        await this.bindMethods(temp_filename,modulename,classname,instanceName,py_data);
+        await this.bindMethods(temp_filename,modulename,classname,instanceName);
         
         this.done_init = true;
         return true;

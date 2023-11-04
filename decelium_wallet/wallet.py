@@ -1,11 +1,11 @@
 from pathlib import Path
-
-try:
-    from .crypto import crypto
-except:
-    import crypto
-    crypto = crypto.crypto
-    #from decelium.crypto import crypto
+if not "crypto" in globals():   
+    try:
+        from .crypto import crypto
+    except:
+        import crypto
+        crypto = crypto.crypto
+        #from decelium.crypto import crypto
 import json
 import os,sys
 from os.path import exists

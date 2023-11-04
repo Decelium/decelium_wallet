@@ -61,6 +61,16 @@ class WorkerHTTP {
         {
             raw_wallet = await this.load_wallet_strings_from_disk();
         }
+        
+        
+        console.log("---------------------");
+        let password = "1234";
+        let encryption = await this.core.dw.crypto.encode({'content':"testmessage",'password':password});
+        console.log("encrypted data :"+encryption);
+        let decrypted = await this.core.dw.crypto.decode({'payload':encryption,'password':password});
+        console.log("decrypted data :"+decrypted);
+        console.log("---------------------");
+        
         console.log( "INIT 2" );
         if (raw_wallet.error)
             throw new Error('Failed to load wallet fron disk: '+raw_wallet.error);

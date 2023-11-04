@@ -1,6 +1,4 @@
 import {IPythonWrapper} from './IPythonWrapper.js';
-import py_data from './crypto.py.js'
-
 
 class crypto extends IPythonWrapper {
     constructor(core) {
@@ -17,7 +15,7 @@ class crypto extends IPythonWrapper {
         
         if (this.done_init)
             return true;
-        await this.bindMethods(temp_filename,modulename,classname,instanceName,py_data);
+        await this.bindMethods(temp_filename,modulename,classname,instanceName);
         
         this.done_init = true;
         return true;

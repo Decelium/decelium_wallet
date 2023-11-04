@@ -3,7 +3,7 @@
 class IPythonWrapper {
 
 
-    async bindMethods(temp_filename,modulename,classname,instanceName,py_data){
+    async bindMethods(temp_filename,modulename,classname,instanceName){
         console.log("Importing .... "+`${__dirname}/${temp_filename}.py.js`);
         //const code_py = (await import  (`./${temp_filename}.py.js`)).default;
         //const code_py = (await import  (`${__dirname}/${temp_filename}.py.js`)).default;
@@ -88,7 +88,7 @@ class IPythonWrapper {
                 else
                 {
                     if (Array.isArray(args) &&  args.length ==1) {
-                        //console.log("AM ARRAY");
+                        console.log("AM ARRAY");
                         // args is an array, join elements with commas
                         for (const val of args) {
                             argString += '' +  objectToPythonDict(val) + ',';
@@ -96,12 +96,12 @@ class IPythonWrapper {
                         
                         //argString += args.join(',') + ',';
                     } else {
-                        //console.log("AM NOT ARRAY");
-                        //console.log(args);
+                        console.log("AM NOT ARRAY");
+                        console.log(args);
                         // args is an object, join key-value pairs with commas
                         for (const key in args) {
-                            //console.log(key);
-                            //console.log(args[key]);
+                            console.log(key);
+                            console.log(args[key]);
                             argString += key + '=' + objectToPythonDict(args[key]) + ',';
                         }
                     }            
@@ -110,9 +110,10 @@ class IPythonWrapper {
                 //    argString=argString+key+'="'+args[key]+'",';
                 //}
                 argString='('+argString+'format="json")';
-                // console.log(instanceName+`.`+method+argString);
+                console.log(instanceName+`.`+method+argString);
                 //instanceName+`.`+method+argString
                 //throw new Error(instanceName+`.`+method+argString);
+            
                 let result = this.pyodide.runPython(instanceName+`.`+method+argString);
                 //console.log("wallet result");
                 //console.log({result});
