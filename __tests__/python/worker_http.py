@@ -1,3 +1,7 @@
+# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
+# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
+# python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
+# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query []
 import sys
 import time,datetime
 sys.path.append("../")
@@ -7,6 +11,7 @@ import uuid
 import io
 import json
 from pprint import pprint
+import base64
 
 class WorkerHTTP():
     def __init__(self,core,node,peers):
@@ -55,7 +60,6 @@ class WorkerHTTP():
     ###    
     def stage_init(self):
         raw_wallet = self.load_wallet_strings_from_disk()
-        
         success = self.core.load_wallet(data=raw_wallet['data'],
                                         password=raw_wallet['password'])
         print("success",success)
@@ -77,13 +81,29 @@ class WorkerHTTP():
                                                show_url=True)
         #print("del_fil",del_fil)
         assert del_fil == True or 'error' in del_fil
-
+        '''
+        connection_settings = {
+            'host': 'ipfs.infura.io',
+            'port': 5001,
+            'protocol': 'https',
+            'headers': {
+                'authorization': 'Basic ' + base64.b64encode(b'2X4hcFqmM5QyWMj7aR9rQcthN5q:686773513d65eeb2d7d22dfdc79d230f').decode('utf-8')
+            },
+        }
+        '''
+        connection_settings = {
+            'host': '35.167.170.96',
+            'port': 5001,
+            'protocol': 'http',
+        }
+        
         dict_list  = self.core.net.create_ipfs({
             'api_key':self.core.dw.pubk("admin"),
             'file_type':'ipfs',
-            'ipfs_url':"/dns/ipfs/tcp/5001/http",
+            'connection_settings':connection_settings,
+            #'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
             'payload_type':'local_path',
-            'payload':'/app/paxdatascience/example_site'},remote=True,show_url=True)
+            'payload':'./example_site'},remote=True,show_url=True)
         print("dict_list",dict_list)
         q = {'api_key':self.core.dw.pubk("admin"),
             'path':'test_website',
@@ -221,11 +241,12 @@ def run_ipfs_tests(worker_id,node,peers):
         print("----------------------------------------------------------")
         print(f"[{i}] Worker {worker_id}: {step.__name__}")
         result = False
+        message = ""
         try:
             result = step()
         except Exception as e:
             import traceback as tb
-            result = tb.format_exc()
+            message = tb.format_exc()
             try:
                 print("forcing shutdown . . .", end="")
                 worker.stage_shutdown()
@@ -234,9 +255,9 @@ def run_ipfs_tests(worker_id,node,peers):
                 pass
         print(f"worker_http.py_{worker_id}: Step {step.__name__} {'succeeded' if result else 'failed'}")
         if not result == True:
-            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(result))
+            raise Exception(f"[{i}] Worker {worker_id}: {step.__name__}"+str(message))
         if result != True:
-            break    
+            break   
 def run_all_tests(worker_id,node,peers):
     
     worker = WorkerHTTP(core(),node,peers)
@@ -276,7 +297,10 @@ def run_all_tests(worker_id,node,peers):
 
 if __name__ == "__main__":
     # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
+    # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
     # python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
+    # python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query []
+    
     print("running "+str(sys.argv[2])+" on "+sys.argv[4]+" with peers "+sys.argv[4])
     mode = sys.argv[1]
     worker_id = int(sys.argv[2])

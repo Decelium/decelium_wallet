@@ -16,7 +16,6 @@ class Chunk:
         raise Exception("could not remove object")
             
     def build(from_path,to_path):    
-        print("DOING BUILD")
         Chunk.build_zip(from_path,Chunk.tmp_file)
         Chunk.build_chunks(Chunk.tmp_file,to_path)
         Chunk.obliterate(Chunk.tmp_file)
@@ -27,7 +26,6 @@ class Chunk:
         Chunk.obliterate("extract_"+Chunk.tmp_file)
     
     def build_zip(from_path,to_file):
-        print(from_path)
         shutil.make_archive(to_file.replace(".zip",""), 'zip', from_path)
         remote=True
     
@@ -81,19 +79,13 @@ class Chunk:
         
             
     def upload(pq,api_key,remote,from_path,remote_path,extract_path = "chunk_test"):        
-        print("Starts Here")
         
         Chunk.build(from_path,extract_path)    
         chunks = pq.list({'api_key':api_key, 'path':remote_path, },remote=remote)
-        print(chunks)
         if 'error' not in chunks:
             for fileobj in chunks:        
                 fil  = pq.delete_entity({'api_key':api_key,  'path':remote_path, 'name':fileobj['dir_name'], },remote=remote)
-                print("Deleting chunk")
-                print(fil)
         fil  = pq.delete_entity({'api_key':api_key,  'path':remote_path,},remote=remote) # show_url=True to debug
-        print("Deleting chunk End")
-        print(fil)
         
         dir_obj_id  = pq.create_directory({
             'api_key':api_key,
@@ -103,18 +95,14 @@ class Chunk:
         chunks = [name for name in os.listdir(extract_path)]
         for filename in chunks:
             t = time.time()
-            print("DOING DELETE")
             fil  = pq.delete_entity({'api_key':api_key, 
                                     'path':remote_path, 
                                     'name':filename, 
                                     },remote=remote) # show_url=True to debug
-            print(fil)
             
             delay = (time.time() - t)
-            print("END DOING DELETE"+ str(delay))
             with open(extract_path+"/"+filename,'r') as f:
                 t = time.time()
-                print("DOING CREATE")
 
                 fil  = pq.create_entity({
                     'api_key':api_key,
@@ -123,20 +111,15 @@ class Chunk:
                     'file_type':'ipfs',
                     'payload':f.read()},remote=remote)
                 #t = time.time()
-                print("DOING CREATE 2")
                 delay = (time.time() - t)
-                #print("END DOING CREATE "+str(delay))
-
                 
                 try:
                     assert 'obj' in fil
+                    print('.',end="")
                 except Exception as e:
                     print("Bad Chunk:",fil)
                     raise e
         Chunk.obliterate(extract_path)
-        
-        
-        
         return dir_obj_id
 
                 

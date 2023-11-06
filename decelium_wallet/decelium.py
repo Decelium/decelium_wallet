@@ -23,19 +23,21 @@ import datetime
 import urllib.parse
 import sys 
 #from .crypto import crypto
-try:
-    from .crypto import crypto
-except:
-    import crypto
-    crypto = crypto.crypto
-    #from decelium.crypto import crypto
+if not "crypto" in globals():    
+    try:
+        from .crypto import crypto
+    except:
+        import crypto
+        crypto = crypto.crypto
+        #from decelium.crypto import crypto
 
-try:    
-    from .wallet import wallet
-except:
-    import wallet
-    wallet = wallet.wallet
-import os
+if not "wallet" in globals():    
+    try:    
+        from .wallet import wallet
+    except:
+        import wallet
+        wallet = wallet.wallet
+    import os
 
 try:
     from processingNetwork.ProcessingNode import ProcessingNode

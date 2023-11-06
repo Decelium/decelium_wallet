@@ -1,0 +1,40 @@
+{
+  "name": "test_website",
+  "version": "1.0.0",
+  "description": "a decelium test website for validating web features",
+  "main": "index.js",
+  "scripts": {
+    "flask": "./run_flask.sh",
+    "parcel": "rm -rf .parcel-cache && PORT=5000 ./node_modules/.bin/parcel serve index.html -p 5000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "@parcel/resolver-default": {
+    "packageExports": true
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cross-fetch": "^3.1.6",
+    "ipfs-core": "^0.18.1",
+    "ipfs-http-client": "^60.0.1",
+    "jest": "^29.3.1",
+    "moment": "^2.29.4",
+    "multiformats": "^12.1.3",
+    "pyodide": "^0.22.0",
+    "uuidv4": "^6.2.13"
+  },
+  "devDependencies": {
+    "assert": "^2.1.0",
+    "crypto-browserify": "^3.12.0",
+    "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
+    "parcel": "^2.10.1",
+    "path-browserify": "^1.0.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "timers-browserify": "^2.0.12",
+    "url": "^0.11.3",
+    "util": "^0.12.5"
+  }
+}

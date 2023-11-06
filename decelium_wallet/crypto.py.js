@@ -37,6 +37,7 @@ def datetime_parser(dct):
     return dct
 
 class crypto:
+    @staticmethod
     def getpass(format=None,rootfile=None):
         #if file != None:
         #    return wallet.getpass(rootfile)
@@ -56,6 +57,7 @@ class crypto:
             ret = json.dumps(ret)
         return ret
 
+    @staticmethod
     def do_encode_string(obj,format=None):
         string = jsondateencode_crypto.dumps(obj,separators=(',', ':'))
         encoded = base64.b64encode(string.encode('ascii'))
@@ -63,6 +65,7 @@ class crypto:
             return json.dumps(encoded.decode('ascii'))
         return encoded.decode('ascii') 
 
+    @staticmethod
     def do_decode_string(data_packet,format=None):
         user_data_dev = base64.b64decode(data_packet) 
         data2 = jsondateencode_crypto.loads(user_data_dev.decode("ascii"))
@@ -71,6 +74,7 @@ class crypto:
         return data2
     
     # TODO break into crypto modules and support various versions
+    @staticmethod
     def generate_user(version='python-ecdsa-0.1',format=None):
         assert version == "python-ecdsa-0.1"
         sk = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256) 
@@ -84,6 +88,7 @@ class crypto:
             user = json.dumps(user)
         return user
 
+    @staticmethod
     def generate_user_from_string(private_key,version='python-ecdsa-0.1',format=None):
         assert version == "python-ecdsa-0.1"
         #cls, string, curve=NIST192p, hashfunc=sha1):        
@@ -103,6 +108,7 @@ class crypto:
             user = json.dumps(user)
         return user
 
+    @staticmethod
     def sign_request(msg,signers,version='python-ecdsa-0.1',format=None):
         assert version == "python-ecdsa-0.1"
         q = crypto.do_encode_string(msg)
@@ -117,6 +123,7 @@ class crypto:
             msg = json.dumps(msg)        
         return msg
 
+    @staticmethod
     def verify_request(msg,version='python-ecdsa-0.1',format=None):
         assert version == "python-ecdsa-0.1"
         verified = {}
@@ -142,7 +149,7 @@ class crypto:
             msg = json.dumps(msg)              
         return msg   
 
-
+    @staticmethod
     def decode(payload,password,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         q= hashlib.sha224(password.encode('utf-8')).hexdigest()[:32]
@@ -152,7 +159,8 @@ class crypto:
         if format == 'json':
             dec = json.dumps(dec)          
         return dec
-
+            
+    @staticmethod
     def encode(content,password,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         q= hashlib.sha224(password.encode('utf-8')).hexdigest()[:32]
@@ -164,6 +172,7 @@ class crypto:
             enc = json.dumps(enc)        
         return enc
     
+    @staticmethod
     def encode_key(content,password,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         password = password.encode('utf-8')
@@ -182,6 +191,7 @@ class crypto:
             ret = json.dumps(ret)
         return ret
     
+    @staticmethod
     def decode_key(payload,password,key,version='python-ecdsa-0.1',format=None): 
         assert version == "python-ecdsa-0.1"
         password = password.encode('utf-8')
@@ -191,5 +201,4 @@ class crypto:
         dec = data.decode()
         if format == 'json':
             dec = json.dumps(dec)
-        return dec
-`;
+        return dec`;
