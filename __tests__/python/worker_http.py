@@ -1,3 +1,7 @@
+# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
+# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
+# python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
+# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query []
 import sys
 import time,datetime
 sys.path.append("../")
