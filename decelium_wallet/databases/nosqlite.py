@@ -43,44 +43,50 @@ class NosqlThread():
     worker_thread = None
     
     def Instance():
-        if NosqlThread.worker_thread == None:
-             NosqlThread.worker_thread = NosqlThread()
+        if NosqlThread.worker_thread is None or not NosqlThread.worker_thread.is_alive():
+            NosqlThread.worker_thread = NosqlThread()
         return NosqlThread.worker_thread
 
-    def threaded_execute(self, query, args_raw=None,path = None):
-        """Execute a SQL query on the worker thread."""
-        correlation_id = str(uuid.uuid4())  # Generate a unique ID
+    def threaded_execute(self, query, args_raw=None, path=None, timeout=None):
+        correlation_id = str(uuid.uuid4())
         local_result_queue = queue.Queue()
         self.result_queues[correlation_id] = local_result_queue
         self.command_queue.put(("execute", (query, args_raw, correlation_id, path)))
 
-        result = local_result_queue.get()  # Block until result is available
-        del self.result_queues[correlation_id]  # Cleanup
+        try:
+            result = local_result_queue.get(timeout=timeout)  # Add timeout
+        except queue.Empty:
+            del self.result_queues[correlation_id]
+            raise TimeoutError("Operation timed out")
+        else:
+            del self.result_queues[correlation_id]
+            return result     
 
-        return result
-        
-    def threaded_close(self,path=None):
-        """Execute a SQL query on the worker thread."""
-        correlation_id = str(uuid.uuid4())  # Generate a unique ID
+    def threaded_close(self, path=None, timeout=None):
+        correlation_id = str(uuid.uuid4())
         local_result_queue = queue.Queue()
         self.result_queues[correlation_id] = local_result_queue
-        self.command_queue.put(("terminate", (None, None, correlation_id,path)))
+        self.command_queue.put(("terminate", (None, None, correlation_id, path)))
 
-        result = local_result_queue.get()  # Block until result is available
-        del self.result_queues[correlation_id]  # Cleanup
-        return result
-        
+        try:
+            result = local_result_queue.get(timeout=timeout)  # Add timeout
+        except queue.Empty:
+            del self.result_queues[correlation_id]
+            raise TimeoutError("Operation timed out")
+        else:
+            del self.result_queues[correlation_id]
+            return result
+            
     def _worker(self):
-        """Dedicated worker thread for executing SQLite operations."""
         while True:
             command, args = self.command_queue.get()
             if command == "terminate":
-                query, args_raw, correlation_id,path = args
+                query, args_raw, correlation_id, path = args
                 self.result_queues[correlation_id].put(True)
                 break
             elif command == "execute":
-                query, args_raw, correlation_id,path = args
-                result = self.__execute(query, args_raw,path)
+                query, args_raw, correlation_id, path = args
+                result = self.__execute(query, args_raw, path)
                 self.result_queues[correlation_id].put(result)
 
     
@@ -128,21 +134,13 @@ class NosqlThread():
             cur = conn.cursor()
             if args:
                 try:
-                    #print("EXECUTING A")
-                    #print(query)
-                    #print(args)
                     res = cur.execute(query, args)
-                    #print(res)
                 except Exception as e:
                     print("Could not execute Query :: " +str(query) + " :: " + str(args))
                     raise e
             else:
-                #print("EXECUTING B")
-                #print(query)
                 res = cur.execute(query)
-                #print(res)
             
-            # Return all rows if it's a SELECT; else, return nothing
             if query.lstrip().upper().startswith('SELECT') and not query.lstrip().upper().startswith('SELECT COUNT'):
                 rows = []
                 for row_in in cur.fetchall():
@@ -489,15 +487,8 @@ class nosqlite():
         else:
             where_str = "1"  # If no filter is provided, default to true condition (this means all records will be updated)
 
-        # Finalizing the UPDATE query
-        
         query = f"UPDATE {table_name} SET {set_str} WHERE {where_str}"
-        #print("nosqlite CREATING UPDATE MANY")
-        #print(query)
-        #print(args)
         return self.__execute(query,tuple(args))
-
-
     
     def sqlite_insert(self, source, filterval, setval, limit, offset, field):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
