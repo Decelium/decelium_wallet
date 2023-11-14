@@ -59,8 +59,6 @@ class http_client_wrapped {
                 let addedItems = [];
 
                 for await (const item of generator) {
-                    //console.log("raw item");
-                    //console.log(item);
                     item.cid = item.cid.toString();
                     item.name = item.path.toString();
                     if (item.name == "")

@@ -105,6 +105,7 @@ class WorkerHTTP():
             'payload_type':'local_path',
             'payload':'./example_site'},remote=True,show_url=True)
         print("dict_list",dict_list)
+        # TODO Verify structrue of ipfs
         q = {'api_key':self.core.dw.pubk("admin"),
             'path':'test_website',
             'name':'website.ipfs',

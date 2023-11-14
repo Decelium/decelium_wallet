@@ -139,6 +139,8 @@ class WorkerHTTP {
                 'payload_type':'raw_file_list',
                 'payload':this.data_in.files});          
             //console.log(dict_list);
+        // TODO Verify structrue of ipfs
+            
         }
         else
         {

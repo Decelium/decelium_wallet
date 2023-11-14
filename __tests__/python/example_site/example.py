@@ -1,0 +1,7 @@
+text_document_formats = ['.txt', '.rtf', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp', '.md', '.csv']
+image_formats = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.tiff', '.ico', '.webp']
+audio_formats = ['.mp3', '.wav', '.aac', '.ogg', '.flac', '.m4a', '.wma']
+video_formats = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm']
+compressed_formats = ['.zip', '.rar', '.7z', '.gz', '.tar', '.bz2']
+code_script_formats = ['.html', '.css', '.js', '.json', '.xml', '.py', '.java', '.c', '.cpp', '.cs', '.php', '.sh', '.bat']
+miscellaneous_formats = ['.iso', '.dmg', '.exe', '.dll', '.psd', '.ai', '.eps']
