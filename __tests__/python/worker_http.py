@@ -114,6 +114,10 @@ class WorkerHTTP():
             'payload':dict_list}
         q_signed = self.core.dw.sign_request(q,["admin"])
         fil  = self.core.net.create_entity(q_signed,remote=True,show_url=True)
+        
+        # Remove Base Dir from upload path
+        
+        
         print("fil",fil)
         assert 'obj-' in fil
         return True 

@@ -56,18 +56,11 @@ class http_client():
         print(filter)
         
         if source_id == "create_ipfs" and 'file_type' in filter and filter['file_type'] == 'ipfs' and 'payload_type' in filter and filter['payload_type'] ==  'local_path':
-            print("PROCESSING IPFS IN PaxFinancialAPI")
-            print(filter['payload'])
-            print(os.path.basename(filter['payload']))
             # Check if 'connection_settings' is present in the 'filter' dictionary
             if 'connection_settings' not in filter:
                 return {"error": "connection_settings argument required i.e. {host:str, port:int, protocol:str, headers:{authorization:str}}"}
 
-            # Retrieve 'connection_settings' from 'filter'
             connection_settings = filter['connection_settings']
-            print("connection_settings 1")
-            print(connection_settings)
-            # Perform checks on 'connection_settings' fields
             if 'host' not in connection_settings:
                 return {"error": "ipfs host must be specified in connection_settings"}
             if 'port' not in connection_settings:
@@ -80,29 +73,30 @@ class http_client():
                 connection_settings['headers'] = {}
 
             
-            #ipfs_string = "/dns/35.167.170.96/tcp/5001/http"
             ipfs_string = "/dns/"+str(connection_settings["host"])+"/tcp/"+str(connection_settings["port"])+"/"+str(connection_settings["protocol"])
             
-            #api = ipfshttpclient.connect(ipfs_string) #TODO Implement a proper path
-            #if len(connection_settings['headers']) > 0:
-            #    api.session.headers.update(connection_settings['headers'])            
             if len(connection_settings['headers']) > 0:
-                print("PROCESSING WITH HEADERS")
                 api = ipfshttpclient.connect(ipfs_string,headers=connection_settings['headers'])
             else:
                 api = ipfshttpclient.connect(ipfs_string)
             
+            #res = api.add(filter['payload'],recursive=True)
+            original_directory = os.getcwd()
+            try:
+                os.chdir(filter['payload'])
+                res = api.add('.', recursive=True)
+            finally:
+                os.chdir(original_directory)            
             
-            #api.extra_args = ['token=sampletoken1'] 
-            res = api.add(filter['payload'],recursive=True)
             try:
                 dict_list = [{'name': res['Name'], 'cid': res['Hash'], 'size': res['Size']}]
             except:
                 dict_list = [{'name': item['Name'], 'cid': item['Hash'], 'size': item['Size']} for item in res]
-            print(dict_list) 
+            import pprint
+            pprint.pprint(dict_list) 
             root = {}
             for item in dict_list:
-                if item['name'] == os.path.basename(filter['payload']):
+                if item['name'] == "":
                     item['root'] = True
                     break
             return dict_list
