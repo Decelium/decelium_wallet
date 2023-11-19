@@ -266,7 +266,12 @@ class http_client_wrapped {
         
         let rData = "could not load";
         let dat;
+        /*
         try {
+            console.log("GETTING RESPONSE");
+            console.log(r);
+            console.log(await r.text());
+            
             let rText = await r.text();
             try {
                 if (show_url) {
@@ -283,11 +288,46 @@ class http_client_wrapped {
             dat = rData;
         } catch (e) {
             console.log("An error occurred while reading the response:", e);
-        }       
+        }*/
+        let responseData;
+        let contentType = r.headers.get("content-type");        
+        try {
+            let rawData = await r.arrayBuffer();
+            const decoder = new TextDecoder();       
+            const vall = decoder.decode(rawData); 
+            if (contentType && contentType.includes("application/json")) {
+                // Handle JSON response
+                responseData = new TextDecoder().decode(rawData);
+            } else if (contentType && contentType.includes("text")) {
+                // Handle text response
+                responseData = new TextDecoder().decode(rawData);
+            } else {
+                try {
+                    // Try to parse as JSON
+                    responseData = JSON.parse(new TextDecoder().decode(rawData));
+                } catch (e) {
+                    try {
+                        // If JSON parsing fails, try reading as text
+                        responseData = new TextDecoder().decode(rawData);
+                    } catch (e) {
+                        try {
+                            // If text parsing fails, handle it as a Blob
+                            responseData = new Blob([rawData]);
+                        } catch (e) {
+                            console.log("An error occurred while converting the response:", e);
+                            responseData = null;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.log("An error occurred while reading the response:", e);
+            responseData = null;
+        }        
 
         try 
         {
-            dat = jsondateencode_local.loads(rData);
+            dat = jsondateencode_local.loads(responseData);
         } catch (e) {
             console.log(e);
             dat = rData;

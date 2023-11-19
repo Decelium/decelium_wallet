@@ -48,7 +48,6 @@ function trigger_upload()
 // FILL IN WALLET DATA!
 let data_in = {wallet:{
                     data:"",
-
                     password:""
                 }};
     

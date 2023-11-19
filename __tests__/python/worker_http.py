@@ -65,8 +65,12 @@ class WorkerHTTP():
         print("success",success)
         assert success == True
         # The initial connection is to a miner and relay. Through this system, a user can download addresses of even more public access points.
-        assert self.core.initial_connect(target_url=self.node_address,
+        #assert self.core.initial_connect(target_url=self.node_address,
+        #                  target_user="admin") == True
+        assert self.core.initial_connect(target_url='http://35.167.170.96:5000/data/query',
                           target_user="admin") == True
+        
+        
         return True
         
     #############################
@@ -74,6 +78,24 @@ class WorkerHTTP():
     ###  2 Upload a IPFS website, and ensure upload works
     ###  
     def stage_ipfs_test(self):
+        '''
+        fil_dat  = self.core.net.download_entity({
+                          'api_key': 'e66eebeb3b56bd627c082a36fb0528e45d1fa8d6a1b9e47d478c3af9a11baaf6431bfdb491ceb6d8c5a3674433dcf5a1a1f9af74cf5a9414d026b68fdcedfc5d',
+                          'self_id': 'obj-c65b34bb-1ea3-4a3f-baef-7e8e09a4ca30',
+                          'inner_path': 'data/img.png'
+                        },remote=True,
+                        show_url=True)
+        print(fil_dat)
+        
+        fil_dat  = self.core.net.download_entity({
+                          'api_key': 'e66eebeb3b56bd627c082a36fb0528e45d1fa8d6a1b9e47d478c3af9a11baaf6431bfdb491ceb6d8c5a3674433dcf5a1a1f9af74cf5a9414d026b68fdcedfc5d',
+                          'self_id': 'obj-c65b34bb-1ea3-4a3f-baef-7e8e09a4ca30',
+                          'inner_path': 'example.txt'
+                        },remote=True,
+                        show_url=True)
+        print(fil_dat)
+        '''
+        
         self.sessions=[]
         del_fil  = self.core.net.delete_entity(self.core.dw.sr({'api_key':self.core.dw.pubk("admin"),
                                                                 'path':'/test_website/website.ipfs'},["admin"]),
