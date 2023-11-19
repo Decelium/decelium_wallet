@@ -11,7 +11,8 @@ class WorkerHTTP {
     constructor(core) {
         this.core = core;
         this.node_address = node;
-        this.peer_ids = peers;        
+        this.peer_ids = peers;     
+        
     }
 
     load_wallet_strings_from_disk() {
@@ -70,6 +71,20 @@ class WorkerHTTP {
     // query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false})
     async stage_ipfs_upload() {
         // sr(self,q,user_ids,format=None):
+        //console.log(content);
+        /*
+        console.log('contentTest a');
+        q ={'api_key':this.core.dw.pubk("admin"),
+            'self_id':"obj-7a4a4a4e-62e7-497e-b8a1-1ff3fec7d06a",  
+            'inner_path':'data/img.png',
+           }
+        let contentTest  = await this.core.net.download_entity(q,true,true);   
+        */
+        // console.log('contentTest b');
+        // console.log(contentTest);
+        // return true;
+        
+        
         let signed_del = await this.core.dw.sr({q: {'api_key':await this.core.dw.pubk("admin"),
                                    'path':'/test_website/website.ipfs'},user_ids:["admin"]})
         let del_fil  = await this.core.net.delete_entity(signed_del);
@@ -97,6 +112,7 @@ class WorkerHTTP {
             throw new Error("wrong number of files returned");
         
         dict_list.forEach((item) =>{
+            
             if( item.cid ==undefined)
                 throw new Error("Did not get a CID back");
             if( item.path ==undefined)
@@ -130,13 +146,15 @@ class WorkerHTTP {
             'self_id':fil,  
             'inner_path':'index.html',
            }
-          console.log("DOWNLOAD IS FAILING");
-          console.log("DOWNLOAD IS FAILING");
-          console.log("DOWNLOAD IS FAILING");
-          console.log("DOWNLOAD IS FAILING");
         let content  = await this.core.net.download_entity(q,true,true);        
-        console.log("INDEX CONTENT");
         console.log(content);
+        q ={'api_key':this.core.dw.pubk("admin"),
+            'self_id':"obj-7a4a4a4e-62e7-497e-b8a1-1ff3fec7d06a",  
+            'inner_path':'data/img.png',
+           }
+        content  = await this.core.net.download_entity(q,true,true);        
+        console.log(content);
+        
         return true;
     }
     
@@ -298,7 +316,7 @@ async function run_ipfs_tests(workerId, node, peers) {
     for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         console.log(`----------------------------------------------------------`);
-        console.log(`[${i}] Worker ${workerId}: ${step.name}`);
+        console.log(`.[${i}] Worker ${workerId}: ${step.name}`);
 
         let result = false;
         try {

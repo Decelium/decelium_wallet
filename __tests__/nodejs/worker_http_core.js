@@ -99,12 +99,20 @@ class WorkerHTTP {
 
     // query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false})
     async stage_ipfs_upload() {
-        // sr(self,q,user_ids,format=None):
         
-        //console.log("0) ------------ ENTERING UPLOAD");
-        //console.log({core:this.core});
-        //console.log({dw:this.core.dw});
-       
+        //console.log('contentTest aaa');
+        /*
+        let q2 ={'api_key':this.core.dw.pubk("admin"),
+            'self_id':"obj-a17db5c4-5544-48f1-9117-cb3de095231c",  
+            'inner_path':'data/img.png',
+            //'inner_path':'example.txt',
+           }
+        let contentTest  = await this.core.net.download_entity(q2,true,true);        
+        console.log('contentTest b');
+        console.log(contentTest);
+        return true;       
+        */
+        
         
         let signed_del = await this.core.dw.sr({q: {'api_key':await this.core.dw.pubk("admin"),
                                    'path':'/test_website/website.ipfs'},user_ids:["admin"]})
