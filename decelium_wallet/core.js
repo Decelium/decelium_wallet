@@ -1,3 +1,5 @@
+/* eslint-disable import/first */
+
 // core.js
 import { wallet } from "./wallet.js";
 import { network } from "./network.js";
@@ -50,10 +52,12 @@ class Core {
   async init() {
     if (this.init_done) return true;
       //console.log("Phase 0----------------- ");
-
+    let pathVar;
+    let fsVar;
+      
     if (typeof window === 'undefined') { // Check if in Node.js environment
-        fs = await import('fs');
-        path = await import('path');
+        fs = await import(fsVar);
+        path = await import(pathVar);
     }
 
     if (this.isNode()) {

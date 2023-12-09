@@ -1,3 +1,5 @@
+/* eslint-disable import/first */
+
 import fetch from 'cross-fetch';
 import * as ipfsClient from 'ipfs-http-client';
 
@@ -12,20 +14,17 @@ class http_client_wrapped {
         this.url_version = url_version;
         this.api_key = api_key;
         this.port = port;
-        
-        // Instantiate IPFS HTTP client directly
         console.log(ipfsClient);
-        //this.ipfs = ipfsClient({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-        //this.ipfs = ipfsClient.create({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-      
-
     }
     
    async applyAlternateProcessing(filter, sourceId) {
+        let pathVar;
+        let fsVar; // Hiding from webpack's idiotic module scanner
+       
         if (fs == undefined)
         {
-            path = await import('path');
-            fs = await import('fs');
+            path = await import(pathVar);
+            fs = await import(fsVar);
         }
         if (sourceId === "create_ipfs" && filter['file_type'] === 'ipfs' )
         {
