@@ -1,4 +1,4 @@
-/* eslint-disable import/first */
+/* disable-eslint-disable disable-import/first */
 
 import fetch from 'cross-fetch';
 import * as ipfsClient from 'ipfs-http-client';

@@ -1,4 +1,4 @@
-/* eslint-disable import/first */
+
 
 // core.js
 import { wallet } from "./wallet.js";
