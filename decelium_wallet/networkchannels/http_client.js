@@ -1,3 +1,5 @@
+/* disable-eslint-disable disable-import/first */
+
 import fetch from 'cross-fetch';
 import * as ipfsClient from 'ipfs-http-client';
 
@@ -12,16 +14,13 @@ class http_client_wrapped {
         this.url_version = url_version;
         this.api_key = api_key;
         this.port = port;
-        
-        // Instantiate IPFS HTTP client directly
         console.log(ipfsClient);
-        //this.ipfs = ipfsClient({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-        //this.ipfs = ipfsClient.create({ host: '35.167.170.96', port: '5001', protocol: 'http' });
-      
-
     }
     
    async applyAlternateProcessing(filter, sourceId) {
+        let pathVar;
+        let fsVar; // Hiding from webpack's idiotic module scanner
+       
         if (fs == undefined)
         {
             path = await import('path');
@@ -329,6 +328,8 @@ class http_client_wrapped {
         {
             dat = jsondateencode_local.loads(responseData);
         } catch (e) {
+            console.log("decelium warning -- could not json decode:");
+            console.log(responseData);
             console.log(e);
             dat = rData;
         }        
@@ -379,6 +380,7 @@ const proxyHandler = {
 };
 
 class jsondateencode_local {
+    /*
     static loads(dic) {
 
         let p;
@@ -399,7 +401,28 @@ class jsondateencode_local {
         }
 
         return p;
-    }
+    }*/
+    static loads(dic) {
+        let p;
+        if (typeof dic === 'string') {
+            if (this.isJsonString(dic)) {
+                // Use an arrow function to preserve the context of `this`
+                p = JSON.parse(dic, (key, val) => this.datetime_parser(key, val));
+            } else if (!isNaN(dic)) {
+                p = Number(dic);
+            } else {
+                p = dic;
+            }
+        } else if (typeof dic === 'object') {
+            p = this.datetime_parser('', dic);
+        }
+        else
+        {
+            p = dic;
+        }
+
+        return p;
+    }    
 
     static isJsonString(str) {
         try {

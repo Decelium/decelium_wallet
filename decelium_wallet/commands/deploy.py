@@ -14,12 +14,13 @@ try:
     import decelium_wallet.decelium as decelium
     from decelium_wallet.crypto import crypto
     from decelium_wallet.chunk import Chunk
-
+    from decelium_wallet.core import core
 except:        
     # Otherwise use the pip package
     from decelium_wallet.crypto import crypto
     from decelium_wallet.chunk import Chunk
     import decelium_wallet.decelium as decelium
+    from decelium_wallet.core import core
 
 sys.stdout = original_stdout
 
@@ -42,11 +43,12 @@ class Deploy():
         dw.load(path,password)
         accts = dw.list_accounts()
         
-        #print(accts)
-        #print(dw.get_user('admin'))
+        print("-----accts-----", accts)
+        print(dw.get_user('admin'))
         
         assert target_user in accts
         user = dw.get_user(target_user)
+        print("----user----", user)
         pq_raw = decelium.Decelium(url_version=url_version,api_key=user['api_key'])
         pq = decelium.SimpleCryptoRequester(pq_raw,{user['api_key']:user})
         return pq, user['api_key'], dw
@@ -84,9 +86,8 @@ class Deploy():
             print(res_url)
         return res_url
 
-    def _deploy_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
-
-
+    def _deploy_website(self,pq,dw,api_key,path,name,source_path,self_id,jsonOutputOnly):
+    
         original_stdout = sys.stdout
         
         if jsonOutputOnly:
@@ -98,50 +99,64 @@ class Deploy():
      
         remote=True
 
-        dir_fil = Chunk.upload(pq,api_key,remote,from_path,chunk_path)
-        print("uploading") 
-        print(dir_fil) # node index.js .env.test file_browser deploy-test
-        assert 'obj-' in dir_fil or 'dir-' in dir_fil
 
-        #print({'api_key':api_key,'path':remote_path_ipfs,'name':name,})
-        for i in range (1,5):
-            print("removing . . . "+str(i)+"/5")
-            del_fil  = pq.delete_entity({'api_key':api_key,'path':remote_path_ipfs,'name':name,},remote=True)
-            print(del_fil,"del_fil")
-            if del_fil == True or 'error' in del_fil:
-                break
-            time.sleep(2)
-        try:
-            assert del_fil == True or 'error' in del_fil
-        except Exception as e:
-            print("Could not remove old website before proceeding")
-            raise e
-        #print({
-        #    'api_key':api_key,
-        #    'path':remote_path_ipfs,
-        #    'name':name,
-        #    'file_type':'ipfs',
-        #    'payload_type':'chunk_directory',
-        #    'payload':dir_fil})
-        # node index.js .env.test file_browser deploy-test
+        del_fil = pq.delete_entity({'api_key':api_key, 'path':remote_path_ipfs, 'name':name}, remote=True, show_url=True)
+
+        
+        assert del_fil == True or 'error' in del_fil
+
+        '''
+        connection_settings = {
+            'host': 'ipfs.infura.io',
+            'port': 5001,
+            'protocol': 'https',
+            'headers': {
+                'authorization': 'Basic ' + base64.b64encode(b'2X4hcFqmM5QyWMj7aR9rQcthN5q:686773513d65eeb2d7d22dfdc79d230f').decode('utf-8')
+            },
+        }
+        '''
+        connection_settings = {
+            'host': '35.167.170.96',
+            'port': 5001,
+            'protocol': 'http',
+        }
+        
+        dist_list = self.core.net.create_ipfs({
+            'api_key':api_key,
+            'file_type':'ipfs',
+            'connection_settings':connection_settings,
+            'payload_type':'local_path',
+            'payload':from_path
+        }, remote=True, show_url=True)
+        
+        
+        for item in dist_list:
+            if item['name'] == 'quickstart/index.html':
+                item['root'] = True
+                break  
+
+        print("-----dist_list-----", dist_list)
+    
         q = {
             'api_key':api_key,
             'path':remote_path_ipfs,
             'name':name,
             'file_type':'ipfs',
-            'payload_type':'chunk_directory',
-            'payload':dir_fil}
+            'payload_type':'ipfs_pin_list',
+            'payload':dist_list
+        }
         
+
         
-        fil  = pq.create_entity(q,remote=True)
-        #print(fil['traceback'])
+        fil  = pq.create_entity(q, remote=True)
+        print("------fil------", fil)
         
-        print("early upload response...  ",fil)
         if 'message' in fil and fil['message']=='Endpoint request timed out':
             time.sleep(5)
             for i in range (1,5):
                 print("uploading . . . "+str(i)+"/5")
                 data_test  = pq.download_entity({'api_key':api_key,'path':remote_path_ipfs+"/"+name , 'attrib':True},remote=True)
+                print("---data_test---", data_test)
                 if not 'self_id' in data_test: 
                     time.sleep(i*5)
                 else:
@@ -150,9 +165,13 @@ class Deploy():
         print("later upload response...  ",fil)
         assert 'obj-' in fil
         data  = pq.download_entity({'api_key':api_key,'self_id':fil , 'attrib':True},remote=True)
-        #sys.stdout = original_stdout 
-        #print(json.dumps(data))
+        
+    
+        
+        assert 'obj-' in fil
         return fil
+    
+      
     
     def _deploy_small_website(self,pq,api_key,path,name,source_path,self_id,jsonOutputOnly):
         shutil.make_archive('temp_upload', 'zip', source_path)
@@ -213,6 +232,11 @@ class Deploy():
         upload_dir = args[4] 
         dns_host = None
         dns_secret_location = None
+        
+        self.core = core()
+        
+        print("----site_dir----", site_dir)
+        
         if len(args) >= 6 and len(args[5]) > 5:
             dns_host = args[5]
         if len(args) >= 7 and len(args[6]) > 4:
@@ -231,6 +255,12 @@ class Deploy():
                         self_id = args[i]
         password = decelium.getpass(wallet_path)
     
+        with open(wallet_path) as f:
+            wallet_data = f.read() 
+        # raw_wallet = self.load_wallet_strings_from_disk()
+        success = self.core.load_wallet(data=wallet_data, password=password)
+        self.core.initial_connect(target_url=url_version, target_user="admin")
+    
         #---- begin
         #root_path= site_dir
         #site_name = upload_dir.split("/")[-1]
@@ -248,11 +278,14 @@ class Deploy():
         #print(website_path)
         #return
         
+        print("-----root_path-----",root_path)
+        print("-----site_name-----",site_name)
+        
         [pq,api_key,wallet] = self._load_pq(wallet_path,password,url_version,target_user)
         secret_passcode = wallet.get_secret(target_user, dns_secret_location)
         print("Deploying")
         sys.stdout = original_stdout
-        website_id = self._deploy_website(pq,api_key,root_path,site_name,website_path,self_id,jsonOutputOnly)
+        website_id = self._deploy_website(pq, wallet, api_key, root_path, site_name, website_path, self_id, jsonOutputOnly)
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")        
