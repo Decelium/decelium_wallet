@@ -23,8 +23,8 @@ class http_client_wrapped {
        
         if (fs == undefined)
         {
-            path = await import(pathVar);
-            fs = await import(fsVar);
+            path = await import('path');
+            fs = await import('fs');
         }
         if (sourceId === "create_ipfs" && filter['file_type'] === 'ipfs' )
         {
@@ -328,6 +328,8 @@ class http_client_wrapped {
         {
             dat = jsondateencode_local.loads(responseData);
         } catch (e) {
+            console.log("decelium warning -- could not json decode:");
+            console.log(responseData);
             console.log(e);
             dat = rData;
         }        
@@ -378,6 +380,7 @@ const proxyHandler = {
 };
 
 class jsondateencode_local {
+    /*
     static loads(dic) {
 
         let p;
@@ -398,7 +401,28 @@ class jsondateencode_local {
         }
 
         return p;
-    }
+    }*/
+    static loads(dic) {
+        let p;
+        if (typeof dic === 'string') {
+            if (this.isJsonString(dic)) {
+                // Use an arrow function to preserve the context of `this`
+                p = JSON.parse(dic, (key, val) => this.datetime_parser(key, val));
+            } else if (!isNaN(dic)) {
+                p = Number(dic);
+            } else {
+                p = dic;
+            }
+        } else if (typeof dic === 'object') {
+            p = this.datetime_parser('', dic);
+        }
+        else
+        {
+            p = dic;
+        }
+
+        return p;
+    }    
 
     static isJsonString(str) {
         try {

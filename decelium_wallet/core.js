@@ -52,12 +52,12 @@ class Core {
   async init() {
     if (this.init_done) return true;
       //console.log("Phase 0----------------- ");
-    let pathVar;
-    let fsVar;
+    let pathVar='path';
+    let fsVar='fs';
       
     if (typeof window === 'undefined') { // Check if in Node.js environment
-        fs = await import(fsVar);
-        path = await import(pathVar);
+        fs = await import('fs');
+        path = await import('path');
     }
 
     if (this.isNode()) {
