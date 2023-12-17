@@ -99,22 +99,27 @@ class Deploy():
      
         remote=True
 
-
-        del_fil = pq.delete_entity({'api_key':api_key, 'path':remote_path_ipfs, 'name':name}, remote=True, show_url=True)
-
         
+        del_fil = pq.delete_entity({'api_key':api_key, 'path':remote_path_ipfs, 'name':name}, remote=True, show_url=True)
+        
+        try:
+            assert del_fil == True or 'error' in del_fil
+        except:
+            try:
+                if 'message' in del_fil:
+                    print("Could not complete delete fast enough... retry...")
+                    time.sleep(10)
+                    del_fil = pq.delete_entity({'api_key':api_key, 'path':remote_path_ipfs, 'name':name}, remote=True, show_url=True)
+                assert del_fil == True or 'error' in del_fil
+            except:
+                print("Could not remove old file...")
+                print("-------")
+                print(del_fil)
+                print("-------")
+                print("END")
+            
         assert del_fil == True or 'error' in del_fil
-
-        '''
-        connection_settings = {
-            'host': 'ipfs.infura.io',
-            'port': 5001,
-            'protocol': 'https',
-            'headers': {
-                'authorization': 'Basic ' + base64.b64encode(b'2X4hcFqmM5QyWMj7aR9rQcthN5q:686773513d65eeb2d7d22dfdc79d230f').decode('utf-8')
-            },
-        }
-        '''
+            
         connection_settings = {
             'host': '35.167.170.96',
             'port': 5001,

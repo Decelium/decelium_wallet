@@ -50,8 +50,6 @@ class wallet():
         return False
     
     def save_js(self,path,password=None):
-        print("unimplemented")
-        #print(self.wallet);
         return True
         
     
@@ -69,7 +67,6 @@ class wallet():
             else:
                 astr = crypto.do_encode_string(json.loads(data))
             if password != None:
-                #print("astr",astr)
                 astr = crypto.decode(astr,password,version='python-ecdsa-0.1')
             self.wallet= crypto.do_decode_string(astr )
             return True
@@ -131,9 +128,6 @@ class wallet():
 
 
     def create_account(self,user ,label,version='python-ecdsa-0.1',format=None):
-        #print("user",user)
-        #print("label",label)
-        #print("version",version)
         if user == None:
             user = crypto.generate_user(version=version)
         assert 'api_key' in user
@@ -145,12 +139,10 @@ class wallet():
                         'description':None,
                         'secrets':{},
                         'watch_addresses':[]}
-        #print("account_data",account_data)
         if label == None:
             label = user['api_key']
         self.wallet[label] = account_data
         #user["some_data"] = "return"
-        print("wallet",self.wallet)
         if format == 'json':
             user = json.dumps(user)
         return user
@@ -208,18 +200,13 @@ class wallet():
 
     def recover_user(self,private_key,format=None):
         return crypto.generate_user_from_string(private_key=private_key,version='python-ecdsa-0.1',format=format)
-
-    
     
     @staticmethod
     def getpass(walletpath):
         wallet_path = Path(walletpath)
         wallet_dir = wallet_path.parent
-        #print(wallet_dir)
-        #print(os.getcwd())
         # look for a properly named .filename.dec.password
         password_file = wallet_dir / (wallet_path.stem + '.dec.password')
-        #print(password_file)
         if not password_file.is_file():
             # then look for a .password
             password_file = wallet_dir / '.password'

@@ -1,10 +1,5 @@
-
-
 class IPythonWrapper {
-
     async bindMethods(code_py,modulename,classname,instanceName){
-        //console.log("in bind");
-        //console.log(this.pyodide);
         this.pyodide.runPython(instanceName+`= ${modulename}.${classname}()`);        
         this.pyodide.runPython(`print(`+instanceName+`)`);        
         
@@ -65,37 +60,18 @@ class IPythonWrapper {
                         for (const val of args) {
                             argString += '' +  objectToPythonDict(val) + ',';
                         }
-                        
-                        //argString += args.join(',') + ',';
                     } else {
-                        console.log("AM NOT ARRAY");
-                        console.log(args);
-                        // args is an object, join key-value pairs with commas
                         for (const key in args) {
-                            console.log(key);
-                            console.log(args[key]);
                             argString += key + '=' + objectToPythonDict(args[key]) + ',';
                         }
                     }            
                 }
-                //for ( const key in args ) {
-                //    argString=argString+key+'="'+args[key]+'",';
-                //}
                 argString='('+argString+'format="json")';
-                console.log(instanceName+`.`+method+argString);
-                //instanceName+`.`+method+argString
-                //throw new Error(instanceName+`.`+method+argString);
-            
                 let result = this.pyodide.runPython(instanceName+`.`+method+argString);
-                //console.log("wallet result");
-                //console.log({result});
-            
                 return JSON.parse(result); 
               } 
         );            
     }
-    
 };
-
 export default IPythonWrapper;
 export {IPythonWrapper};
