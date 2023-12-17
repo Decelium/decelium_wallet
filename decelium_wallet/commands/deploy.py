@@ -86,7 +86,7 @@ class Deploy():
             print(res_url)
         return res_url
 
-    def _deploy_website(self,pq,dw,api_key,path,name,source_path,self_id,jsonOutputOnly):
+    def _deploy_website(self,pq,dw,api_key,path,name,source_path,self_id,jsonOutputOnly,version):
     
         original_stdout = sys.stdout
         
@@ -119,12 +119,20 @@ class Deploy():
                 print("END")
             
         assert del_fil == True or 'error' in del_fil
-            
-        connection_settings = {
-            'host': '35.167.170.96',
-            'port': 5001,
-            'protocol': 'http',
-        }
+        if version == 'dev':
+            connection_settings = {
+                'host': '35.167.170.96',
+                'port': 5001,
+                'protocol': 'http',
+            }
+        elif version == 'test':
+            connection_settings = {
+                'host': '54.184.193.202',
+                'port': 5001,
+                'protocol': 'http',
+            }
+        else:
+            raise Exception("Could not find IPFS server for upload")
         
         dist_list = self.core.net.create_ipfs({
             'api_key':api_key,
@@ -237,6 +245,13 @@ class Deploy():
         upload_dir = args[4] 
         dns_host = None
         dns_secret_location = None
+        version = None
+        if 'dev' in url_version:
+            version = 'dev'
+        if 'test' in url_version:
+            version = 'test'
+        if not version:
+            raise Exception("Could not detect upload version as dev or test")
         
         self.core = core()
         
@@ -290,7 +305,7 @@ class Deploy():
         secret_passcode = wallet.get_secret(target_user, dns_secret_location)
         print("Deploying")
         sys.stdout = original_stdout
-        website_id = self._deploy_website(pq, wallet, api_key, root_path, site_name, website_path, self_id, jsonOutputOnly)
+        website_id = self._deploy_website(pq, wallet, api_key, root_path, site_name, website_path, self_id, jsonOutputOnly,version)
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")        
