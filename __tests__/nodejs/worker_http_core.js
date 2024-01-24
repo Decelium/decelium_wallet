@@ -134,7 +134,18 @@ class WorkerHTTP {
           headers: {
             authorization: 'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64'),
           },
-        };           
+        };       
+        
+        
+        //let connection_settings = {
+        //  host: '35.167.170.96',
+        //  port: 5001,
+        //  protocol: 'http',
+        //  headers: {
+        //  //  authorization: 'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64'),
+        //  },
+        //};         
+        
         if (Object.keys(this.data_in).includes("files"))
         {
          
@@ -143,11 +154,8 @@ class WorkerHTTP {
                 'api_key':await this.core.dw.pubk("admin"),
                 'connection_settings':connection_settings,
                 'file_type':'ipfs',
-             //   'ipfs_url':"/dns/35.167.170.96/tcp/5001/http",
                 'payload_type':'raw_file_list',
                 'payload':this.data_in.files});          
-            //console.log(dict_list);
-        // TODO Verify structrue of ipfs
             
         }
         else

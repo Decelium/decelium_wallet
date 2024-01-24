@@ -51,13 +51,29 @@ class http_client_wrapped {
                 if (connection_settings.protocol == undefined) return {"error":"ipfs protocol must be specified in connection_settings"};
                 if (connection_settings.headers == undefined)
                     connection_settings.headers = {};
-                
+                console.log(connection_settings);
                 this.ipfs = ipfsClient.create(connection_settings);                  
 
                 let generator = await this.ipfs.addAll(itemsToAdd, { wrapWithDirectory: true });
                 let addedItems = [];
 
                 for await (const item of generator) {
+                    // For each added item, to avoid errors, painstakingly verify each file.
+                    const pinResult = await this.ipfs.pin.add(item.cid);
+                    console.log("pin result", pinResult);
+                    let isPinned = false;
+                    for await (const pin of this.ipfs.pin.ls({ paths: item.cid })) {
+                        if (pin.cid.toString() === item.cid.toString()) {
+                            isPinned = true;
+                            break;
+                        }
+                    }
+                    
+                    if(isPinned == false)
+                    {
+                        console.error('Error Could not add pin to your pinning service:'+ item.cid.toString());
+                        throw new Error("Could not add pin to pinning service.");                    
+                    }
                     item.cid = item.cid.toString();
                     item.name = item.path.toString();
                     if (item.name == "")
@@ -67,7 +83,7 @@ class http_client_wrapped {
                     addedItems.push(item);
 
                 }
-                console.log("addedItems")
+                console.log("actually addedItems!")
                 console.log(addedItems)
                 console.log("DONE create_ipfs");
 
