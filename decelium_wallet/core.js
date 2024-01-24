@@ -23,12 +23,16 @@ class Core {
   constructor() {}
 
   async import_python_bundle(bundle_name){
-      console.log("IMPORTING BUNDLE");
+        const originalConsoleLog = console.log;
+        console.log = function (message) {
+          if (!message.includes("Loading") && !message.includes("Loaded")) {
+            originalConsoleLog.apply(console, arguments);
+          }
+        };        
+      
+        //
         let temp_filename = bundle_name;
         let modulename = bundle_name;
-        //const code_py = (await import  (`${__dirname}/${temp_filename}.py.js`)).default;
-        
-        console.log("imported");
         this.pyodide.globals.set(`${temp_filename}_py`, code_py);
         await this.pyodide.runPythonAsync(`import sys, importlib`);
 
@@ -37,15 +41,10 @@ class Core {
         with open("${modulename}.py", "wb") as f:
             f.write(${temp_filename}_py_bytes)
             f.close()`);
-        //console.log("IMPORTED BUNDLE");
-        //console.log(modulename);
-        //console.log(this);
-        //console.log(this.pyodide);
-        //console.log(this.pyodide.runPythonAsync);
         
-        //await this.pyodide.runPythonAsync(`mod_list = set(sys.modules.keys())`);
         await this.pyodide.runPythonAsync(`import ${modulename}`);
-        //console.log("FINISHED IMPORT BUNDLE");
+        console.log = originalConsoleLog;        
+        console.log("pyodide initalized");
   
   }
     

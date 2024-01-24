@@ -160,16 +160,16 @@ def localfindclass(type_or_string,module_string=None,context=None,reload=True):
                 #print("(A)computationally expensive paxdk.localfindclass > ",module_string)
                 moduleIn = importlib.import_module(module_string)
                 if reload:
-                    print("(B)computationally expensive paxdk.localfindclass > ",module_string)
+                    #print("(B)computationally expensive paxdk.localfindclass > ",module_string)
                     importlib.reload(moduleIn)
                 try:
                     typeVar = getattr(moduleIn ,type_or_string)
                 except Exception as e:
                     print("PaxFinancialAPI Failure: Failing to find an attribute in the module. Below are the attributes of the model.")
-                    import pprint
-                    print(moduleIn)
-                    print(type_or_string)
-                    pprint.pprint(dir(moduleIn))
+                    #import pprint
+                    #print(moduleIn)
+                    #print(type_or_string)
+                    #pprint.pprint(dir(moduleIn))
                     raise(e)
                     
         return typeVar
@@ -257,20 +257,14 @@ class paxqueryengine():
             
         try:
             try:
-                #print(result)
-                #print(type(result))
                 dat = jsondateencode_local.loads(result)
                 if type(dat) == str:
                     dat = jsondateencode_local.loads(dat)
-                #print('decoded 1 - ',dat)
-                #print(type(dat))
             except Exception as e:
                 print(e)
                 pass
             if type(dat) == str and dat[0] in ['[','{']:
                 dat = jsondateencode_local.loads(dat)
-                #print(type(dat))
-                #print('decoded 2 - ',dat)
         except Exception as e :
             print("DECODE ERROR")
             print(e)

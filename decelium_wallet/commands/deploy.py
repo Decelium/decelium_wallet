@@ -86,7 +86,7 @@ class Deploy():
             print(res_url)
         return res_url
 
-    def _deploy_website(self,pq,dw,api_key,path,name,source_path,self_id,jsonOutputOnly):
+    def _deploy_website(self,pq,dw,api_key,path,name,source_path,self_id,jsonOutputOnly,version):
     
         original_stdout = sys.stdout
         
@@ -99,27 +99,40 @@ class Deploy():
      
         remote=True
 
-
-        del_fil = pq.delete_entity({'api_key':api_key, 'path':remote_path_ipfs, 'name':name}, remote=True, show_url=True)
-
         
+        del_fil = pq.delete_entity({'api_key':api_key, 'path':remote_path_ipfs, 'name':name}, remote=True, show_url=True)
+        
+        try:
+            assert del_fil == True or 'error' in del_fil
+        except:
+            try:
+                if 'message' in del_fil:
+                    print("Could not complete delete fast enough... retry...")
+                    time.sleep(10)
+                    del_fil = pq.delete_entity({'api_key':api_key, 'path':remote_path_ipfs, 'name':name}, remote=True, show_url=True)
+                assert del_fil == True or 'error' in del_fil
+            except:
+                print("Could not remove old file...")
+                print("-------")
+                print(del_fil)
+                print("-------")
+                print("END")
+            
         assert del_fil == True or 'error' in del_fil
-
-        '''
-        connection_settings = {
-            'host': 'ipfs.infura.io',
-            'port': 5001,
-            'protocol': 'https',
-            'headers': {
-                'authorization': 'Basic ' + base64.b64encode(b'2X4hcFqmM5QyWMj7aR9rQcthN5q:686773513d65eeb2d7d22dfdc79d230f').decode('utf-8')
-            },
-        }
-        '''
-        connection_settings = {
-            'host': '35.167.170.96',
-            'port': 5001,
-            'protocol': 'http',
-        }
+        if version == 'dev':
+            connection_settings = {
+                'host': '35.167.170.96',
+                'port': 5001,
+                'protocol': 'http',
+            }
+        elif version == 'test':
+            connection_settings = {
+                'host': '54.184.193.202',
+                'port': 5001,
+                'protocol': 'http',
+            }
+        else:
+            raise Exception("Could not find IPFS server for upload")
         
         dist_list = self.core.net.create_ipfs({
             'api_key':api_key,
@@ -232,6 +245,13 @@ class Deploy():
         upload_dir = args[4] 
         dns_host = None
         dns_secret_location = None
+        version = None
+        if 'dev' in url_version:
+            version = 'dev'
+        if 'test' in url_version:
+            version = 'test'
+        if not version:
+            raise Exception("Could not detect upload version as dev or test")
         
         self.core = core()
         
@@ -285,7 +305,7 @@ class Deploy():
         secret_passcode = wallet.get_secret(target_user, dns_secret_location)
         print("Deploying")
         sys.stdout = original_stdout
-        website_id = self._deploy_website(pq, wallet, api_key, root_path, site_name, website_path, self_id, jsonOutputOnly)
+        website_id = self._deploy_website(pq, wallet, api_key, root_path, site_name, website_path, self_id, jsonOutputOnly,version)
         original_stdout = sys.stdout
         if jsonOutputOnly:
             sys.stdout = open(os.devnull,"w")        
