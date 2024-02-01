@@ -64,27 +64,10 @@ class WorkerHTTP {
         if (connected !== true) {
             throw new Error('Failed to connect');
         }
-        //console.log(this.core.dw.get_raw())
         return true;
     }
 
-    // query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false})
     async stage_ipfs_upload() {
-        // sr(self,q,user_ids,format=None):
-        //console.log(content);
-        /*
-        console.log('contentTest a');
-        q ={'api_key':this.core.dw.pubk("admin"),
-            'self_id':"obj-7a4a4a4e-62e7-497e-b8a1-1ff3fec7d06a",  
-            'inner_path':'data/img.png',
-           }
-        let contentTest  = await this.core.net.download_entity(q,true,true);   
-        */
-        // console.log('contentTest b');
-        // console.log(contentTest);
-        // return true;
-        
-        
         let signed_del = await this.core.dw.sr({q: {'api_key':await this.core.dw.pubk("admin"),
                                    'path':'/test_website/website.ipfs'},user_ids:["admin"]})
         let del_fil  = await this.core.net.delete_entity(signed_del);
@@ -218,8 +201,7 @@ class WorkerHTTP {
 
             const val = uuidv4();
             
-            console.log("Target Funk");
-            console.log(this.core.net.set_value);
+
             const respset = await this.core.net.set_value(
                 {
                     api_key: this.core.dw.pubk('admin'),

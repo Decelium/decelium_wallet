@@ -17,7 +17,7 @@ from os.path import exists
 class Command:
     def run(self,args):
         path = args[0:][0]
-        #print("display_wallet cwd", os.getcwd())
+        # return path
         password = decelium.getpass(path)
         dw = decelium.SimpleWallet()
         dw.load(path=path,password=password)
@@ -26,3 +26,4 @@ class Command:
 def run(*args):
     c = Command()
     return c.run (args)
+

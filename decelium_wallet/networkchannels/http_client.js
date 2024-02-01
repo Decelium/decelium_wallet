@@ -31,7 +31,8 @@ class http_client_wrapped {
             if (filter['payload_type'] != 'local_path' && filter['payload_type'] != 'raw_file_list')
                 return {error:"only payload_type local_path and raw_file_list is accepted with create_ipfs"}
         }
-        console.log("Considering create "+sourceId);
+        console.log("Considering create " + sourceId);
+       console.log(filter);
         if (sourceId === "create_ipfs"  && 'file_type' in filter && filter['file_type'] === 'ipfs' && 'payload_type' in filter) {
             console.log("IN create_ipfs");
             try {
@@ -90,8 +91,8 @@ class http_client_wrapped {
                 return addedItems;
             } catch (error) {
                 console.error('Error adding to IPFS:', error);
-                throw error;
-                
+                return { error: 'Error adding to IPFS:' + error.toString() }
+
             }
             
         } else {
@@ -109,10 +110,6 @@ class http_client_wrapped {
     }
     
     async loadFileData (path_in) {
-        // TODO - Correctly create sub directory
-        // TODO - Correstly assign root element
-        //let itemsToAdd = [];
-        // This function will get all the files recursively from a directory
         const getFilesRecursive = (dir) => {
             let results = [];
             const list = fs.readdirSync(dir);
@@ -199,12 +196,12 @@ class http_client_wrapped {
         {
             return resp;
         }
-        console.log("PROCESSING QUERY REMOTE"+source_id);
+        console.log("PROCESSING QUERY REMOTE->"+source_id);
         if(show_url === true)
         {
             console.log("THE RAW  QUERY()");
             console.log({source_id,url_version,filter});
-        }        
+        }
         while ((Date.now() - time_start) / 1000 < wait_seconds) {
             resp = await this.query_wait(filter, source_id, {remote, url_version, show_url});
             if (resp && typeof resp === 'object' && 'state' in resp && resp['state'] === 'updating') {
@@ -242,17 +239,18 @@ class http_client_wrapped {
     }
 
     async query_remote(source_id, query, url_version = 'dev', show_url = false) {
-        
+
+        console.log("--STarting query--");
         let data = {};
         data['qtype'] = source_id;
         data['__str_encoded_query'] = this.do_encode_string(query);
 
-        if (show_url) {
+        // if (show_url) {
             console.log("show_url QUERY REMOTE");
             console.log(url_version);
             console.log(query);
             console.log(data);
-        }
+        //}
         //console.log('query_remote----------------------');
         //console.log(url_version);
         //console.log(data);
@@ -307,9 +305,11 @@ class http_client_wrapped {
         let responseData;
         let contentType = r.headers.get("content-type");        
         try {
+
             let rawData = await r.arrayBuffer();
+            //console.log(r);
             const decoder = new TextDecoder();       
-            const vall = decoder.decode(rawData); 
+            const vall = decoder.decode(rawData);
             if (contentType && contentType.includes("application/json")) {
                 // Handle JSON response
                 responseData = new TextDecoder().decode(rawData);
@@ -319,6 +319,7 @@ class http_client_wrapped {
             } else {
                 try {
                     // Try to parse as JSON
+                    console.log("Trying to parse");
                     responseData = JSON.parse(new TextDecoder().decode(rawData));
                 } catch (e) {
                     try {

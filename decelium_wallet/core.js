@@ -3,12 +3,8 @@
 // core.js
 import { wallet } from "./wallet.js";
 import { network } from "./network.js";
-//import { service } from './service.js';
-//class network {};
 class service {}
-//import fs from 'fs';
-//import path from 'path';
-let fs, path;
+let fs, path,url;
 fs = null;
 path = null;
 import code_py from './py_bundle.py.js';
@@ -47,47 +43,53 @@ class Core {
         console.log("pyodide initalized");
   
   }
-    
+    async findRootDir(currentDir) {
+        try {
+            const files =  fs.readFileSync(path.join(currentDir, 'package.json'), 'utf-8');
+            return currentDir;
+        } catch (error) {
+            console.log(error);
+            const parentDir = path.dirname(currentDir);
+            if (parentDir === currentDir) {
+                throw new Error('Reached the file system root without finding a package.json.');
+            }
+            return this.findRootDir(parentDir);
+        }
+    }    
   async init() {
     if (this.init_done) return true;
-      //console.log("Phase 0----------------- ");
     let pathVar='path';
     let fsVar='fs';
       
-    if (typeof window === 'undefined') { // Check if in Node.js environment
+    if (typeof window === 'undefined') { 
         fs = await import('fs');
         path = await import('path');
+        url = await import('url');
+
     }
 
-    if (this.isNode()) {
-      //const { loadPyodide } = require("pyodide");
-      //const loadPyodide = async () => {
-      //    const pyodideModule = await import('pyodide');
-      //    return pyodideModule.loadPyodide();
-      //};
+      if (this.isNode()) {
+        // Do a manual search for package.json, then locate the pyodide NPM package.
+        // This method is more reliable than relying on convention.
+        const { loadPyodide } = await import("pyodide");
+        const currentDir = path.dirname(url.fileURLToPath(import.meta.url));
+        console.log({ currentDir });
 
-      const { loadPyodide } = await import("pyodide");
-      //console.log(loadPyodide);
-      this.pyodide = await loadPyodide({
-        indexURL: "/app/projects/decelium_wallet/node_modules/pyodide/",
-      });
-      //const pyodideReady = pyodideLoader.loadPyodide({
-      //    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/",
-      //    fs
-      //});
-      //this.pyodide = await pyodideReady;
+        const __dirname = await this.findRootDir(currentDir);
+        const pyodidePath = path.join(__dirname, '..', 'node_modules', 'pyodide');
+        console.log(pyodidePath);
+        this.pyodide = await loadPyodide({
+            indexURL: path.join(pyodidePath, '/'), 
+        });
+
     } else {
       this.pyodide = await window.loadPyodide({
         indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js",
       });
     }
 
-    ////
-      //console.log("Phase 1 ");
-
     await this.pyodide.runPythonAsync(`
         import codecs`);
-      //console.log("Phase 2 ");
 
     await this.pyodide.loadPackage("micropip");
     await this.pyodide.runPythonAsync(`
@@ -108,25 +110,16 @@ class Core {
     const micropip = this.pyodide.pyimport("micropip");
     await micropip.install("requests");
     await micropip.install("ecdsa");
-    //await micropip.install('sys');
     await micropip.install("cryptography");
-    //console.log("Phase 3 ");
     this.bundle_name = BUNDLE_NAME;
     await this.import_python_bundle(this.bundle_name);
 
-    //console.log("Phase 3.1 ");
     this.dw = new wallet(this);
-    //console.log("Phase 3.2 ");
     if (!this.net) this.net = new network();
-    //console.log("Phase 3.3 ");
     this.service = new service();
-    //console.log("Phase 3.4 ");
     this.node_peer_list = null;
-    //console.log("FINISHED INIT 1");
       
     await this.dw.init();
-    //console.log("Phase 6");
-    //console.log("Phase 7");
       
     this.init_done = true;
     return true;

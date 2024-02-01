@@ -218,6 +218,7 @@ from cryptography.fernet import InvalidToken
 
 class wallet():
     def __init__(self):
+        self.wallet = {}
         pass
     def load(self,path=None,password=None,data=None,format=None,mode='fs'):
         if path == None and data != None:
