@@ -1,7 +1,7 @@
 class IPythonWrapper {
     async bindMethods(code_py,modulename,classname,instanceName){
         this.pyodide.runPython(instanceName+`= ${modulename}.${classname}()`);        
-        this.pyodide.runPython(`print(`+instanceName+`)`);        
+        // this.pyodide.runPython(`print(`+instanceName+`)`);        
         
         const methodRegex = /def\s+(\w+)\s*\(/g;
         const instanceMethods = [];
@@ -55,7 +55,6 @@ class IPythonWrapper {
                 else
                 {
                     if (Array.isArray(args) &&  args.length ==1) {
-                        console.log("AM ARRAY");
                         // args is an array, join elements with commas
                         for (const val of args) {
                             argString += '' +  objectToPythonDict(val) + ',';

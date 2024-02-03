@@ -180,19 +180,9 @@ const proxyHandler = {
       return Reflect.get(target, propKey);
     } else {
       target.current_attr = propKey;
-      //let v =  target.__run_query.bind(target);
-      //console.log("proxy value!");
-      //console.log (v);
-      //return v;
       return async (...args) => {
-        //console.log( "TEST STR");
         let v = target.__run_query(...args);
-        //console.log( "-----v");
-        //console.log(v);
         v = await v;
-        //console.log( "-----await v");
-        //console.log(v);
-        //console.log(typeof v);
         return v;
       };
     }

@@ -18,13 +18,7 @@ class Core {
 
   constructor() {}
 
-  async import_python_bundle(bundle_name){
-        const originalConsoleLog = console.log;
-        console.log = function (message) {
-          if (!message.includes("Loading") && !message.includes("Loaded")) {
-            originalConsoleLog.apply(console, arguments);
-          }
-        };        
+    async import_python_bundle(bundle_name) {
       
         //
         let temp_filename = bundle_name;
@@ -39,7 +33,6 @@ class Core {
             f.close()`);
         
         await this.pyodide.runPythonAsync(`import ${modulename}`);
-        console.log = originalConsoleLog;        
   
   }
     async findRootDir(currentDir) {
@@ -53,8 +46,42 @@ class Core {
             }
             return this.findRootDir(parentDir);
         }
-    }    
-  async init() {
+    } 
+
+    async init() {
+
+        const originalConsoleLog = console.log;
+        const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+        const originalStderrWrite = process.stderr.write.bind(process.stderr);
+
+        process.stdout.write = () => { };
+        process.stderr.write = () => { };
+        console.log = function (message) {
+            //if (!message.includes("Loading") && !message.includes("Loaded") && !message.includes("loaded")) {
+            //   originalConsoleLog.apply(console, arguments);
+            //}
+        };
+        try {
+            // Execute the function and await its completion
+            const result = await this.init_console_logs();
+
+            // Return the result after restoring console output
+            console.log = originalConsoleLog;
+            process.stdout.write = originalStdoutWrite;
+            process.stderr.write = originalStderrWrite;
+
+            return result;
+        } catch (error) {
+            console.log = originalConsoleLog;
+            process.stdout.write = originalStdoutWrite;
+            process.stderr.write = originalStderrWrite;
+            throw error;
+        }
+    }
+
+    async init_console_logs() {
+
+
     if (this.init_done) return true;
     let pathVar='path';
     let fsVar='fs';
@@ -286,7 +313,7 @@ class Core {
       } else {
         clearInterval(intervalId);
       }
-    }, sec * 1000); // Multiply by 1000 to convert sec to ms
+    }, sec * 1000); 
     return intervalId;
   }
 
