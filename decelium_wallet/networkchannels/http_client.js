@@ -14,7 +14,6 @@ class http_client_wrapped {
         this.url_version = url_version;
         this.api_key = api_key;
         this.port = port;
-        console.log(ipfsClient);
     }
     
    async applyAlternateProcessing(filter, sourceId) {
@@ -31,10 +30,7 @@ class http_client_wrapped {
             if (filter['payload_type'] != 'local_path' && filter['payload_type'] != 'raw_file_list')
                 return {error:"only payload_type local_path and raw_file_list is accepted with create_ipfs"}
         }
-        console.log("Considering create " + sourceId);
-       console.log(filter);
         if (sourceId === "create_ipfs"  && 'file_type' in filter && filter['file_type'] === 'ipfs' && 'payload_type' in filter) {
-            console.log("IN create_ipfs");
             try {
                 let itemsToAdd = [];
                 if (filter['payload_type'] === 'local_path')
@@ -42,8 +38,6 @@ class http_client_wrapped {
                 if (filter['payload_type'] === 'raw_file_list')
                     itemsToAdd =filter['payload'];
                     
-                console.log("itemsToAdd");
-                console.log(itemsToAdd);
                 if (filter.connection_settings == undefined) return {"error":"connection_settings argument required i.e. {host:str,port:int,protocol:str,headers:{authorization:str}}"};
                 let connection_settings = filter.connection_settings;
                 
@@ -52,7 +46,6 @@ class http_client_wrapped {
                 if (connection_settings.protocol == undefined) return {"error":"ipfs protocol must be specified in connection_settings"};
                 if (connection_settings.headers == undefined)
                     connection_settings.headers = {};
-                console.log(connection_settings);
                 this.ipfs = ipfsClient.create(connection_settings);                  
 
                 let generator = await this.ipfs.addAll(itemsToAdd, { wrapWithDirectory: true });
@@ -61,7 +54,6 @@ class http_client_wrapped {
                 for await (const item of generator) {
                     // For each added item, to avoid errors, painstakingly verify each file.
                     const pinResult = await this.ipfs.pin.add(item.cid);
-                    console.log("pin result", pinResult);
                     let isPinned = false;
                     for await (const pin of this.ipfs.pin.ls({ paths: item.cid })) {
                         if (pin.cid.toString() === item.cid.toString()) {
@@ -84,9 +76,6 @@ class http_client_wrapped {
                     addedItems.push(item);
 
                 }
-                console.log("actually addedItems!")
-                console.log(addedItems)
-                console.log("DONE create_ipfs");
 
                 return addedItems;
             } catch (error) {
@@ -188,7 +177,6 @@ class http_client_wrapped {
     
     async query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false}) {
 
-        console.log("PROCESSING QUERY"+source_id);
         const time_start = Date.now();
         let resp = undefined;
         resp = await this.applyAlternateProcessing(filter, source_id);
@@ -196,7 +184,6 @@ class http_client_wrapped {
         {
             return resp;
         }
-        console.log("PROCESSING QUERY REMOTE->"+source_id);
         if(show_url === true)
         {
             console.log("THE RAW  QUERY()");
@@ -240,35 +227,16 @@ class http_client_wrapped {
 
     async query_remote(source_id, query, url_version = 'dev', show_url = false) {
 
-        console.log("--STarting query--");
         let data = {};
         data['qtype'] = source_id;
         data['__str_encoded_query'] = this.do_encode_string(query);
 
-        // if (show_url) {
+        if (show_url) {
             console.log("show_url QUERY REMOTE");
             console.log(url_version);
             console.log(query);
             console.log(data);
-        //}
-        //console.log('query_remote----------------------');
-        //console.log(url_version);
-        //console.log(data);
-        //console.log(query);
-        /*
-        let r = await axios.post(url_version, data);
-        //console.log("query_remote_data",r.data);
-        let dat;
-
-        try 
-        {
-            dat = jsondateencode_local.loads(r.data);
-        
-        } catch (e) {
-            console.log(e);
-            dat = r.data;
         }
-        */
         let r = await fetch(url_version, {
             method: 'POST',
             headers: {
@@ -279,35 +247,11 @@ class http_client_wrapped {
         
         let rData = "could not load";
         let dat;
-        /*
-        try {
-            console.log("GETTING RESPONSE");
-            console.log(r);
-            console.log(await r.text());
-            
-            let rText = await r.text();
-            try {
-                if (show_url) {
-                    console.log("show_url return text:");
-                    console.log(rText);
-                }
-                
-                rData = JSON.parse(rText);
-            } catch (e) {
-                console.log("Response is not JSON:", e);
-                rData = rText;
-                console.log("data",rData);
-            }
-            dat = rData;
-        } catch (e) {
-            console.log("An error occurred while reading the response:", e);
-        }*/
         let responseData;
         let contentType = r.headers.get("content-type");        
         try {
 
             let rawData = await r.arrayBuffer();
-            //console.log(r);
             const decoder = new TextDecoder();       
             const vall = decoder.decode(rawData);
             if (contentType && contentType.includes("application/json")) {
@@ -319,7 +263,6 @@ class http_client_wrapped {
             } else {
                 try {
                     // Try to parse as JSON
-                    console.log("Trying to parse");
                     responseData = JSON.parse(new TextDecoder().decode(rawData));
                 } catch (e) {
                     try {

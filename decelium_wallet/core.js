@@ -40,7 +40,6 @@ class Core {
         
         await this.pyodide.runPythonAsync(`import ${modulename}`);
         console.log = originalConsoleLog;        
-        console.log("pyodide initalized");
   
   }
     async findRootDir(currentDir) {
@@ -48,7 +47,6 @@ class Core {
             const files =  fs.readFileSync(path.join(currentDir, 'package.json'), 'utf-8');
             return currentDir;
         } catch (error) {
-            console.log(error);
             const parentDir = path.dirname(currentDir);
             if (parentDir === currentDir) {
                 throw new Error('Reached the file system root without finding a package.json.');
@@ -73,11 +71,9 @@ class Core {
         // This method is more reliable than relying on convention.
         const { loadPyodide } = await import("pyodide");
         const currentDir = path.dirname(url.fileURLToPath(import.meta.url));
-        console.log({ currentDir });
 
         const __dirname = await this.findRootDir(currentDir);
         const pyodidePath = path.join(__dirname, '..', 'node_modules', 'pyodide');
-        console.log(pyodidePath);
         this.pyodide = await loadPyodide({
             indexURL: path.join(pyodidePath, '/'), 
         });
@@ -229,13 +225,8 @@ class Core {
     if (typeof data !== "string" || typeof password !== "string") {
       throw new Error("Invalid argument types.");
     }
-    //throw new Error(`STOP HERE 2`);
     this.dw = new wallet(this);
-    //throw new Error(`STOP HERE 1`);
     await this.dw.init();
-    //throw new Error(`STOP HERE`);
-    //console.log({data});
-    //throw new Error(`STOP HERE:`+ data);
       
     const success = this.dw.load({ data, password, mode });
     return success;
@@ -293,7 +284,6 @@ class Core {
       if (keepRunning()) {
         func(...args);
       } else {
-        console.log("ENDING TIMER FOR " + func.name);
         clearInterval(intervalId);
       }
     }, sec * 1000); // Multiply by 1000 to convert sec to ms
@@ -328,9 +318,7 @@ class Core {
     }
 
     const run_pings_def = async () => {
-      //console.log("DOING PING");
       resp = await this.do_ping(port, name, wallet_user);
-      //console.log(resp);
     };
 
     this.setInterval(run_pings_def, () => this.net.listening(), 5); // ping every 5 seconds
@@ -377,14 +365,12 @@ class Core {
     this.nodes = await this.net.node_list();
 
     let found = false;
-    //console.log("this.nodes",this.nodes);
     for (const n of this.nodes) {
       if (n.self_id === this.self_id) {
         found = true;
       } else {
         if ("test_id" in n.connect_data.meta) {
           this.node_peer_list.push(n);
-          //console.log('passed inspection' + n.self_id);
         }
       }
     }
@@ -418,7 +404,7 @@ class Core {
   }
 
   async initial_connect(
-    target_url = "https://dev.paxfinancial.ai/data/query",
+    target_url = undefined,
     target_user = undefined,
     api_key = undefined
   ) {
