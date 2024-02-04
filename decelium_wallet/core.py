@@ -47,6 +47,7 @@ class core:
         return success
     
     def __init__(self):
+        self.target_user = 'admin'
         self.net = network()
         self.service = service()
         self.node_peer_list = None

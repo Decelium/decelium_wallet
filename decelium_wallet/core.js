@@ -1,5 +1,3 @@
-
-
 // core.js
 import { wallet } from "./wallet.js";
 import { network } from "./network.js";
@@ -19,8 +17,6 @@ class Core {
   constructor() {}
 
     async import_python_bundle(bundle_name) {
-      
-        //
         let temp_filename = bundle_name;
         let modulename = bundle_name;
         this.pyodide.globals.set(`${temp_filename}_py`, code_py);
@@ -49,7 +45,7 @@ class Core {
     } 
 
     async init() {
-
+        this.target_user = 'admin'; // By convention, we always look for an admin user
         const originalConsoleLog = console.log;
         const originalStdoutWrite = process.stdout.write.bind(process.stdout);
         const originalStderrWrite = process.stderr.write.bind(process.stderr);
@@ -79,78 +75,87 @@ class Core {
         }
     }
 
+    async sr(request, user = null) {
+        if (user == null)
+            user = this.target_user;
+        return await this.dw.sr({
+            q: request,
+            user_ids: [user]
+        });
+    }
+
     async init_console_logs() {
 
-
-    if (this.init_done) return true;
-    let pathVar='path';
-    let fsVar='fs';
+        if (this.init_done) return true;
+        let pathVar='path';
+        let fsVar='fs';
       
-    if (typeof window === 'undefined') { 
-        fs = await import('fs');
-        path = await import('path');
-        url = await import('url');
+        if (typeof window === 'undefined') { 
+            fs = await import('fs');
+            path = await import('path');
+            url = await import('url');
 
-    }
+        }
 
-      if (this.isNode()) {
-        // Do a manual search for package.json, then locate the pyodide NPM package.
-        // This method is more reliable than relying on convention.
-        const { loadPyodide } = await import("pyodide");
-        const currentDir = path.dirname(url.fileURLToPath(import.meta.url));
+        if (this.isNode()) {
+            // Do a manual search for package.json, then locate the pyodide NPM package.
+            // This method is more reliable than relying on convention.
+            const { loadPyodide } = await import("pyodide");
+            const currentDir = path.dirname(url.fileURLToPath(import.meta.url));
 
-        const __dirname = await this.findRootDir(currentDir);
-        const pyodidePath = path.join(__dirname, '..', 'node_modules', 'pyodide');
-        this.pyodide = await loadPyodide({
-            indexURL: path.join(pyodidePath, '/'), 
-        });
+            const __dirname = await this.findRootDir(currentDir);
+            const pyodidePath = path.join(__dirname, '..', 'node_modules', 'pyodide');
+            this.pyodide = await loadPyodide({
+                indexURL: path.join(pyodidePath, '/'), 
+            });
 
-    } else {
-      this.pyodide = await window.loadPyodide({
-        indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js",
-      });
-    }
+        } else {
+            this.pyodide = await window.loadPyodide({
+            indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js",
+            });
+        }
 
-    await this.pyodide.runPythonAsync(`
-        import codecs`);
+        await this.pyodide.runPythonAsync(`
+            import codecs`);
 
-    await this.pyodide.loadPackage("micropip");
-    await this.pyodide.runPythonAsync(`
-        import micropip
-        micropip.INDEX_URL = 'https://pypi.org/simple'
-        import os
-        import time
+        await this.pyodide.loadPackage("micropip");
+        await this.pyodide.runPythonAsync(`
+            import micropip
+            micropip.INDEX_URL = 'https://pypi.org/simple'
+            import os
+            import time
 
-        def wait_for_file(filename, timeout=5):
-            start_time = time.time()
-            while not os.path.exists(filename):
-                time.sleep(0.1)
-                elapsed_time = time.time() - start_time
-                if elapsed_time > timeout:
-                    raise FileNotFoundError(f"File {filename} not found within {timeout} seconds.")
+            def wait_for_file(filename, timeout=5):
+                start_time = time.time()
+                while not os.path.exists(filename):
+                    time.sleep(0.1)
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time > timeout:
+                        raise FileNotFoundError(f"File {filename} not found within {timeout} seconds.")
         
-        `);
-    const micropip = this.pyodide.pyimport("micropip");
-    await micropip.install("requests");
-    await micropip.install("ecdsa");
-    await micropip.install("cryptography");
-    this.bundle_name = BUNDLE_NAME;
-    await this.import_python_bundle(this.bundle_name);
+            `);
+        const micropip = this.pyodide.pyimport("micropip");
+        await micropip.install("requests");
+        await micropip.install("ecdsa");
+        await micropip.install("cryptography");
+        this.bundle_name = BUNDLE_NAME;
+        await this.import_python_bundle(this.bundle_name);
 
-    this.dw = new wallet(this);
-    if (!this.net) this.net = new network();
-    this.service = new service();
-    this.node_peer_list = null;
+        this.dw = new wallet(this);
+        if (!this.net) this.net = new network();
+        this.service = new service();
+        this.node_peer_list = null;
       
-    await this.dw.init();
+        await this.dw.init();
       
-    this.init_done = true;
-    return true;
-  }
-  get_bundle_name_for(module_name)
-  {
-    return this.bundle_name;
-  }
+        this.init_done = true;
+        return true;
+    }
+
+    get_bundle_name_for(module_name)
+    {
+        return this.bundle_name;
+    }
 
   getpass(walletpath) {
     const wallet_path = path.resolve(walletpath);
@@ -429,12 +434,43 @@ class Core {
       return err.stack;
     }
   }
+    /**
+     *   async initial_connect(
+    target_url = undefined,
+    target_user = undefined,
+    api_key = undefined
+  ) {
+    if (target_user == undefined)
+        target_user = await this.dw.list_accounts()[0];
+    if (!this.net) this.net = new network();
+    let set_api_key = api_key;
+    if (!set_api_key && target_user && this.dw)
+      set_api_key = this.dw.pubk(target_user);
+    if (!set_api_key) throw new Error("No valid credentials provided");
+      if (!target_url) throw new Error("No valid URL provided");
 
+      // Create a URL object from the target_url string
+      const url = new URL(target_url);
+    this.primary_session_id = await this.net.connect(
+      {
+        type: "tcpip",
+        host: url.hostname, // Extracts the host part of the URL
+        protocol: url.protocol.slice(0, -1),, // Extracts the protocol part of the URL (note: it includes the colon (:) at the end)
+        path: url.pathname, // Extracts the path part of the URL
+        port: 5000,
+        api_key: set_api_key,
+      },
+      this.handle_connection.bind(this)
+    );
+
+     */
   async initial_connect(
     target_url = undefined,
     target_user = undefined,
     api_key = undefined
   ) {
+    if (target_user == undefined)
+          target_user = await this.dw.list_accounts()[0];
     if (!this.net) this.net = new network();
     let set_api_key = api_key;
     if (!set_api_key && target_user && this.dw)

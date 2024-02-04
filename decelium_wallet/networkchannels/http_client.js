@@ -25,6 +25,20 @@ class http_client_wrapped {
             path = await import('path');
             fs = await import('fs');
         }
+       if (sourceId === "create_ipfs" && filter.file_type === undefined) {
+           filter.file_type = 'ipfs';
+       }
+
+       // Check if payload_type is not defined and payload is a string, then set payload_type to 'local_path'
+       if (sourceId === "create_ipfs" && filter.payload_type === undefined && typeof filter.payload === 'string') {
+           filter.payload_type = 'local_path';
+       }
+
+       // Check if payload_type is not defined and payload is an object (note: null is also considered an object in JavaScript)
+       if (sourceId === "create_ipfs" && filter.payload_type === undefined && typeof filter.payload === 'object' && filter.payload !== null) {
+           filter.payload_type = 'raw_file_list';
+       }
+
         if (sourceId === "create_ipfs" && filter['file_type'] === 'ipfs' )
         {
             if (filter['payload_type'] != 'local_path' && filter['payload_type'] != 'raw_file_list')
@@ -38,16 +52,24 @@ class http_client_wrapped {
                 if (filter['payload_type'] === 'raw_file_list')
                     itemsToAdd =filter['payload'];
                     
-                if (filter.connection_settings == undefined) return {"error":"connection_settings argument required i.e. {host:str,port:int,protocol:str,headers:{authorization:str}}"};
                 let connection_settings = filter.connection_settings;
+                if (connection_settings == undefined) {
+                    const url = new URL(this.url_version);
+                    connection_settings = {
+                        host: url.hostname,
+                        protocol: url.protocol.slice(0, -1),
+                        port: 5002
+                    }
+                }
                 
                 if (connection_settings.host == undefined) return {"error":"ipfs host must be specified in connection_settings"};
                 if (connection_settings.port == undefined) return {"error":"ipfs port must be specified in connection_settings"};
                 if (connection_settings.protocol == undefined) return {"error":"ipfs protocol must be specified in connection_settings"};
                 if (connection_settings.headers == undefined)
                     connection_settings.headers = {};
-                this.ipfs = ipfsClient.create(connection_settings);                  
-
+                console.log("INSPECTING connection_settings");
+                console.log(connection_settings);
+                this.ipfs = ipfsClient.create(connection_settings);
                 let generator = await this.ipfs.addAll(itemsToAdd, { wrapWithDirectory: true });
                 let addedItems = [];
 

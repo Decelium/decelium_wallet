@@ -91,10 +91,14 @@ class wallet():
             assert dumpstr == savedstr
         return True
             
-    def sr(self,q,user_ids,format=None):
+    def sr(self,q,user_ids=None,format=None):
+        if (user_ids == None):
+            user_ids = [self.wallet.keys()[0]]
         return self.sign_request(q,user_ids,format=format)
     
-    def pubk(self,uid,format=None):
+    def pubk(self,uid=None,format=None):
+        if (uid == None):
+            uid = list(self.wallet.keys())[0]
         user = self.wallet[uid]
         key_data = user['user']
         if format == 'json':
@@ -127,13 +131,17 @@ class wallet():
             qsig = json.dumps(qsig)
         return qsig
 
+    def create_account_from_private(self,private_key ,label='admin',version='python-ecdsa-0.1',format=None):
+        user = crypto.generate_user_from_string(private_key=private_key,version=version,format=None)
+        return self.create_account(user =user,label=label,version=version,format=format)
 
-    def create_account(self,user ,label,version='python-ecdsa-0.1',format=None):
+    def create_account(self,user ,label='admin',version='python-ecdsa-0.1',format=None):
         if user == None:
             user = crypto.generate_user(version=version)
         assert 'api_key' in user
         assert 'private_key' in user
         assert 'version' in user
+        print("Final User:")
         account_data = {'user':user,
                         'title':user['api_key'],
                         'image':None,
