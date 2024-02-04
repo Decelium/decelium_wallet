@@ -487,5 +487,25 @@ main()
         process.exit(1);
     });
 
+-----
 
+async function main() {
+    const core = new Core();
+    await core.init();
+    const networkConfig = hre.network.config;
+
+    const credential_data = await core.dw.create_account_from_private({ private_key: networkConfig.decAccounts[0] });
+    const user_context = { 'api_key': await core.dw.pubk() };
+    const upload_context = { ...user_context, 'path': '/nfts/sad_nft_data.ipfs' };
+    const connected = await core.initial_connect('https://devdecelium.com/data/query');
+
+    let del_fil = await core.net.delete_entity(await core.sr({ ...upload_context }));
+    let pin_list = await core.net.create_ipfs({ ...user_context, 'payload': './art/data' });
+    let signed_create = await core.sr({ ...upload_context, 'payload': pin_list, 'file_type': 'ipfs', 'payload_type': 'ipfs_pin_list' });
+    let object_id = await core.net.create_entity(signed_create);
+
+    const pinListJson = JSON.stringify(pin_list, null, 4);
+    let filePath = './art/pin_list.json';
+    fs.writeFileSync(filePath, pinListJson, 'utf8');
+    console.log(`JSON file has been saved to ${filePath}`);
 */
