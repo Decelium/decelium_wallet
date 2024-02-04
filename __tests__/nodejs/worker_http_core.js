@@ -401,3 +401,111 @@ export async function run_ipfs_tests(workerId, node, peers,data_in) {
         }
     }
 }
+/*
+ *
+ * New Tests:
+import pkg from 'hardhat';
+const { ethers } = pkg;
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { Core } from '../decelium_wallet/decelium_wallet/core.js';
+
+
+async function main() {
+
+
+    const core = new Core();
+    const upload_path = '/nfts/sad_nft_data.ipfs';
+
+    await core.init();
+    const networkConfig = hre.network.config;
+    const decPrivateKey = networkConfig.decAccounts ? networkConfig.decAccounts[0] : null;
+
+    if (!decPrivateKey) {
+        console.error('No private key found for the current network.');
+        return;
+    }
+    const userData = await core.dw.crypto.generate_user_from_string(decPrivateKey);
+    const credential_data = await core.dw.create_account({ user: userData, label: 'admin' });
+
+    const connected = await core.initial_connect(
+     'https://devdecelium.com/data/query',
+        'admin'
+    );
+
+    let signed_del = await core.dw.sr({
+        q: {
+            'api_key': await core.dw.pubk("admin"), // update out
+            'path': upload_path
+        }, user_ids: ["admin"]
+    });
+    let del_fil = await core.net.delete_entity(signed_del);
+
+    let pin_list = await core.net.create_ipfs({
+        'api_key': await core.dw.pubk("admin"),
+        'connection_settings': {
+            'host': 'devdecelium.com',
+            'port': '5001',
+            'protocol': 'http',
+            'headers': {}
+        },
+        'payload_type': 'local_path',
+        'payload': './art/data',
+        'file_type': 'ipfs'
+    });
+
+    let signed_create = await core.dw.sr({
+        q: {
+            'api_key': core.dw.pubk("admin"),
+            'path': upload_path,
+            'file_type': 'ipfs',
+            'payload_type': 'ipfs_pin_list',
+            'payload': pin_list
+        }, user_ids: ["admin"]
+    });
+
+    let object_id = await core.net.create_entity(signed_create);
+
+    const pinListJson = JSON.stringify(pin_list, null, 4);
+    let filePath = './art/pin_list.json';
+    try {
+        fs.writeFileSync(filePath, pinListJson, 'utf8');
+        console.log(`JSON file has been saved to ${filePath}`);
+    } catch (err) {
+        console.error('An error occurred while writing JSON Object to file:', err);
+    }
+
+    console.log(object_id);
+    console.log("Uploading art");
+}
+
+main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error("Error:", error);
+        process.exit(1);
+    });
+
+-----
+
+async function main() {
+    const core = new Core();
+    await core.init();
+    const networkConfig = hre.network.config;
+
+    const credential_data = await core.dw.create_account_from_private({ private_key: networkConfig.decAccounts[0] });
+    const user_context = { 'api_key': await core.dw.pubk() };
+    const upload_context = { ...user_context, 'path': '/nfts/sad_nft_data.ipfs' };
+    const connected = await core.initial_connect('https://devdecelium.com/data/query');
+
+    let del_fil = await core.net.delete_entity(await core.sr({ ...upload_context }));
+    let pin_list = await core.net.create_ipfs({ ...user_context, 'payload': './art/data' });
+    let signed_create = await core.sr({ ...upload_context, 'payload': pin_list, 'file_type': 'ipfs', 'payload_type': 'ipfs_pin_list' });
+    let object_id = await core.net.create_entity(signed_create);
+
+    const pinListJson = JSON.stringify(pin_list, null, 4);
+    let filePath = './art/pin_list.json';
+    fs.writeFileSync(filePath, pinListJson, 'utf8');
+    console.log(`JSON file has been saved to ${filePath}`);
+*/

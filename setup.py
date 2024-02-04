@@ -8,15 +8,15 @@ import subprocess
 #subprocess.run(["setx", "PATH", "%PATH%;"+path], shell=True)
 
 setup(
-    name='decelium_wallet',
+    name='decw',
     version='0.1.0',    
     description='The Decelium wallet',
     url='https://github.com/Decelium/decelium_wallet.git',
     author='Justin Girard',
-    author_email='justin.girard@justingirard.com',
+    author_email='justingirard@decelium.com',
     packages=['decelium_wallet','decelium_wallet.commands', 'decelium_wallet.tests','decelium_wallet.networkchannels', 'decelium_wallet.database'],
     entry_points = {
-        'console_scripts': ['decw=decelium_wallet.commands.decw:run'],
+        'console_scripts': ['decw=decelium_wallet.decw:run'],
     },
     install_requires=[ 'ecdsa',
                         'cryptography',

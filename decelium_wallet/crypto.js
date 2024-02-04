@@ -7,7 +7,6 @@ class crypto extends IPythonWrapper {
         this.core = core;
         this.pyodide = this.core.pyodide;
     }
-    
     async init()
     {
         const modulename = this.core.get_bundle_name_for("crypto");
@@ -15,10 +14,7 @@ class crypto extends IPythonWrapper {
         const instanceName = "crypto";
         if (this.done_init)
             return true;
-        //console.log("crypto 1");
         await this.bindMethods(code_py,modulename,classname,instanceName);
-        //console.log("crypto 2");
-        
         this.done_init = true;
         return true;
     }

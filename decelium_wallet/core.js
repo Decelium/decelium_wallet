@@ -1,14 +1,8 @@
-
-
 // core.js
 import { wallet } from "./wallet.js";
 import { network } from "./network.js";
-//import { service } from './service.js';
-//class network {};
 class service {}
-//import fs from 'fs';
-//import path from 'path';
-let fs, path;
+let fs, path,url;
 fs = null;
 path = null;
 import code_py from './py_bundle.py.js';
@@ -22,15 +16,7 @@ class Core {
 
   constructor() {}
 
-  async import_python_bundle(bundle_name){
-        const originalConsoleLog = console.log;
-        console.log = function (message) {
-          if (!message.includes("Loading") && !message.includes("Loaded")) {
-            originalConsoleLog.apply(console, arguments);
-          }
-        };        
-      
-        //
+    async import_python_bundle(bundle_name) {
         let temp_filename = bundle_name;
         let modulename = bundle_name;
         this.pyodide.globals.set(`${temp_filename}_py`, code_py);
@@ -43,98 +29,133 @@ class Core {
             f.close()`);
         
         await this.pyodide.runPythonAsync(`import ${modulename}`);
-        console.log = originalConsoleLog;        
-        console.log("pyodide initalized");
   
   }
-    
-  async init() {
-    if (this.init_done) return true;
-      //console.log("Phase 0----------------- ");
-    let pathVar='path';
-    let fsVar='fs';
+    async findRootDir(currentDir) {
+        try {
+            const files =  fs.readFileSync(path.join(currentDir, 'package.json'), 'utf-8');
+            return currentDir;
+        } catch (error) {
+            const parentDir = path.dirname(currentDir);
+            if (parentDir === currentDir) {
+                throw new Error('Reached the file system root without finding a package.json.');
+            }
+            return this.findRootDir(parentDir);
+        }
+    } 
+
+    async init() {
+        this.target_user = 'admin'; // By convention, we always look for an admin user
+        const originalConsoleLog = console.log;
+        const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+        const originalStderrWrite = process.stderr.write.bind(process.stderr);
+
+        process.stdout.write = () => { };
+        process.stderr.write = () => { };
+        console.log = function (message) {
+            //if (!message.includes("Loading") && !message.includes("Loaded") && !message.includes("loaded")) {
+            //   originalConsoleLog.apply(console, arguments);
+            //}
+        };
+        try {
+            // Execute the function and await its completion
+            const result = await this.init_console_logs();
+
+            // Return the result after restoring console output
+            console.log = originalConsoleLog;
+            process.stdout.write = originalStdoutWrite;
+            process.stderr.write = originalStderrWrite;
+
+            return result;
+        } catch (error) {
+            console.log = originalConsoleLog;
+            process.stdout.write = originalStdoutWrite;
+            process.stderr.write = originalStderrWrite;
+            throw error;
+        }
+    }
+
+    async sr(request, user = null) {
+        if (user == null)
+            user = this.target_user;
+        return await this.dw.sr({
+            q: request,
+            user_ids: [user]
+        });
+    }
+
+    async init_console_logs() {
+
+        if (this.init_done) return true;
+        let pathVar='path';
+        let fsVar='fs';
       
-    if (typeof window === 'undefined') { // Check if in Node.js environment
-        fs = await import('fs');
-        path = await import('path');
-    }
+        if (typeof window === 'undefined') { 
+            fs = await import('fs');
+            path = await import('path');
+            url = await import('url');
 
-    if (this.isNode()) {
-      //const { loadPyodide } = require("pyodide");
-      //const loadPyodide = async () => {
-      //    const pyodideModule = await import('pyodide');
-      //    return pyodideModule.loadPyodide();
-      //};
+        }
 
-      const { loadPyodide } = await import("pyodide");
-      //console.log(loadPyodide);
-      this.pyodide = await loadPyodide({
-        indexURL: "/app/projects/decelium_wallet/node_modules/pyodide/",
-      });
-      //const pyodideReady = pyodideLoader.loadPyodide({
-      //    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/",
-      //    fs
-      //});
-      //this.pyodide = await pyodideReady;
-    } else {
-      this.pyodide = await window.loadPyodide({
-        indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js",
-      });
-    }
+        if (this.isNode()) {
+            // Do a manual search for package.json, then locate the pyodide NPM package.
+            // This method is more reliable than relying on convention.
+            const { loadPyodide } = await import("pyodide");
+            const currentDir = path.dirname(url.fileURLToPath(import.meta.url));
 
-    ////
-      //console.log("Phase 1 ");
+            const __dirname = await this.findRootDir(currentDir);
+            const pyodidePath = path.join(__dirname, '..', 'node_modules', 'pyodide');
+            this.pyodide = await loadPyodide({
+                indexURL: path.join(pyodidePath, '/'), 
+            });
 
-    await this.pyodide.runPythonAsync(`
-        import codecs`);
-      //console.log("Phase 2 ");
+        } else {
+            this.pyodide = await window.loadPyodide({
+            indexUrl: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js",
+            });
+        }
 
-    await this.pyodide.loadPackage("micropip");
-    await this.pyodide.runPythonAsync(`
-        import micropip
-        micropip.INDEX_URL = 'https://pypi.org/simple'
-        import os
-        import time
+        await this.pyodide.runPythonAsync(`
+            import codecs`);
 
-        def wait_for_file(filename, timeout=5):
-            start_time = time.time()
-            while not os.path.exists(filename):
-                time.sleep(0.1)
-                elapsed_time = time.time() - start_time
-                if elapsed_time > timeout:
-                    raise FileNotFoundError(f"File {filename} not found within {timeout} seconds.")
+        await this.pyodide.loadPackage("micropip");
+        await this.pyodide.runPythonAsync(`
+            import micropip
+            micropip.INDEX_URL = 'https://pypi.org/simple'
+            import os
+            import time
+
+            def wait_for_file(filename, timeout=5):
+                start_time = time.time()
+                while not os.path.exists(filename):
+                    time.sleep(0.1)
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time > timeout:
+                        raise FileNotFoundError(f"File {filename} not found within {timeout} seconds.")
         
-        `);
-    const micropip = this.pyodide.pyimport("micropip");
-    await micropip.install("requests");
-    await micropip.install("ecdsa");
-    //await micropip.install('sys');
-    await micropip.install("cryptography");
-    //console.log("Phase 3 ");
-    this.bundle_name = BUNDLE_NAME;
-    await this.import_python_bundle(this.bundle_name);
+            `);
+        const micropip = this.pyodide.pyimport("micropip");
+        await micropip.install("requests");
+        await micropip.install("ecdsa");
+        await micropip.install("cryptography");
+        this.bundle_name = BUNDLE_NAME;
+        await this.import_python_bundle(this.bundle_name);
 
-    //console.log("Phase 3.1 ");
-    this.dw = new wallet(this);
-    //console.log("Phase 3.2 ");
-    if (!this.net) this.net = new network();
-    //console.log("Phase 3.3 ");
-    this.service = new service();
-    //console.log("Phase 3.4 ");
-    this.node_peer_list = null;
-    //console.log("FINISHED INIT 1");
+        this.dw = new wallet(this);
+        if (!this.net) this.net = new network();
+        this.service = new service();
+        this.node_peer_list = null;
       
-    await this.dw.init();
-    //console.log("Phase 6");
-    //console.log("Phase 7");
+        await this.dw.init();
       
-    this.init_done = true;
-    return true;
-  }
-  get_bundle_name_for(module_name)
-  {
-    return this.bundle_name;
-  }
+        this.init_done = true;
+        return true;
+    }
+
+    get_bundle_name_for(module_name)
+    {
+        return this.bundle_name;
+    }
 
   getpass(walletpath) {
     const wallet_path = path.resolve(walletpath);
@@ -236,13 +257,8 @@ class Core {
     if (typeof data !== "string" || typeof password !== "string") {
       throw new Error("Invalid argument types.");
     }
-    //throw new Error(`STOP HERE 2`);
     this.dw = new wallet(this);
-    //throw new Error(`STOP HERE 1`);
     await this.dw.init();
-    //throw new Error(`STOP HERE`);
-    //console.log({data});
-    //throw new Error(`STOP HERE:`+ data);
       
     const success = this.dw.load({ data, password, mode });
     return success;
@@ -300,10 +316,9 @@ class Core {
       if (keepRunning()) {
         func(...args);
       } else {
-        console.log("ENDING TIMER FOR " + func.name);
         clearInterval(intervalId);
       }
-    }, sec * 1000); // Multiply by 1000 to convert sec to ms
+    }, sec * 1000); 
     return intervalId;
   }
 
@@ -335,9 +350,7 @@ class Core {
     }
 
     const run_pings_def = async () => {
-      //console.log("DOING PING");
       resp = await this.do_ping(port, name, wallet_user);
-      //console.log(resp);
     };
 
     this.setInterval(run_pings_def, () => this.net.listening(), 5); // ping every 5 seconds
@@ -384,14 +397,12 @@ class Core {
     this.nodes = await this.net.node_list();
 
     let found = false;
-    //console.log("this.nodes",this.nodes);
     for (const n of this.nodes) {
       if (n.self_id === this.self_id) {
         found = true;
       } else {
         if ("test_id" in n.connect_data.meta) {
           this.node_peer_list.push(n);
-          //console.log('passed inspection' + n.self_id);
         }
       }
     }
@@ -423,12 +434,43 @@ class Core {
       return err.stack;
     }
   }
-
-  async initial_connect(
-    target_url = "https://dev.paxfinancial.ai/data/query",
+    /**
+     *   async initial_connect(
+    target_url = undefined,
     target_user = undefined,
     api_key = undefined
   ) {
+    if (target_user == undefined)
+        target_user = await this.dw.list_accounts()[0];
+    if (!this.net) this.net = new network();
+    let set_api_key = api_key;
+    if (!set_api_key && target_user && this.dw)
+      set_api_key = this.dw.pubk(target_user);
+    if (!set_api_key) throw new Error("No valid credentials provided");
+      if (!target_url) throw new Error("No valid URL provided");
+
+      // Create a URL object from the target_url string
+      const url = new URL(target_url);
+    this.primary_session_id = await this.net.connect(
+      {
+        type: "tcpip",
+        host: url.hostname, // Extracts the host part of the URL
+        protocol: url.protocol.slice(0, -1),, // Extracts the protocol part of the URL (note: it includes the colon (:) at the end)
+        path: url.pathname, // Extracts the path part of the URL
+        port: 5000,
+        api_key: set_api_key,
+      },
+      this.handle_connection.bind(this)
+    );
+
+     */
+  async initial_connect(
+    target_url = undefined,
+    target_user = undefined,
+    api_key = undefined
+  ) {
+    if (target_user == undefined)
+          target_user = await this.dw.list_accounts()[0];
     if (!this.net) this.net = new network();
     let set_api_key = api_key;
     if (!set_api_key && target_user && this.dw)

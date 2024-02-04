@@ -8,28 +8,7 @@ class networkWrapped {
     this.servers = {};
     this.listen_on = false;
   }
-
-  //__run_query(...args) {
-  //    console.log(this.current_attr);
-  //    console.log(args);
-  //    let session_id = args.pop().session_id;
-  //    console.log("the session",session_id);
-  //
-  //    if (session_id == undefined) {
-  //        session_id = Object.keys(this.sessions)[0];
-  //    }
-  //    console.log("this.sessions[session_id]")
-  //    console.log(this.sessions[session_id])
-  //    console.log("this.sessions")
-  //    console.log(this.sessions)
-  //
-  //    const inst = this.sessions[session_id].instance;
-  //    const method_to_call = inst[this.current_attr];
-  //    return method_to_call(...args);
-  //}
   async __run_query(...args) {
-    //console.log(this.current_attr);
-    //console.log(args);
 
     let session_id;
     for (let i = args.length - 1; i >= 0; i--) {
@@ -39,15 +18,10 @@ class networkWrapped {
         break;
       }
     }
-    //console.log("the session",session_id);
 
     if (session_id == undefined) {
       session_id = Object.keys(this.sessions)[0];
     }
-    //console.log("this.sessions[session_id]")
-    //console.log(this.sessions[session_id])
-    //console.log("this.sessions")
-    //console.log(this.sessions)
 
     if (!this.sessions.hasOwnProperty(session_id)) {
       console.error("No session found with the provided ID");
@@ -57,8 +31,6 @@ class networkWrapped {
     const inst = this.sessions[session_id].instance;
     const method_to_call = inst[this.current_attr];
     let val = await method_to_call(...args);
-    //console.log("VAL FROM network");
-    //console.log(val);
 
     if (this.callback) {
       this.callback(args, val);
@@ -125,21 +97,11 @@ class networkWrapped {
     };
 
     query = JSON.parse(JSON.stringify(query));
-    //console.log("attrib",query);
-    // Assuming "list" method exists in the http_client instance
     this.nodes = await this.sessions[session_id].instance.list(query);
-    //console.log("source this.nodes",this.nodes );
 
     return this.nodes;
   }
 
-  /*
-    
-{'api_key': 'e66eebeb3b56bd627c082a36fb0528e45d1fa8d6a1b9e47d478c3af9a11baaf6431bfdb491ceb6d8c5a3674433dcf5a1a1f9af74cf5a9414d026b68fdcedfc5d', 'limit': 10, 'offset': None, 'key': {'connect_data.ping': {'$gte': datetime.datetime(2023, 5, 12, 4, 42, 18)}, 'file_type': 'node'}}
-
-
-    
-    */
 
   connect(args, handler = null) {
     if (typeof args === "object") {
@@ -218,19 +180,9 @@ const proxyHandler = {
       return Reflect.get(target, propKey);
     } else {
       target.current_attr = propKey;
-      //let v =  target.__run_query.bind(target);
-      //console.log("proxy value!");
-      //console.log (v);
-      //return v;
       return async (...args) => {
-        //console.log( "TEST STR");
         let v = target.__run_query(...args);
-        //console.log( "-----v");
-        //console.log(v);
         v = await v;
-        //console.log( "-----await v");
-        //console.log(v);
-        //console.log(typeof v);
         return v;
       };
     }

@@ -14,7 +14,6 @@ class http_client_wrapped {
         this.url_version = url_version;
         this.api_key = api_key;
         this.port = port;
-        console.log(ipfsClient);
     }
     
    async applyAlternateProcessing(filter, sourceId) {
@@ -26,14 +25,26 @@ class http_client_wrapped {
             path = await import('path');
             fs = await import('fs');
         }
+       if (sourceId === "create_ipfs" && filter.file_type === undefined) {
+           filter.file_type = 'ipfs';
+       }
+
+       // Check if payload_type is not defined and payload is a string, then set payload_type to 'local_path'
+       if (sourceId === "create_ipfs" && filter.payload_type === undefined && typeof filter.payload === 'string') {
+           filter.payload_type = 'local_path';
+       }
+
+       // Check if payload_type is not defined and payload is an object (note: null is also considered an object in JavaScript)
+       if (sourceId === "create_ipfs" && filter.payload_type === undefined && typeof filter.payload === 'object' && filter.payload !== null) {
+           filter.payload_type = 'raw_file_list';
+       }
+
         if (sourceId === "create_ipfs" && filter['file_type'] === 'ipfs' )
         {
             if (filter['payload_type'] != 'local_path' && filter['payload_type'] != 'raw_file_list')
                 return {error:"only payload_type local_path and raw_file_list is accepted with create_ipfs"}
         }
-        console.log("Considering create "+sourceId);
         if (sourceId === "create_ipfs"  && 'file_type' in filter && filter['file_type'] === 'ipfs' && 'payload_type' in filter) {
-            console.log("IN create_ipfs");
             try {
                 let itemsToAdd = [];
                 if (filter['payload_type'] === 'local_path')
@@ -41,26 +52,30 @@ class http_client_wrapped {
                 if (filter['payload_type'] === 'raw_file_list')
                     itemsToAdd =filter['payload'];
                     
-                console.log("itemsToAdd");
-                console.log(itemsToAdd);
-                if (filter.connection_settings == undefined) return {"error":"connection_settings argument required i.e. {host:str,port:int,protocol:str,headers:{authorization:str}}"};
                 let connection_settings = filter.connection_settings;
+                if (connection_settings == undefined) {
+                    const url = new URL(this.url_version);
+                    connection_settings = {
+                        host: url.hostname,
+                        protocol: url.protocol.slice(0, -1),
+                        port: 5002
+                    }
+                }
                 
                 if (connection_settings.host == undefined) return {"error":"ipfs host must be specified in connection_settings"};
                 if (connection_settings.port == undefined) return {"error":"ipfs port must be specified in connection_settings"};
                 if (connection_settings.protocol == undefined) return {"error":"ipfs protocol must be specified in connection_settings"};
                 if (connection_settings.headers == undefined)
                     connection_settings.headers = {};
+                console.log("INSPECTING connection_settings");
                 console.log(connection_settings);
-                this.ipfs = ipfsClient.create(connection_settings);                  
-
+                this.ipfs = ipfsClient.create(connection_settings);
                 let generator = await this.ipfs.addAll(itemsToAdd, { wrapWithDirectory: true });
                 let addedItems = [];
 
                 for await (const item of generator) {
                     // For each added item, to avoid errors, painstakingly verify each file.
                     const pinResult = await this.ipfs.pin.add(item.cid);
-                    console.log("pin result", pinResult);
                     let isPinned = false;
                     for await (const pin of this.ipfs.pin.ls({ paths: item.cid })) {
                         if (pin.cid.toString() === item.cid.toString()) {
@@ -83,15 +98,12 @@ class http_client_wrapped {
                     addedItems.push(item);
 
                 }
-                console.log("actually addedItems!")
-                console.log(addedItems)
-                console.log("DONE create_ipfs");
 
                 return addedItems;
             } catch (error) {
                 console.error('Error adding to IPFS:', error);
-                throw error;
-                
+                return { error: 'Error adding to IPFS:' + error.toString() }
+
             }
             
         } else {
@@ -109,10 +121,6 @@ class http_client_wrapped {
     }
     
     async loadFileData (path_in) {
-        // TODO - Correctly create sub directory
-        // TODO - Correstly assign root element
-        //let itemsToAdd = [];
-        // This function will get all the files recursively from a directory
         const getFilesRecursive = (dir) => {
             let results = [];
             const list = fs.readdirSync(dir);
@@ -191,7 +199,6 @@ class http_client_wrapped {
     
     async query(filter, source_id, {remote = false, url_version = 'dev', wait_seconds = 120, re_query_delay = 5, show_url = false}) {
 
-        console.log("PROCESSING QUERY"+source_id);
         const time_start = Date.now();
         let resp = undefined;
         resp = await this.applyAlternateProcessing(filter, source_id);
@@ -199,12 +206,11 @@ class http_client_wrapped {
         {
             return resp;
         }
-        console.log("PROCESSING QUERY REMOTE"+source_id);
         if(show_url === true)
         {
             console.log("THE RAW  QUERY()");
             console.log({source_id,url_version,filter});
-        }        
+        }
         while ((Date.now() - time_start) / 1000 < wait_seconds) {
             resp = await this.query_wait(filter, source_id, {remote, url_version, show_url});
             if (resp && typeof resp === 'object' && 'state' in resp && resp['state'] === 'updating') {
@@ -242,7 +248,7 @@ class http_client_wrapped {
     }
 
     async query_remote(source_id, query, url_version = 'dev', show_url = false) {
-        
+
         let data = {};
         data['qtype'] = source_id;
         data['__str_encoded_query'] = this.do_encode_string(query);
@@ -253,24 +259,6 @@ class http_client_wrapped {
             console.log(query);
             console.log(data);
         }
-        //console.log('query_remote----------------------');
-        //console.log(url_version);
-        //console.log(data);
-        //console.log(query);
-        /*
-        let r = await axios.post(url_version, data);
-        //console.log("query_remote_data",r.data);
-        let dat;
-
-        try 
-        {
-            dat = jsondateencode_local.loads(r.data);
-        
-        } catch (e) {
-            console.log(e);
-            dat = r.data;
-        }
-        */
         let r = await fetch(url_version, {
             method: 'POST',
             headers: {
@@ -281,35 +269,13 @@ class http_client_wrapped {
         
         let rData = "could not load";
         let dat;
-        /*
-        try {
-            console.log("GETTING RESPONSE");
-            console.log(r);
-            console.log(await r.text());
-            
-            let rText = await r.text();
-            try {
-                if (show_url) {
-                    console.log("show_url return text:");
-                    console.log(rText);
-                }
-                
-                rData = JSON.parse(rText);
-            } catch (e) {
-                console.log("Response is not JSON:", e);
-                rData = rText;
-                console.log("data",rData);
-            }
-            dat = rData;
-        } catch (e) {
-            console.log("An error occurred while reading the response:", e);
-        }*/
         let responseData;
         let contentType = r.headers.get("content-type");        
         try {
+
             let rawData = await r.arrayBuffer();
             const decoder = new TextDecoder();       
-            const vall = decoder.decode(rawData); 
+            const vall = decoder.decode(rawData);
             if (contentType && contentType.includes("application/json")) {
                 // Handle JSON response
                 responseData = new TextDecoder().decode(rawData);
