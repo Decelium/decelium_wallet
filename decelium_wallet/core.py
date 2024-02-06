@@ -48,6 +48,7 @@ class core:
     
     def __init__(self):
         self.target_user = 'admin'
+        self.dw = wallet()          
         self.net = network()
         self.service = service()
         self.node_peer_list = None
@@ -210,12 +211,37 @@ class core:
             import traceback as tb
             res = tb.format_exc()
         return res 
-    
-    def initial_connect(self,target_url="https://dev.paxfinancial.ai/data/query",target_user="admin"):
+    '''
+      async initial_connect(
+    target_url = undefined,
+    target_user = undefined,
+    api_key = undefined
+  ) {
+    if (target_user == undefined)
+          target_user = await this.dw.list_accounts()[0];
+    if (!this.net) this.net = new network();
+    let set_api_key = api_key;
+    if (!set_api_key && target_user && this.dw)
+      set_api_key = this.dw.pubk(target_user);
+    if (!set_api_key) throw new Error("No valid credentials provided");    
+    '''
+    def initial_connect(self,target_url,target_user=None,api_key=None):
+        if target_user == None:
+            lst = self.dw.list_accounts()
+            if len(lst) > 0:
+                target_user = self.dw.list_accounts()[0]
+        if self.net == None:
+            self.net = network()
+        set_api_key = api_key
+        if set_api_key == None and target_user != None:
+          set_api_key = self.dw.pubk(target_user)
+        if set_api_key== None: 
+            raise Exception("No valid credentials provided")
+            
         self.primary_session_id = self.net.connect({'type':'tcpip',
                              'url':target_url,
                              'port':5000,
-                             'api_key':self.dw.pubk(target_user)},
+                             'api_key':set_api_key},
                              self.handle_connection)
 
         assert self.net.connected() 

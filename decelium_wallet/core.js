@@ -470,7 +470,11 @@ class Core {
     api_key = undefined
   ) {
     if (target_user == undefined)
-          target_user = await this.dw.list_accounts()[0];
+    {
+        let lst = await this.dw.list_accounts();
+        if (lst.length > 0)
+          target_user = await lst.list_accounts()[0];
+    }
     if (!this.net) this.net = new network();
     let set_api_key = api_key;
     if (!set_api_key && target_user && this.dw)
