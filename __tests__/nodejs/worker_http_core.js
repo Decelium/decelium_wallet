@@ -127,24 +127,24 @@ class WorkerHTTP {
         }
         console.log("1) ------------ REMOVED OLD FILE!");
         let dict_list = [];
-        let connection_settings = {
-          host: 'ipfs.infura.io',
-          port: 5001,
-          protocol: 'https',
-          headers: {
-            authorization: 'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64'),
-          },
-        };       
-        
-        
-        //let connection_settings = {
-        //  host: '35.167.170.96',
+        // let connection_settings = {
+         // host: 'ipfs.infura.io',
         //  port: 5001,
-        //  protocol: 'http',
+        //  protocol: 'https',
         //  headers: {
-        //  //  authorization: 'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64'),
+        //    authorization: 'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64'),
         //  },
-        //};         
+        //};       
+        
+        
+        let connection_settings = {
+          host: '35.167.170.96',
+          port: 5001,
+          protocol: 'http',
+          headers: {
+        //  //  authorization: 'Basic ' + Buffer.from('2X4hcFqmM5QyWMj7aR9rQcthN5q' + ':' + '686773513d65eeb2d7d22dfdc79d230f').toString('base64'),
+          },
+        };         
         
         if (Object.keys(this.data_in).includes("files"))
         {
