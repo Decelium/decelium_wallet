@@ -93,7 +93,7 @@ class wallet():
             
     def sr(self,q,user_ids=None,format=None):
         if (user_ids == None):
-            user_ids = [self.wallet.keys()[0]]
+            user_ids = [list(self.wallet.keys())[0]]
         return self.sign_request(q,user_ids,format=format)
     
     def pubk(self,uid=None,format=None):

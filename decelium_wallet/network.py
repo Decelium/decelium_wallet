@@ -1,14 +1,8 @@
 from decelium_wallet.networkchannels.httpws_client import httpws_client
-
 from decelium_wallet.networkchannels.http_client import http_client
-
 from decelium_wallet.networkchannels.http_server import http_server
-
-
-
 import datetime
 import uuid
-
 
 class network:
     '''
@@ -148,4 +142,5 @@ class network:
     
     def listening(self):
         return self.listen_on 
+
     
