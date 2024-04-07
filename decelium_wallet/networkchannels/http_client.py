@@ -75,11 +75,12 @@ class http_client():
             return self.processing_remove_ipfs(filter,source_id)
         if source_id == "check_pin_status":
             return self.processing_check_pin_status(filter,source_id)
+        if source_id == "download_pin_status":
+            return self.processing_download_pin_status(filter,source_id)
             
         else:
             return None
-    def latest_remote_pin_list(self,connection_settings):
-        do_refresh = False
+    def latest_remote_pin_list(self,connection_settings,do_refresh=False):
         try:
             assert len(self.saved_pins) > 0
         except:
@@ -93,8 +94,17 @@ class http_client():
             self.saved_pins = pins
             
         return self.saved_pins
-
+    def processing_download_pin_status(self, filter,source_id):
+        if 'connection_settings' not in filter:
+            return {"error": "connection_settings argument required i.e. {host:str, port:int, protocol:str, headers:{authorization:str}}"}
+        connection_settings = filter['connection_settings']
+        if 'do_refresh' not in filter:
+            filter['do_refresh'] = False
+        pins = self.latest_remote_pin_list(connection_settings,filter['do_refresh'] )
+        return pins
     def processing_check_pin_status(self, filter,source_id):
+        if 'do_refresh' not in filter:
+            filter['do_refresh'] = False
         if 'connection_settings' not in filter:
             return {"error": "connection_settings argument required i.e. {host:str, port:int, protocol:str, headers:{authorization:str}}"}
         connection_settings = filter['connection_settings']
@@ -103,7 +113,7 @@ class http_client():
             return {"error":"Need need a 'cid' argument"}
         cid = filter['cid']
         
-        pins = self.latest_remote_pin_list(connection_settings)
+        pins = self.latest_remote_pin_list(connection_settings,filter['do_refresh'] )
 
         if cid in pins:
             return True
@@ -138,10 +148,10 @@ class http_client():
                         # Use object patch add-link to link the object to the directory
                         res = api.object.patch.add_link(res['Hash'], name, hash)
                         # res = res['Hash']
-                        print(res.keys())
                     # After linking all items, the 'empty_dir_cid' will be the CID of the final directory
                     # return  [{'name': res['Name'], 'cid': res['Hash'], 'size': res['Size']}]
 
+                    api.pin.add(res['Hash'])
                     return  [{'name': '', 'cid': res['Hash'], 'size': None}]
                 except Exception as e:
                     import traceback as tb
@@ -202,17 +212,22 @@ class http_client():
             else:
                 return {"error":"payload must be a CID or list of CIDs"}
             res = {}
-            for cid in lst:
+            while len(lst) > 0:
+                cid = lst.pop()
                 try:
                     resp = api.pin.rm(cid)
+                    # for removed in resp[]
                     if cid==resp['Pins'][0]:
-                        res[cid]=  {"removed":True}
+                        res[cid]=  {"cid":cid,"removed":True}
                     else:
-                        res[cid]= {"removed":False,"message":str(resp)}
+                        res[cid]= {"cid":cid,"removed":False,"message":str(resp)}
                 except:
                     import traceback as tb
-                    res[cid]= {"removed":False,"message":tb.format_exc()}
-                    
+                    error_str = tb.format_exc()
+                    if 'not pinned or pinned indirectly' in error_str:
+                        res[cid]= {"cid":cid,"removed":True,"message":None,"error":tb.format_exc()}
+                    else:
+                        res[cid]= {"cid":cid,"removed":False,"error":tb.format_exc(),"message":None}
             return res
         return None
 
