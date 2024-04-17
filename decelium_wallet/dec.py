@@ -4,9 +4,9 @@ import json
 import argparse
 import importlib
 
-def load_configuration(source_path):
+def load_configuration(source_path,context_file):
     """ Load configuration from a local 'dec_config.json' if it exists. """
-    config_path = os.path.join(source_path, 'dec_config.json')
+    config_path = os.path.join(source_path, context_file)
     if os.path.exists(config_path):
         with open(config_path, 'r') as config_file:
             return json.load(config_file)
@@ -41,15 +41,20 @@ def run():
         os.chdir(original_cwd)
         return
     
-    file_config = load_configuration(source_path)
     command_line_args = {}
     while remaining_argv:
         if remaining_argv[0].startswith('--'):
             command_line_args[remaining_argv[0][2:]] = remaining_argv[1]
         remaining_argv = remaining_argv[2:]
 
+    if 'ctx' in list(command_line_args.keys()):
+        context_file = command_line_args['ctx']
+    else:
+        context_file = 'dec_config.json'
+    file_config = load_configuration(source_path,context_file)
     # Merge configurations
     final_args = merge_configs(command_line_args, file_config)
+
 
     # Load and run the command module
     current_cwd = os.getcwd()
@@ -57,8 +62,11 @@ def run():
         os.chdir(script_dir)
 
         sys.path.append('../')  # Ensure decelium_wallet is in the path
-        mod = importlib.import_module("commands." + known_args.command)
-        
+        try:
+            mod = importlib.import_module("commands." + known_args.command)
+        except:
+            print("Could not find command `"+ known_args.command+"`")
+            return False
         with open(mod.__file__,'r') as f:
             code = f.read()
         code_lines = code.splitlines()
@@ -77,7 +85,7 @@ def run():
         contract_class = getattr(mod, contract)  # Use a defined class attribute to specify contract
         instance = contract_class()
         print(instance.exec(final_args))  # Run the command with final_args
-        
+
     except Exception as e:
         print("Error running command:", str(e))
         import traceback
