@@ -3,14 +3,11 @@ import sys,binascii
 from cryptography.fernet import Fernet
 import base64
 import os
-from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import hashlib, json
 import datetime
 import getpass
-
-
 
 class jsondateencode_crypto:
     def loads(dic):

@@ -31,12 +31,9 @@ import shutil
 import json
 import time
 
-def run(*args):
-    c = Deploy()
-    result=c.run(*args) 
-    return result
     
 class Deploy():
+    '''
     def _load_pq(self,path,password,url_version,target_user):
         dw = decelium.SimpleWallet()
 
@@ -319,7 +316,63 @@ class Deploy():
         lst= pq.list({'api_key':api_key, 'path':root_path, },remote=True)
         sys.stdout = original_stdout
         return json.dumps({"app_id":website_id,"dns_id":dns,"list":lst})
-    
+    '''
+    def exec(self,args):
+        #api_key = args['api_key']
+        target_user = args['target_user']
+        decelium_path = args['decelium_path']
+        local_path = args['local_path']
+        wallet_path = args['wallet_path']
+        node_url = args['node_url']
+
+
+        #$ --------------
+        decw = core()
+        with open(wallet_path,'r') as f:
+            data = f.read()
+        with open(wallet_path+".password",'r') as f:
+            password = f.read()
+        loaded = decw.load_wallet(data,password)
+        assert loaded == True
+        connected = decw.initial_connect(target_url=node_url,
+                                        api_key=decw.dw.pubk())
+
+
+        # ---------------
+        del_fil = decw.net.delete_entity(decw.dw.sr({'api_key':decw.dw.pubk(), 
+                                    'path':decelium_path},[target_user]))
+        assert del_fil == True or 'error' in del_fil, "Could not remove old file"
+        print(del_fil)
+        
+        ipfs_connection_settings = {
+            'host': 'devdecelium.com',
+            'port': 5002,
+            'protocol': 'https',
+        }
+        
+        
+        print(local_path)
+        dist_list = decw.net.create_ipfs({
+            'api_key':decw.dw.pubk(target_user),
+            'file_type':'ipfs',
+            'connection_settings':ipfs_connection_settings,
+            'payload_type':'local_path',
+            'payload':local_path
+        })
+        print(dist_list)
+        signed_upload = decw.dw.sr({
+            'api_key':decw.dw.pubk(target_user),
+            'path':decelium_path,
+            'file_type':'ipfs',
+            'payload_type':'ipfs_pin_list',
+            'payload':dist_list
+        })
+        
+        fil  = decw.net.create_entity(signed_upload)
+        print("------fil------", fil)
+        assert 'obj-' in fil
+        return fil        
+
 if __name__ == "__main__":
     direc = '/'.join(__file__.split('/')[:-3]) +'/'
 

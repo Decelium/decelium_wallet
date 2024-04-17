@@ -160,27 +160,37 @@ class http_client():
 
             # Existing condition for 'local_path' payload type 
             elif filter['payload_type'] == 'local_path':
+                #raise Exception("")
                 #res = api.add(filter['payload'],recursive=True)
                 original_directory = os.getcwd()
                 try:
+                    print("original_directory",original_directory)
                     path = filter['payload']
                     if os.path.isdir(path):
                         # If the path is a directory, change the working directory and add recursively 
                         os.chdir(path)
+                        new_dir = os.getcwd()
+                        print("new_dir",new_dir)
                         res = api.add('.', recursive=True)
                     elif os.path.isfile(path):
                         # If the path is a file, add the file directly without changing the working directory
                         res = api.add(path)
                     else:
-                        print("The provided path does not exist or is not a file/directory.")
-
+                        raise Exception("The provided path does not exist or is not a file/directory: "+path)
+                except Exception as e:
+                    raise e
                 finally:
                     os.chdir(original_directory)            
             
                 try:
                     dict_list = [{'name': res['Name'], 'cid': res['Hash'], 'size': res['Size']}]
                 except:
-                    dict_list = [{'name': item['Name'], 'cid': item['Hash'], 'size': item['Size']} for item in res]
+                    try:
+                        dict_list = [{'name': item['Name'], 'cid': item['Hash'], 'size': item['Size']} for item in res]
+                    except Exception as e:
+                        print ("CANT PARSE")
+                        print (res)
+                        raise e
                 for pin in dict_list:
                     pin_resp = api.pin.add(pin['cid'])
                     #print(pin_resp)
@@ -261,6 +271,8 @@ class http_client():
 
     def query_remote(self, source_id, query, url_version='dev', show_url=False):
         data = {}
+        print(query)
+        print(source_id)
         data['qtype'] = source_id
         data['__encoded_query'] = self.do_encode(query)
 
