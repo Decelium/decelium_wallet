@@ -43,6 +43,8 @@ class Deploy():
 
         del_fil = decw.net.delete_entity(decw.dw.sr({'api_key':decw.dw.pubk(), 
                                     'path':decelium_path},[target_user]))
+        if 'remove' in args and args['remove'] != None:
+            return del_fil
         assert del_fil == True or 'error' in del_fil, "Could not remove old file"
         
         ipfs_connection_settings = {
@@ -58,14 +60,16 @@ class Deploy():
             'payload_type':'local_path',
             'payload':local_path
         })
-        signed_upload = decw.dw.sr({
+        doc = {
             'api_key':decw.dw.pubk(target_user),
             'path':decelium_path,
             'file_type':'ipfs',
             'payload_type':'ipfs_pin_list',
             'payload':dist_list
-        })
-        
-        fil  = decw.net.create_entity(signed_upload)
+        }        
+        if 'target_id' in args and len(args['target_id'])  > 0:
+            doc['self_id'] = args['target_id']
+
+        fil  = decw.net.create_entity(decw.dw.sr(doc))
         assert 'obj-' in fil
         return fil        
