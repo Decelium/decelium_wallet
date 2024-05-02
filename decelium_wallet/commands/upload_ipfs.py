@@ -47,11 +47,10 @@ class Deploy():
             return del_fil
         assert del_fil == True or 'error' in del_fil, "Could not remove old file"
         
-        ipfs_connection_settings = {
-            'host': 'devdecelium.com',
-            'port': 5002,
-            'protocol': 'https',
-        }
+        ipfs_connection_settings = args['ipfs_connection_settings']
+        assert 'host' in ipfs_connection_settings
+        assert 'port' in ipfs_connection_settings
+        assert 'protocol' in ipfs_connection_settings
         
         dist_list = decw.net.create_ipfs({
             'api_key':decw.dw.pubk(target_user),
@@ -71,5 +70,9 @@ class Deploy():
             doc['self_id'] = args['target_id']
 
         fil  = decw.net.create_entity(decw.dw.sr(doc))
-        assert 'obj-' in fil
+        try:
+            assert 'obj-' in fil
+        except Exception as e:
+            print ("Invalid response: "+ str(fil))
+            raise e
         return fil        
