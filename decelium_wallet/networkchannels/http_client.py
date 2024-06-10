@@ -140,6 +140,19 @@ class http_client():
                     if 'Links' in filter['payload']:
                         filter['payload'] = filter['payload']['Links']
                     # Iterate over the payload to link each object to the newly created directory
+
+                    # Verify sub files are pinned
+                    pins = self.latest_remote_pin_list(connection_settings,True )
+                    missing = []
+                    print("Scanning for missing")
+                    for item in filter['payload']:
+                        print(item)
+                        if item['Hash'] not in pins:
+                            missing.append(item['Hash'])
+                    if len(missing) > 0:
+                        return {"error": "can not create directory, as files were not pinned FIRST. IPFS will hang if you try to upload a directory before files are pinned, as it will get stuck waiting for the file to be found."}
+
+                    
                     for item in filter['payload']:
                         name = item['Name']
                         hash = item['Hash']
