@@ -271,8 +271,6 @@ class http_client():
 
     def query_remote(self, source_id, query, url_version='dev', show_url=False):
         data = {}
-        print(query)
-        print(source_id)
         data['qtype'] = source_id
         data['__encoded_query'] = self.do_encode(query)
 

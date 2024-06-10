@@ -16,6 +16,12 @@ from threading import Timer
 
 
 class core:
+    def has_entity_prefix(self,string):
+        valid_prefix = ['obj-','dir-','system_root']
+        for prefix in valid_prefix:
+            if string.startswith(prefix):
+                return True
+        return False
     def discover_wallet(self,root="./",password=None):
         res = wallet.discover(root,password)
         return res
@@ -38,7 +44,11 @@ class core:
     #            #tb.print_exc()
     #            pass
     #    return {"error":"could not find .password and .wallet.dec in parent path"}
-    
+    @staticmethod
+    def rd_path(path:str):
+        with open(path,'r') as f:
+            data = f.read()
+        return data
     def load_wallet(self,data,password,mode='js'):
         assert type(data) == str
         assert type(password) == str
@@ -150,11 +160,9 @@ class core:
         return t    
     
     def listen(self,port,name,wallet_user="admin",public_handlers = []):
-        ("-----LISTEN----")
         resp = self.do_ping(port,name,wallet_user,public_handlers)
         if "error" in resp:
             return resp
-        ("-----LISTEN_RESP----", resp)
         self.self_id = resp['self_id']
         resp['api_key']=self.dw.pubk(wallet_user)
         self.net.listen(resp,self.handle_connection) # Begin listening with the requested configuration!

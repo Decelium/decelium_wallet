@@ -51,7 +51,14 @@ class Deploy():
         assert 'host' in ipfs_connection_settings
         assert 'port' in ipfs_connection_settings
         assert 'protocol' in ipfs_connection_settings
-        
+        print ("Upload to IPFS")
+        print({
+            'api_key':decw.dw.pubk(target_user),
+            'file_type':'ipfs',
+            'connection_settings':ipfs_connection_settings,
+            'payload_type':'local_path',
+            'payload':local_path
+        })        
         dist_list = decw.net.create_ipfs({
             'api_key':decw.dw.pubk(target_user),
             'file_type':'ipfs',
