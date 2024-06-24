@@ -59,7 +59,7 @@ class http_client():
         # If 'headers' is not present, initialize it to an empty dictionary 
         if 'headers' not in connection_settings:
             connection_settings['headers'] = {}
-            
+        connection_settings['headers']['X-Api-Token']= 'your_secret_token' #Beginning implementation of auth
         ipfs_string = "/dns/"+str(connection_settings["host"])+"/tcp/"+str(connection_settings["port"])+"/"+str(connection_settings["protocol"])
             
         if len(connection_settings['headers']) > 0:
