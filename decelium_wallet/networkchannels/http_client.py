@@ -209,6 +209,8 @@ class http_client():
                     #print(pin_resp)
 
                 root = {}
+                if len(dict_list) == 1:
+                    dict_list[0]['root'] = True                
                 for item in dict_list:
                     if item['name'] == "":
                         item['root'] = True
