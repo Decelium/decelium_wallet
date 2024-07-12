@@ -1,6 +1,7 @@
 import sys
 import time,datetime
 import os
+import subprocess
 try:
     from .wallet import wallet 
     from .network import network
@@ -16,7 +17,8 @@ from threading import Timer
 
 
 class core:
-    def has_entity_prefix(self,string):
+    def has_entity_prefix(self,string:str):
+        assert type(string) == str,"objectid Must be a string " + str(string)
         valid_prefix = ['obj-','dir-','system_root']
         for prefix in valid_prefix:
             if string.startswith(prefix):
@@ -25,6 +27,51 @@ class core:
     def discover_wallet(self,root="./",password=None):
         res = wallet.discover(root,password)
         return res
+    
+    def __monitor_local_job_progress(self,proc,label):
+        while True:
+            output = proc.stdout.readline()
+            if output:
+                print(output.strip())
+                sys.stdout.flush()  # Flush after each print            
+            if output == '' and proc.poll() is not None:
+                break
+        res = proc.communicate()
+        return  res[0],res[1]  
+
+    def run_local_job(self,script,command,cwd):
+        '''
+        TODO - Merge / use nodejobs locally (?)
+        '''
+        #result = subprocess.run(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,cwd=cwd)
+        print(command)
+        with subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,cwd=cwd, text=True) as proc:
+            return self.__monitor_local_job_progress(proc,script) 
+        return None,None
+
+
+    def run_remote_job(self,script,command,cwd):
+        decw = self
+        s = decw.dw.sign_request
+        run_result = decw.net.node_job_run(decw.dw.sr({'api_key':decw.dw.pubk("admin"),
+                                                       'job_id':script,
+                                                       'job_name':script,
+                                                       'command':command,
+                                                       'cwd':cwd,
+                                                       },["admin"]))
+        list_data = decw.net.node_job_list(s({'api_key':decw.dw.pubk("admin"),'filter':{'self_id':script}},["admin"]))
+        if 'error' in list_data:
+            print(list_data)
+        while (list_data[script]['status'] in ['starting','running']):
+            time.sleep(3)
+            print(".",end='')
+            list_data = decw.net.node_job_list(s({'api_key':decw.dw.pubk("admin"),'filter':{'self_id':script}},["admin"]))
+        job_logs = decw.net.node_job_logs(decw.dw.sr({'api_key':decw.dw.pubk("admin"),
+                                                       'job_id':script,
+                                                       },["admin"]))
+        
+        return job_logs[0],job_logs[1]
+
     #def load_wallet_from_disk(self):
     #    # TODO - Add in loading OP
     #    
