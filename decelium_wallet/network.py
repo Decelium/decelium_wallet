@@ -69,9 +69,9 @@ class network:
     
     def connect(self,args,handler=None):
         # TODO Support Object Id Connection
-        #print ("worker http connect")
-        #import pprint
-        #pprint.pprint(args)
+        print ("worker http connect")
+        import pprint
+        pprint.pprint(args)
         if type(args) == dict:
             if "connect_data" in args:
                 cd = args['connect_data']

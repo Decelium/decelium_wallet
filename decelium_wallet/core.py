@@ -29,20 +29,23 @@ class core:
         return res
     
     def __monitor_local_job_progress(self,proc,label):
+        outbuf = ""
         while True:
             output = proc.stdout.readline()
             if output:
+                outbuf = outbuf + output
                 print(output.strip())
-                sys.stdout.flush()  # Flush after each print            
+                #sys.stdout.flush()  # Flush after each print            
             if output == '' and proc.poll() is not None:
                 break
         res = proc.communicate()
-        return  res[0],res[1]  
+        return  outbuf + "\n"+ res[0],res[1]  
 
     def run_local_job(self,script,command,cwd):
         '''
         TODO - Merge / use nodejobs locally (?)
         '''
+        print("IN RUN LOCAL JOB")
         #result = subprocess.run(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,cwd=cwd)
         print(command)
         with subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,cwd=cwd, text=True) as proc:

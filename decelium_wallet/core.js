@@ -49,14 +49,16 @@ class Core {
         const originalConsoleLog = console.log;
         const originalStdoutWrite = process.stdout.write.bind(process.stdout);
         const originalStderrWrite = process.stderr.write.bind(process.stderr);
-
+        /*
+        TODO turn console log cleaning back on
         process.stdout.write = () => { };
         process.stderr.write = () => { };
         console.log = function (message) {
             //if (!message.includes("Loading") && !message.includes("Loaded") && !message.includes("loaded")) {
             //   originalConsoleLog.apply(console, arguments);
             //}
-        };
+        };*/
+
         try {
             // Execute the function and await its completion
             const result = await this.init_console_logs();
@@ -100,14 +102,32 @@ class Core {
         if (this.isNode()) {
             // Do a manual search for package.json, then locate the pyodide NPM package.
             // This method is more reliable than relying on convention.
+            console.log("THE META URL"+import.meta.url);
+
             const { loadPyodide } = await import("pyodide");
             const currentDir = path.dirname(url.fileURLToPath(import.meta.url));
 
             const __dirname = await this.findRootDir(currentDir);
-            const pyodidePath = path.join(__dirname, '..', 'node_modules', 'pyodide');
-            this.pyodide = await loadPyodide({
-                indexURL: path.join(pyodidePath, '/'), 
-            });
+            const pyodidePathOld = path.join(__dirname, '..', 'node_modules', 'pyodide');
+            const pyodidePath = path.join(__dirname, 'node_modules', 'pyodide');
+
+            // ---
+            //console.log(currentDir);
+            //console.log(__dirname);
+            //console.log(pyodidePath);
+            try{
+                this.pyodide = await loadPyodide({
+                  indexURL: path.join(pyodidePath, '/'), 
+              });
+            }
+            catch
+            {
+                this.pyodide = await loadPyodide({
+                  indexURL: path.join(pyodidePathOld, '/'), 
+              });
+            }
+            //throw Error("pyodidePath 2");
+            //---
 
         } else {
             this.pyodide = await window.loadPyodide({

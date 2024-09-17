@@ -131,6 +131,12 @@ class Deploy():
                 'port': 5001,
                 'protocol': 'http',
             }
+        elif version == 'mainnet':
+            connection_settings = {
+                'host': '35.161.106.244',
+                'port': 5001,
+                'protocol': 'http',
+            }
         else:
             raise Exception("Could not find IPFS server for upload")
         
@@ -247,6 +253,8 @@ class Deploy():
             version = 'dev'
         if 'test' in url_version:
             version = 'test'
+        if 'mainnet' in url_version:
+            version = 'mainnet'
         if not version:
             raise Exception("Could not detect upload version as dev or test")
         
@@ -276,6 +284,7 @@ class Deploy():
             wallet_data = f.read() 
         # raw_wallet = self.load_wallet_strings_from_disk()
         success = self.core.load_wallet(data=wallet_data, password=password)
+        print("CONNECTING TO "+ url_version)
         self.core.initial_connect(target_url=url_version, target_user="admin")
     
         #---- begin
