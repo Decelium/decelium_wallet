@@ -76,7 +76,26 @@ class Core {
             throw error;
         }
     }
-
+    /*
+    
+    const crypto = require('crypto');
+    const { v4: uuidv4 } = require('uuid');
+    
+    function uuid_gen(seed_string = null) {
+        if (seed_string !== null) {
+            // Step 1: Generate SHA-256 hash of the seed string
+            const sha256_hash = crypto.createHash('sha256').update(seed_string).digest('hex');
+    
+            // Step 2: Format the hash like a UUID (8-4-4-4-12 format)
+            const uuid_like = `${sha256_hash.slice(0, 8)}-${sha256_hash.slice(8, 12)}-${sha256_hash.slice(12, 16)}-${sha256_hash.slice(16, 20)}-${sha256_hash.slice(20, 32)}`;
+            return "obj-" + uuid_like;
+        } else {
+            // If no seed is provided, generate a normal UUID
+            return "obj-" + uuidv4();
+        }
+    }
+    
+    */
     async sr(request, user = null) {
         if (user == null)
             user = this.target_user;

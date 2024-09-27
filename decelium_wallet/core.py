@@ -17,6 +17,15 @@ from threading import Timer
 
 
 class core:
+
+    def uuid_gen(seed_string= None):
+        if seed_string != None:
+            sha256_hash = hashlib.sha256(seed_string.encode()).hexdigest()
+            uuid_like = f"{sha256_hash[:8]}-{sha256_hash[8:12]}-{sha256_hash[12:16]}-{sha256_hash[16:20]}-{sha256_hash[20:32]}"    
+            return "obj-"+uuid_like
+        else:
+            return "obj-"+str(uuid.uuid4())
+    
     def has_entity_prefix(self,string:str):
         assert type(string) == str,"objectid Must be a string " + str(string)
         valid_prefix = ['obj-','dir-','system_root']
