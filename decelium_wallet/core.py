@@ -1,6 +1,7 @@
 import sys
 import time,datetime
 import os
+import hashlib
 import subprocess
 try:
     from .wallet import wallet 
@@ -17,7 +18,7 @@ from threading import Timer
 
 
 class core:
-
+    '''
     def uuid_gen(seed_string= None):
         if seed_string != None:
             sha256_hash = hashlib.sha256(seed_string.encode()).hexdigest()
@@ -25,7 +26,21 @@ class core:
             return "obj-"+uuid_like
         else:
             return "obj-"+str(uuid.uuid4())
-    
+    '''
+    @staticmethod
+    def uuid_gen(seed_string=None):
+        if seed_string is not None:
+            # Generate SHA-256 hash of the seed string
+            sha256_hash = hashlib.sha256(seed_string.encode()).hexdigest()
+
+            # Format the hash into a UUID-like format (8-4-4-4-12)
+            uuid_like = f"{sha256_hash[:8]}-{sha256_hash[8:12]}-{sha256_hash[12:16]}-{sha256_hash[16:20]}-{sha256_hash[20:32]}"
+            
+            return "obj-" + uuid_like
+        else:
+            # Generate a random UUID4 and prepend "obj-"
+            return "obj-" + str(uuid.uuid4())    
+        
     def has_entity_prefix(self,string:str):
         assert type(string) == str,"objectid Must be a string " + str(string)
         valid_prefix = ['obj-','dir-','system_root']

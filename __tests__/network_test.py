@@ -1,7 +1,10 @@
 import subprocess
 import time
 import sys
-# python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
 
 workers = [
     ("./python/worker_http.py", "python"),

@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import hashlib, json
 import datetime
 import getpass
+import subprocess
 
 class jsondateencode_crypto:
     def loads(dic):
@@ -168,6 +169,41 @@ class crypto:
         if format == 'json':
             enc = json.dumps(enc)        
         return enc
+    
+    @staticmethod
+    def encode_bytes(content_bytes, password,version='python-ecdsa-0.1',format=None):
+        # Generate key from password
+        q = hashlib.sha224(password.encode('utf-8')).hexdigest()[:32]
+        key = base64.urlsafe_b64encode(q.encode('utf-8'))
+        f = Fernet(key)
+        token = f.encrypt(content_bytes)
+        return token
+    
+    @staticmethod
+    def get_file_cid(file_path,ipfs_path="ipfs"):
+        #if not os.path.isfile(ipfs_path):
+        #    raise FileNotFoundError(f"IPFS binary not found at {ipfs_path}")
+        #if not os.path.isfile(file_path):
+        #    raise FileNotFoundError(f"File not found at {file_path}")
+
+        result = subprocess.run(
+            [ipfs_path, 'add', '--only-hash', '--cid-version=0', '--quiet', file_path],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            cid = result.stdout.strip()
+            return cid
+        else:
+            raise Exception(f"Error computing CID: {result.stderr.strip()}")
+    
+    @staticmethod
+    def decode_bytes(encrypted_bytes, password,version='python-ecdsa-0.1',format=None):
+        # Generate key from password
+        q = hashlib.sha224(password.encode('utf-8')).hexdigest()[:32]
+        key = base64.urlsafe_b64encode(q.encode('utf-8'))
+        f = Fernet(key)
+        data = f.decrypt(encrypted_bytes)
+        return data
     
     @staticmethod
     def encode_key(content,password,version='python-ecdsa-0.1',format=None): 

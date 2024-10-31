@@ -1,7 +1,8 @@
-# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
-# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query [1]
-# python3 worker_http.py full 1 http://35.167.170.96:5000/data/query []
-# python3 worker_http.py ipfs 1 http://35.167.170.96:5000/data/query []
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
+
 import sys
 import time,datetime
 sys.path.append("../")
@@ -103,16 +104,7 @@ class WorkerHTTP():
                                                show_url=True)
         #print("del_fil",del_fil)
         assert del_fil == True or 'error' in del_fil
-        '''
-        connection_settings = {
-            'host': 'ipfs.infura.io',
-            'port': 5001,
-            'protocol': 'https',
-            'headers': {
-                'authorization': 'Basic ' + base64.b64encode(b'2X4hcFqmM5QyWMj7aR9rQcthN5q:686773513d65eeb2d7d22dfdc79d230f').decode('utf-8')
-            },
-        }
-        '''
+
         connection_settings = {
             'host': '35.167.170.96',
             'port': 5001,

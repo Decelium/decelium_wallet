@@ -1,13 +1,7 @@
-# This is the main test driver. It sets up the whole suite, runs tests, and reports results, including how to do a deeper dive.
-# Key Tasks
-# [X] Unit Test core single user wallet commands
-# ---- Look for a wallet
-# ---- if wallet exists
-# [] Unit Test Py Network Commands (Single-py)
-# [] Unit Test Py Network Commands (Single-js)
-# [] Unit Test Py Network Commands (Group-hetero)
-# [] target the tests at a specific node based on config
-# [] Derive or require some 
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent
+## TODO - Move / re-write these tests into SecretAgent 
 
 import subprocess
 
@@ -110,8 +104,6 @@ class SystemTests():
             return {"result": success, "output": output}  # All jobs completed, success is True only if all jobs were successful
         except Exception as e:
             return {"result": False, "output": output + "\nException: " + str(e)}
-
-        
 
     def run_pyjs_network_together(self):
         num_jobs = 2
