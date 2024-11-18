@@ -1,10 +1,16 @@
 #contract=BaseService
 #version=0.2    
 import warnings
-from urllib3.exceptions import NotOpenSSLWarning
 
-# Suppress the specific NotOpenSSLWarning
-warnings.filterwarnings("ignore", category=NotOpenSSLWarning)
+
+try:
+    from urllib3.exceptions import NotOpenSSLWarning
+    warnings.simplefilter("ignore", NotOpenSSLWarning)
+except ImportError:
+    from urllib3.exceptions import InsecureRequestWarning    
+    # Fallback to suppress InsecureRequestWarning if NotOpenSSLWarning is not available
+    warnings.simplefilter("ignore", InsecureRequestWarning)
+
 """
 USAGE:
 
@@ -53,6 +59,8 @@ class BaseService():
     @classmethod
     def run(cls, **kwargs):
         # TO INHERITOR - you may override run for manual control, or leave it in for standad method routing (see examples)
+        #print(cls)
+        # print(kwargs)        
         command_map = cls.get_command_map()
 
         assert len(kwargs['__command']) == 1, f"Exactly one command must be specified {kwargs['__command']} "
@@ -98,7 +106,8 @@ class BaseService():
         # Store the positional args as a list under the '__command' key
         if positional_args:
             kwargs['__command'] = positional_args
-
+        #print(cls)
+        #print(kwargs)
         result = cls.run(**kwargs)
         print(f"{result}")
         return result
