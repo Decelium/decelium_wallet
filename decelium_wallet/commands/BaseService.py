@@ -1,7 +1,7 @@
 #contract=BaseService
 #version=0.2    
 import warnings
-
+import json
 
 try:
     from urllib3.exceptions import NotOpenSSLWarning
@@ -58,11 +58,20 @@ class BaseService():
     
     @classmethod
     def run(cls, **kwargs):
-        # TO INHERITOR - you may override run for manual control, or leave it in for standad method routing (see examples)
-        #print(cls)
-        # print(kwargs)        
-        command_map = cls.get_command_map()
+        # Apply dynamic config files, if attached in args.        
+        cfg_in = {}
+        for key in list(kwargs.keys()):
+            if key.startswith("!"):
+                with open(kwargs[key], "r") as f:
+                    cfg_in = json.load(f)
+                # Update kwargs with the contents from the JSON file
+                kwargs.update(cfg_in)
+                # Remove the key starting with "!" from kwargs
+                del kwargs[key]
 
+        command_map = cls.get_command_map()
+        assert '__command'  in  kwargs, f"Need at leas one command. Like >command_exec COMMAND: COMMAND is required from {cls.get_command_map().keys()} "
+        
         assert len(kwargs['__command']) == 1, f"Exactly one command must be specified {kwargs['__command']} "
         cmd = kwargs['__command'][0]
         if cmd not in command_map:
@@ -75,6 +84,7 @@ class BaseService():
             assert arg in kwargs, f"Missing required argument: {arg} for command {cmd}"
         del(kwargs['__command'])
         method_kwargs = kwargs
+        print(f"Running {cmd}: {method}")
         return method(**method_kwargs)   
     
     
@@ -96,6 +106,7 @@ class BaseService():
 
         for item in args.args:
             if '=' in item:
+                # !=hostSpec.json
                 # Split key=value pairs
                 key, value = item.split('=', 1)
                 kwargs[key] = value
@@ -107,12 +118,147 @@ class BaseService():
         if positional_args:
             kwargs['__command'] = positional_args
         #print(cls)
-        #print(kwargs)
+        print(json.dumps(kwargs, indent = 4))
+        kwargs = cls.add_depth(kwargs)
+        print(json.dumps(kwargs, indent = 4))
         result = cls.run(**kwargs)
         print(f"{result}")
         return result
         # Suppress stdout and stderr until the result is ready
+
+    @classmethod
+    def add_depth(cls, flat: dict) -> dict:
+        """
+        Convert a flat dict with dot‑notation keys into a nested dict.
+        Keys without a dot remain at the root.
+
+        Parameters
+        ----------
+        flat : dict
+            Input dictionary. Keys may be of the form "group.subkey".
+
+        Returns
+        -------
+        nested : dict
+            Nested dictionary.
+
+        Example
+        -------
+        >>> flat = {
+        ...     "command.field_1": 2,
+        ...     "command.hello": "hi",
+        ...     "field": 2,
+        ...     "other.no": "x",
+        ...     "other.what": "y",
+        ... }
+        >>> add_depth(flat)
+        {
+            "command": {"field_1": 2, "hello": "hi"},
+            "field": 2,
+            "other": {"no": "x", "what": "y"}
+        }
+        """
+        nested = {}
+        for key, value in flat.items():
+            if '.' in key:
+                group, subkey = key.split('.', 1)
+                nested.setdefault(group, {})[subkey] = value
+            else:
+                nested[key] = value
+        return nested
+    @classmethod
+    def to_arg_string(cls,flat: dict) -> str:
+        """
+        Convert a flat dictionary into a command-line argument string.
+        
+        Each key-value pair is formatted as:
+            "key"=value
+        where the key is always enclosed in double quotes. If a value is a string,
+        it will also be enclosed in double quotes.
+        
+        Parameters
+        ----------
+        flat : dict
+            A flat dictionary with keys and their corresponding values.
+        
+        Returns
+        -------
+        str
+            A single argument string with each key-value pair separated by a space.
+        
+        Examples
+        --------
+        >>> flat = {"a.a": 1, "b": "2"}
+        >>> to_arg_string(flat)
+        '"a.a"=1 "b"="2"'
+        """
+        parts = []
+        for key, value in flat.items():
+            # Always quote the key.
+            formatted_key = f'"{key}"'
+            # Format the value: quote it if it's a string.
+            if isinstance(value, str):
+                formatted_value = f'"{value}"'
+            else:
+                formatted_value = str(value)
+            parts.append(f'{formatted_key}={formatted_value}')
+        return " ".join(parts)
+
+
+    # Example usage
+    if __name__ == "__main__":
+        flat_config = {"a.a": 1, "b": "2"}
+        arg_string = to_arg_string(flat_config)
+        print(arg_string)  # Output: "a.a"=1 "b"="2"
     
+    @classmethod
+    def flatten(cls,nested: dict, parent_key: str = "", sep: str = ".") -> dict:
+        """
+        Convert a nested dictionary into a flat dictionary with dot‑notation keys.
+        Nested keys are concatenated using a dot, forming keys like "group.subkey".
+
+        Parameters
+        ----------
+        nested : dict
+            The nested input dictionary.
+        parent_key : str, optional
+            A prefix used in the recursion to build the dot‑notation key. 
+            Defaults to an empty string.
+        sep : str, optional
+            The separator between key components. Defaults to ".".
+
+        Returns
+        -------
+        flat : dict
+            The flattened dictionary.
+
+        Example
+        -------
+        >>> nested = {
+        ...     "command": {"field_1": 2, "hello": "hi"},
+        ...     "field": 2,
+        ...     "other": {"no": "x", "what": "y"}
+        ... }
+        >>> flatten(nested)
+        {
+            "command.field_1": 2,
+            "command.hello": "hi",
+            "field": 2,
+            "other.no": "x",
+            "other.what": "y"
+        }
+        """
+        flat = {}
+        for key, value in nested.items():
+            # If there is a parent key, prepend it to the current key using the separator
+            full_key = f"{parent_key}{sep}{key}" if parent_key else key
+            if isinstance(value, dict):
+                # Recurse into the nested dictionary and update the flat dictionary
+                flat.update(flatten(value, full_key, sep=sep))
+            else:
+                flat[full_key] = value
+        return flat
+
     #@classmethod
     #def __init_subclass__(cls, **kwargs):
     #    """This method is automatically called when a subclass is created."""
