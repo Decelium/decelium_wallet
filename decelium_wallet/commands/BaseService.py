@@ -59,15 +59,19 @@ class BaseService():
     @classmethod
     def run(cls, **kwargs):
         # Apply dynamic config files, if attached in args.        
+        # If you detect "!XYZ=JSON+PATH -- inline replace the key with values"
         cfg_in = {}
         for key in list(kwargs.keys()):
-            if key.startswith("!"):
-                with open(kwargs[key], "r") as f:
-                    cfg_in = json.load(f)
-                # Update kwargs with the contents from the JSON file
+            if type(kwargs[key]) != str or not kwargs[key].endswith(".json]!"):
+                continue
+            with open(kwargs[key].replace("]!","").replace("![",""), "r") as f:
+                cfg_in = json.load(f)                
+            if key.startswith("!["):
                 kwargs.update(cfg_in)
-                # Remove the key starting with "!" from kwargs
                 del kwargs[key]
+            elif kwargs[key].startswith("!["):
+                kwargs[key] = cfg_in
+
 
         command_map = cls.get_command_map()
         assert '__command'  in  kwargs, f"Need at leas one command. Like >command_exec COMMAND: COMMAND is required from {cls.get_command_map().keys()} "
@@ -84,7 +88,6 @@ class BaseService():
             assert arg in kwargs, f"Missing required argument: {arg} for command {cmd}"
         del(kwargs['__command'])
         method_kwargs = kwargs
-        print(f"Running {cmd}: {method}")
         return method(**method_kwargs)   
     
     
@@ -118,9 +121,9 @@ class BaseService():
         if positional_args:
             kwargs['__command'] = positional_args
         #print(cls)
-        print(json.dumps(kwargs, indent = 4))
+        #print(json.dumps(kwargs, indent = 4))
         kwargs = cls.add_depth(kwargs)
-        print(json.dumps(kwargs, indent = 4))
+        #print(json.dumps(kwargs, indent = 4))
         result = cls.run(**kwargs)
         print(f"{result}")
         return result
