@@ -26,7 +26,8 @@ def run():
         try:
             name = "decelium_wallet.commands."+command
             mod = importlib.import_module(name)
-        except:
+        except Exception as e:
+            print("Error importing {}: {}".format(name, e))
             mod = importlib.import_module("commands."+command)        
         with open(mod.__file__,'r') as f:
             code = f.read()
@@ -46,14 +47,8 @@ def run():
         try:
             contract_class = getattr(mod, contract)  # Get the class from the module
             c = contract_class()
-            try:
-                parser = c.get_parser()
-                result,args = c.parse_arguments(sys.argv[2:])
-                if result == False:
-                    return args
-                print(c.run(args))
-            except:
-                print(c.run(sys.argv[2:]))
+            c.run_cli()
+            
         except:
             print("----------------------")    
             print("version",version)    
@@ -63,7 +58,6 @@ def run():
             print("command",command)   
             print("----------------------")    
             print("module",mod.__file__)   
-
             print("----------------------")    
             import traceback as tb
             tb.print_exc()
