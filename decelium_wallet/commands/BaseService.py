@@ -1,8 +1,7 @@
 #contract=BaseService
 #version=0.2    
 import warnings
-
-
+import json
 try:
     from urllib3.exceptions import NotOpenSSLWarning
     warnings.simplefilter("ignore", NotOpenSSLWarning)
@@ -10,6 +9,9 @@ except ImportError:
     from urllib3.exceptions import InsecureRequestWarning    
     # Fallback to suppress InsecureRequestWarning if NotOpenSSLWarning is not available
     warnings.simplefilter("ignore", InsecureRequestWarning)
+
+from contextlib import contextmanager
+import os
 
 """
 USAGE:
@@ -28,6 +30,42 @@ if __name__ == "__main__": -- To
     HelloCommand.run_cli()
 
 """
+'''
+@contextmanager
+def suppress_stdout():
+    # Save the original stdout
+    original_stdout = sys.stdout
+    sys.stdout = open(os.devnull, 'w')
+    try:
+        yield
+    finally:
+        # Restore original stdout
+        sys.stdout.close()
+        sys.stdout = original_stdout
+'''
+@contextmanager
+def suppress_stdout():
+    """
+    Suppresses stdout and stderr by redirecting them to /dev/null.
+    Restores them properly after the context ends.
+    """
+    # Save the original sys.stdout and sys.stderr
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+
+    # Open /dev/null
+    devnull = open(os.devnull, 'w')
+
+    try:
+        # Redirect sys.stdout and sys.stderr to /dev/null
+        sys.stdout = devnull
+        sys.stderr = devnull
+        yield
+    finally:
+        # Restore original sys.stdout and sys.stderr
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+        devnull.close()
 
 
 import argparse, pprint, sys
@@ -76,7 +114,7 @@ class BaseService():
         del(kwargs['__command'])
         method_kwargs = kwargs
         return method(**method_kwargs)   
-    
+
     
     @classmethod
     def run_cli(cls):
@@ -94,8 +132,11 @@ class BaseService():
         positional_args = []
         kwargs = {}
 
+        verbose = False
         for item in args.args:
-            if '=' in item:
+            if item == '--v':
+                verbose = True
+            elif '=' in item:
                 # Split key=value pairs
                 key, value = item.split('=', 1)
                 kwargs[key] = value
@@ -108,9 +149,17 @@ class BaseService():
             kwargs['__command'] = positional_args
         #print(cls)
         #print(kwargs)
-        result = cls.run(**kwargs)
+        if not verbose:
+            with suppress_stdout():
+                result = cls.run(**kwargs)
+        else:
+            result = cls.run(**kwargs)
+        #try:
+        #    print(json.dumps(result,indent=4))
+        #except:
+        #    print(f"{result}")
         print(f"{result}")
-        return result
+        #return result
         # Suppress stdout and stderr until the result is ready
     
     #@classmethod

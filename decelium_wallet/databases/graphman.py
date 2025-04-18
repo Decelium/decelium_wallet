@@ -49,12 +49,20 @@ class Node(BaseData):
         required = {
             "node_id": str,
             "node_type_id": str,
-            "data": str,
+            "data": dict,
             "attached_groups": list
         }
         optional = {}
         return required, optional
-
+    
+    def get_groups(self):
+        return self["attached_groups"]
+    
+    def add_group(self,group_id:str):
+        return self["attached_groups"].append(group_id)
+    def remove_group(self,group_id:str):
+        return self["attached_groups"].remove(group_id)
+    
     def validate(self, graph):
         # Validate type
         node_config = graph.get_node_config(self["type"])
@@ -80,9 +88,35 @@ Group
     ]
 }
 '''
+
+#class Group(BaseData):
+#    def get_keys(self):
+#        required = {
+#            "group_type_id": str,
+#            "name": str,
+#            "members": list
+#        }
+#        optional = {}
+#        return required, optional
+#    
+#    def get_node_ids(self):
+#        ids = []
+#        for member in self['members']:
+#            ids.append(member["node_id"])
+#        return ids
+#    def do_validation(self,key,value,init_data):
+#        if key == "members":
+#            for item in value:
+#                assert type(item) == dict
+#                assert "node_id" in item
+#                assert "role" in item
+#                assert "weight" in item#
+#
+#        return value,""
 class Group(BaseData):
     def get_keys(self):
         required = {
+            "group_id": str,          # Added 'group_id' to required keys
             "group_type_id": str,
             "name": str,
             "members": list
@@ -90,15 +124,48 @@ class Group(BaseData):
         optional = {}
         return required, optional
 
-    def do_validation(self,key,value,init_data):
+    def get_node_ids(self):
+        return [member["node_id"] for member in self['members']]
+
+    def add_member(self, member_info: dict):
+        """
+        Adds a new member to the group.
+
+        :param member_info: A dictionary containing 'node_id', 'role', and 'weight'.
+        """
+        # Validate the member_info
+        assert isinstance(member_info, dict), "member_info must be a dictionary"
+        assert "node_id" in member_info, "member_info must contain 'node_id'"
+        assert "role" in member_info, "member_info must contain 'role'"
+        assert "weight" in member_info, "member_info must contain 'weight'"
+
+        # Check if the node is already a member
+        node_ids = self.get_node_ids()
+        if member_info["node_id"] not in node_ids:
+            self['members'].append(member_info)
+        else:
+            raise ValueError(f"Node '{member_info['node_id']}' is already a member of the group")
+
+    def remove_member(self, node_id: str):
+        """
+        Removes a member from the group by node_id.
+
+        :param node_id: The ID of the node to remove from the group's members.
+        """
+        original_length = len(self['members'])
+        self['members'] = [member for member in self['members'] if member["node_id"] != node_id]
+        if len(self['members']) == original_length:
+            raise ValueError(f"Node '{node_id}' is not a member of the group")
+
+    def do_validation(self, key, value, init_data):
         if key == "members":
             for item in value:
-                assert type(item) == dict
-                assert "node_id" in value
-                assert "role" in value
-                assert "weight" in value
+                assert isinstance(item, dict), "Each member must be a dictionary"
+                assert "node_id" in item, "Each member must contain 'node_id'"
+                assert "role" in item, "Each member must contain 'role'"
+                assert "weight" in item, "Each member must contain 'weight'"
 
-        return value,""
+        return value, ""
 
 
 ''' Graph
@@ -244,9 +311,17 @@ class GraphManager(BaseService):
         with safe_open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
         return True
+    
+    @classmethod
+    def __remove_json_file(cls, file_path: str):
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        if os.path.exists(file_path):
+            raise Exception("COULD NOT REMOVE FILE file_path")
+        return True
+    
     #  base_directory: str, file_type: str, identifier:
     @classmethod
-
     def load_graph(cls, base_directory: str) -> Graph:
         return cls.__load_graph(base_directory)
     #  base_directory: str, file_type: str, identifier:
@@ -267,6 +342,8 @@ class GraphManager(BaseService):
         #    "required":["source_id","destination_id"]
         #}
         #cls.add_group_type({**navigation_group_type,"base_directory":base_directory})
+        if os.path.exists(cls._get_file_path(base_directory, 'graph')):
+            raise Exception("Can not create, graph already exists.")
         saved = cls.__save_item(base_directory, graph_data)
         if saved == False:
             raise Exception("Could not save new graph")
@@ -280,7 +357,7 @@ class GraphManager(BaseService):
         # print(f"Graph '{name}' created successfully at {cls._get_file_path(base_directory, 'graph')}")
 
     @classmethod
-    def add(cls, base_directory: str, data: dict,type_id:str=None):   
+    def add(cls, base_directory: str, data: dict,type_id:str=None,overwrite=False):   
         if type(data) == str:
             data = json.loads(data)
 
@@ -291,32 +368,66 @@ class GraphManager(BaseService):
         #
         if type_id != None:
             assert type_id in cls.__data_types, f"type {type_id} not registered with GraphManager"
-            if type(data) != cls.__data_types[type_id] and not issubclass(type(data),cls.__data_types[type_id]):
+            if type(data) == cls.__data_types[type_id] or  issubclass(type(data),cls.__data_types[type_id]):
                 data = cls.__data_types[type_id](data)
             else:
-                raise Exception("Could not assign type")
+                raise Exception(f"GraphManager.add error: Type '{type(data)}'is not same as type '{cls.__data_types[type_id]}'.")
         
         if issubclass(type(data),Node) or type(data) == Node:
+            print("I Should be printing as a node")
+            print(str(data)[0:100])
+            # Has valid type
             node_type:dict = graph_data.get_node_type(data['node_type_id'])
             if node_type == None:
                 raise ValueError(f"Node type '{node_type}' is not defined in the graph. Please use add_node_type first.")
+            
+            # Doesnt already exist
             file_path = cls._get_file_path(base_directory, 'node',f"{data['node_id']}")
-            print(file_path)
+            if overwrite == False and os.path.exists(file_path):
+                raise Exception("Can not overwrite")
+            
+            # Save the Group
             added= cls._write_json_file(file_path, data)
             if added != True:
                 raise Exception("Could not complete add operation")
         
         elif issubclass(type(data),Group) or type(data) == Group:
+            # Has valid type
             graph_type:dict = graph_data.get_group_type(data['group_type_id'])
             if graph_type == None:
                 raise ValueError(f"Group type '{data['group_type_id']}' is not defined in the graph. Please use add_group_type first.")
-            added = cls._write_json_file(cls._get_file_path(base_directory, 'group',f"{data['group_id']}"), data)
-            if added != True:
-                raise Exception("Could not complete add operation")
+            
+            # Doesnt already exist
+            file_path = cls._get_file_path(base_directory, 'group',f"{data['group_id']}")            
+            if overwrite == False and os.path.exists(file_path):
+                raise Exception("Can not overwrite")
+            
+            # Save the Group
+            group_path = cls._get_file_path(base_directory, 'group',f"{data['group_id']}")
+            try:
+                added = cls._write_json_file(group_path, data)
+                if added != True:
+                    raise Exception("Could not complete add operation")
+                theGroup:Group = data
+                linked_node_ids:list = theGroup.get_node_ids()
+                for nid in linked_node_ids:
+                    source_node:Node = cls.get(base_directory=base_directory,self_id=nid)
+                    if source_node != None:
+                        source_node.add_group(data['group_id'])
+                        cls.add(base_directory=base_directory,
+                                data=source_node,
+                                overwrite=True)
+                    
+            except Exception as e:
+                cls.__remove_json_file(group_path)
+                raise e
+            # Now we have to add the ID into the source and destination
+
         else:
             added= False
             if added != True:
                 raise Exception("Could not complete add operation")
+    '''
     @classmethod
     def remove(cls, base_directory: str,self_id:str=None):
 
@@ -327,28 +438,90 @@ class GraphManager(BaseService):
         #
         if (self_id != None):
             print("removing item_id")
-            os.remove(os.path.join(base_directory, 'graph','nodes',f"{self_id}.json"))
-            os.remove(os.path.join(base_directory, 'graph','groups',f"{self_id}.json"))
+            os.remove(os.path.join(base_directory, 'nodes',f"{self_id}.json"))
+            os.remove(os.path.join(base_directory, 'groups',f"{self_id}.json"))
             return True       
-        
+    '''
+    @classmethod
+    def remove(cls, base_directory: str, self_id: str = None):
+        graph_data = cls.__load_graph(base_directory)
+        if graph_data is None:
+            raise Exception("Could not load graph")
+
+        if self_id is None:
+            raise ValueError("self_id must be provided for removal")
+
+        # Determine if self_id corresponds to a node or a group
+        node_file_path = cls._get_file_path(base_directory, 'node', f"{self_id}")
+        group_file_path = cls._get_file_path(base_directory, 'group', f"{self_id}")
+
+        if os.path.exists(node_file_path):
+            # It's a node
+            # Load the node
+            node_data:Node = cls.get(base_directory=base_directory, self_id=self_id)
+            if node_data is None:
+                raise Exception(f"Node with id '{self_id}' not found")
+
+            # Remove node file
+            os.remove(node_file_path)
+
+            # Update all groups that this node is a member of
+            attached_group_ids = node_data.get_groups()
+            for group_id in attached_group_ids:
+                group_data:Group = cls.get(base_directory=base_directory, self_id=group_id)
+                if group_data is not None:
+                    # Remove the node from the group's members
+                    group_data.remove_member(self_id)
+                    if len(group_data['members']) == 0:
+                        # Optionally remove the group if it has no more members
+                        cls.remove(base_directory=base_directory, self_id=group_id)
+                    else:
+                        # Overwrite the group file with updated data
+                        cls.add(base_directory=base_directory, data=group_data, overwrite=True)
+
+        elif os.path.exists(group_file_path):
+            # It's a group
+            # Load the group
+            group_data = cls.get(base_directory=base_directory, self_id=self_id)
+            if group_data is None:
+                raise Exception(f"Group with id '{self_id}' not found")
+
+            # Remove group file
+            os.remove(group_file_path)
+
+            # Update all nodes that are members of this group
+            member_node_ids = group_data.get_node_ids()
+            for node_id in member_node_ids:
+                node_data = cls.get(base_directory=base_directory, self_id=node_id)
+                if node_data is not None:
+                    # Remove the group from the node's attached_groups
+                    node_data.remove_group(self_id)
+                    # Overwrite the node file with updated data
+                    cls.add(base_directory=base_directory, data=node_data, overwrite=True)
+        else:
+            raise Exception(f"No node or group found with id '{self_id}'")
+        return True    
+    
     @classmethod
     def get(cls, base_directory: str,self_id:str):
         graph_data = cls.__load_graph(base_directory)
         if graph_data == None:
-            raise Exception("Could not load graph")
-        #
+            raise Exception(f"Could not load graph at {base_directory}")
+        
         if (self_id == None):
             return False
         
-        pth = os.path.join(base_directory, 'graph','nodes',f"{self_id}.json")
+        pth = os.path.join(base_directory, 'nodes',f"{self_id}.json")
+        print(f"searching 1 in {pth}")
         if os.path.exists(pth):
             with safe_open(pth,'r') as f:
-                return f.read()
+                return Node(json.loads(f.read()))
         
-        pth = os.path.join(base_directory, 'graph','groups',f"{self_id}.json")
+        pth = os.path.join(base_directory, 'groups',f"{self_id}.json")
+        print(f"searching 2 in {pth}")
         if os.path.exists(pth):
             with safe_open(pth,'r') as f:
-                return f.read()
+                return Group(json.loads(f.read()))
         return None
               
     @classmethod
@@ -375,8 +548,4 @@ if __name__ == "__main__":
 # python3 graph_manager.py create_graph graph_id="test_graph" name="Test Graph" base_directory="./test_graph"
 # python3 graph_manager.py add_node_type base_directory="./test_graph" name="simple_location" node_type_id="sim_locat"
 # python3 graph_manager.py add base_directory="./test_graph" data='{"node_id": "n1", "node_type_id": "sim_locat", "data": "some/path","attached_groups": []}' type_id="Node"
-
-
-# python3 graph_manager.py add base_directory="./test_graph" data='{"node_id": "n1",  "data": "some/path","attached_groups": []}'
-
-            
+# python3 graph_manager.py add base_directory="./test_graph" data='{"node_id": "n1",  "data": "some/path","attached_groups": []}'            
