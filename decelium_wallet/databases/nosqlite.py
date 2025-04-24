@@ -127,6 +127,7 @@ class NosqlThread():
         if path == None:
             path = ':memory:'
         if path not in self.conns:
+            print(path)
             self.conns[path] = sqlite3.connect(path)
             self.conns[path].row_factory = sqlite3.Row
         conn = self.conns[path]

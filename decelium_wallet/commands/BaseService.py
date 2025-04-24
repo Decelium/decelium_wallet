@@ -97,20 +97,24 @@ class BaseService():
     @classmethod
     def run(cls, **kwargs):
         # Apply dynamic config files, if attached in args.        
+        # If you detect "!XYZ=JSON+PATH -- inline replace the key with values"
         cfg_in = {}
         for key in list(kwargs.keys()):
-            if key.startswith("!"):
-                with open(kwargs[key], "r") as f:
-                    cfg_in = json.load(f)
-                # Update kwargs with the contents from the JSON file
+            if type(kwargs[key]) != str or not kwargs[key].endswith(".json]]"):
+                continue
+            with open(kwargs[key].replace("]]","").replace("[[",""), "r") as f:
+                cfg_in = json.load(f)                
+            if key.startswith("[["):
                 kwargs.update(cfg_in)
-                # Remove the key starting with "!" from kwargs
                 del kwargs[key]
+            elif kwargs[key].startswith("[["):
+                kwargs[key] = cfg_in
+
 
         command_map = cls.get_command_map()
         assert '__command'  in  kwargs, f"Need at leas one command. Like >command_exec COMMAND: COMMAND is required from {cls.get_command_map().keys()} "
         
-        assert len(kwargs['__command']) == 1, f"Exactly one command must be specified {kwargs['__command']} "
+        assert len(kwargs['__command']) == 1, f"Exactly one command must be specified {kwargs['__command']}:{kwargs['__command']} "
         cmd = kwargs['__command'][0]
         if cmd not in command_map:
             raise ValueError(f"Unknown command: {cmd}")
@@ -122,7 +126,6 @@ class BaseService():
             assert arg in kwargs, f"Missing required argument: {arg} for command {cmd}"
         del(kwargs['__command'])
         method_kwargs = kwargs
-        print(f"Running {cmd}: {method}")
         return method(**method_kwargs)   
 
     
@@ -159,20 +162,24 @@ class BaseService():
             kwargs['__command'] = positional_args
         #print(cls)
 
+        kwargs = cls.add_depth(kwargs)
         print(json.dumps(kwargs, indent = 4))
         kwargs = cls.add_depth(kwargs)
         print(json.dumps(kwargs, indent = 4))
         #result = cls.run(**kwargs)
-        if not verbose:
-            with suppress_stdout():
-                result = cls.run(**kwargs)
-        else:
-            result = cls.run(**kwargs)
+        #if not verbose:
+        #    with suppress_stdout():
+        #        result = cls.run(**kwargs)
+        #else:
+        #result = cls.run(**kwargs)
         
+        #print(json.dumps(kwargs, indent = 4))
+        #print(json.dumps(kwargs, indent = 4))
+        result = cls.run(**kwargs)
         print(f"{result}")
         #return result
         # Suppress stdout and stderr until the result is ready
-
+    '''
     @classmethod
     def add_depth(cls, flat: dict) -> dict:
         """
@@ -213,6 +220,8 @@ class BaseService():
             else:
                 nested[key] = value
         return nested
+    '''
+
     @classmethod
     def to_arg_string(cls,flat: dict) -> str:
         """
@@ -250,6 +259,52 @@ class BaseService():
                 formatted_value = str(value)
             parts.append(f'{formatted_key}={formatted_value}')
         return " ".join(parts)
+    
+    @classmethod
+    def add_depth(cls, flat: dict, sep: str = ".") -> dict:
+        from collections.abc import MutableMapping
+
+        def insert_path(nested, keys, value):
+            key = keys[0]
+            is_index = key.isdigit()
+            idx = int(key) - 1 if is_index else key
+
+            if len(keys) == 1:
+                if is_index:
+                    # Ensure list is large enough
+                    while len(nested) <= idx:
+                        nested.append(None)
+                    nested[idx] = value
+                else:
+                    nested[key] = value
+                return
+
+            next_key = keys[1]
+            is_next_index = next_key.isdigit()
+
+            if is_index:
+                while len(nested) <= idx:
+                    nested.append([] if is_next_index else {})
+                if not isinstance(nested[idx], (list, dict)):
+                    nested[idx] = [] if is_next_index else {}
+                insert_path(nested[idx], keys[1:], value)
+            else:
+                if key not in nested:
+                    nested[key] = [] if is_next_index else {}
+                insert_path(nested[key], keys[1:], value)
+
+        nested = {}
+        for flat_key, value in flat.items():
+            keys = flat_key.split(sep)
+            is_root_index = keys[0].isdigit()
+            if is_root_index:
+                if not isinstance(nested, list):
+                    nested = []
+                insert_path(nested, keys, value)
+            else:
+                insert_path(nested, keys, value)
+
+        return nested
 
 
     # Example usage
@@ -258,6 +313,7 @@ class BaseService():
         arg_string = to_arg_string(flat_config)
         print(arg_string)  # Output: "a.a"=1 "b"="2"
     
+    '''
     @classmethod
     def flatten(cls,nested: dict, parent_key: str = "", sep: str = ".") -> dict:
         """
@@ -301,10 +357,32 @@ class BaseService():
             full_key = f"{parent_key}{sep}{key}" if parent_key else key
             if isinstance(value, dict):
                 # Recurse into the nested dictionary and update the flat dictionary
-                flat.update(flatten(value, full_key, sep=sep))
+                flat.update(cls.flatten(value, full_key, sep=sep))
             else:
                 flat[full_key] = value
         return flat
+    '''
+    @classmethod
+    def flatten(cls, nested: dict, parent_key: str = "", sep: str = ".") -> dict:
+        from collections.abc import Mapping, Sequence
+
+        flat = {}
+
+        def _flatten(obj, parent_key):
+            if isinstance(obj, Mapping):
+                for k, v in obj.items():
+                    full_key = f"{parent_key}{sep}{k}" if parent_key else str(k)
+                    _flatten(v, full_key)
+            elif isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+                for i, v in enumerate(obj, start=1):
+                    full_key = f"{parent_key}{sep}{i}" if parent_key else str(i)
+                    _flatten(v, full_key)
+            else:
+                flat[parent_key] = obj
+
+        _flatten(nested, parent_key)
+        return flat
+
 
     #@classmethod
     #def __init_subclass__(cls, **kwargs):
