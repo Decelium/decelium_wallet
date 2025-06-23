@@ -1,7 +1,5 @@
 ecdsa
 cryptography
 flask
-pandas
 zipfile36
 requests
-ipfshttpclient

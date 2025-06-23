@@ -1,3 +1,2 @@
 [console_scripts]
-decw = decelium_wallet.commands.decw:run
-
+decw = decelium_wallet.decw:run
