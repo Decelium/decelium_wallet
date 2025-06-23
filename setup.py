@@ -8,7 +8,7 @@ import subprocess
 #subprocess.run(["setx", "PATH", "%PATH%;"+path], shell=True)
 
 setup(
-    name='decw',
+    name='decelium_wallet',
     version='0.1.0',    
     description='The Decelium wallet',
     url='https://github.com/Decelium/decelium_wallet.git',
