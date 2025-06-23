@@ -2,7 +2,25 @@ import sqlite3, json,uuid,datetime
 from functools import reduce
 import re
 from collections import deque
+'''
+(venv) (justinops) computercomputer@Computers-MacBook-Air nodejobs % python3 jobs_test.py
+a. DB jobs working in ./test_data
+DONE INIT
+RUNNING {'dirname': 'no_such'} 
+CREATE TABLE IF NOT EXISTS 
+./test_data/jobs.db
+Exception in thread Thread-1 (_worker):
+Traceback (most recent call last):
+  File "/Users/computercomputer/.pyenv/versions/3.11.6/lib/python3.11/threading.py", line 1045, in _bootstrap_inner
+    self.run()
+  File "/Users/computercomputer/.pyenv/versions/3.11.6/lib/python3.11/threading.py", line 982, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Users/computercomputer/justinops/decelium_wallet/decelium_wallet/databases/nosqlite.py", line 89, in _worker
+    result = self.__execute(query, args_raw, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/computercomputer/justinops/decelium_wallet/decelium_wallet/databases/nosqlite.py", line 131, in __execute
 
+'''
 class jsonwithdate:
     def loads(dic):
         return json.loads(dic,object_hook=jsonwithdate.date_load)
@@ -48,6 +66,7 @@ class NosqlThread():
         return NosqlThread.worker_thread
 
     def threaded_execute(self, query, args_raw=None, path=None, timeout=None):
+        #print(f"NosqlThread START EXEC {query}")
         correlation_id = str(uuid.uuid4())
         local_result_queue = queue.Queue()
         self.result_queues[correlation_id] = local_result_queue
@@ -60,6 +79,7 @@ class NosqlThread():
             raise TimeoutError("Operation timed out")
         else:
             del self.result_queues[correlation_id]
+            #print("NosqlThread FUN")
             return result     
 
     def threaded_close(self, path=None, timeout=None):
@@ -84,11 +104,18 @@ class NosqlThread():
                 query, args_raw, correlation_id, path = args
                 self.result_queues[correlation_id].put(True)
                 break
+            #elif command == "execute":
+            #    query, args_raw, correlation_id, path = args
+            #    result = self.__execute(query, args_raw, path)
+            #    self.result_queues[correlation_id].put(result)
             elif command == "execute":
                 query, args_raw, correlation_id, path = args
-                result = self.__execute(query, args_raw, path)
+                try:
+                    result = self.__execute(query, args_raw, path)
+                except Exception as e:
+                    # on any exception, send the exception back (or a sentinel)
+                    result = e
                 self.result_queues[correlation_id].put(result)
-
     
     def __init__(self,path=None):
         self.command_queue = queue.Queue()
@@ -127,7 +154,7 @@ class NosqlThread():
         if path == None:
             path = ':memory:'
         if path not in self.conns:
-            print(path)
+            #print(path)
             self.conns[path] = sqlite3.connect(path)
             self.conns[path].row_factory = sqlite3.Row
         conn = self.conns[path]
@@ -209,7 +236,10 @@ class nosqlite():
                                 value TEXT NOT NULL
                              )'''
         self.__execute(create_table_query)
+        '''
         
+        
+        '''
     def sqlite_insert_many(self, source, filterval, setval, limit=None, offset=None, field=None):
         table_name = source  # Assuming `source` is equivalent to the MongoDB collection name
 

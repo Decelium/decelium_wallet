@@ -31,19 +31,7 @@ from typing import Union, Dict
 
 
 from decelium_wallet.commands.BaseData import BaseData
-''' 
-Node
-{
-    "id": "node_id",
-    "type": "type1",
-    "data": {
-        "key1": "value1",
-        "key2": "value2"
-    },
-    "attached_groups": ["group_id_1", "group_id_2"]
-}
 
-'''
 class Node(BaseData):
     def get_keys(self):
         required = {
@@ -72,47 +60,7 @@ class Node(BaseData):
         allowed_fields = node_config["allowed_fields"]
         for field in self["data"].keys():
             assert field in allowed_fields, f"Invalid field '{field}' for node type '{self['type']}'"
-'''
-Group
-{
-    "id": "group_id",
-    "name": "Group Name",
-    "type": "edge",
-    "metadata": {
-        "description": "Edge connecting two nodes",
-        "created_at": "timestamp"
-    },
-    "members": [
-        {"node_id": "node_id_1", "role": "source", "weight": 1.0},
-        {"node_id": "node_id_2", "role": "target", "weight": 1.0}
-    ]
-}
-'''
 
-#class Group(BaseData):
-#    def get_keys(self):
-#        required = {
-#            "group_type_id": str,
-#            "name": str,
-#            "members": list
-#        }
-#        optional = {}
-#        return required, optional
-#    
-#    def get_node_ids(self):
-#        ids = []
-#        for member in self['members']:
-#            ids.append(member["node_id"])
-#        return ids
-#    def do_validation(self,key,value,init_data):
-#        if key == "members":
-#            for item in value:
-#                assert type(item) == dict
-#                assert "node_id" in item
-#                assert "role" in item
-#                assert "weight" in item#
-#
-#        return value,""
 class Group(BaseData):
     def get_keys(self):
         required = {
@@ -282,7 +230,6 @@ class GraphManager(BaseService):
         if type(item) == Group or issubclass(item,Group):
             return cls._write_json_file(cls._get_file_path(base_directory, 'group',f"{item['group_id']}"), item)
         return False
-    
   
 
     @classmethod

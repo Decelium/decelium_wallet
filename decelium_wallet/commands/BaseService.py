@@ -2,6 +2,11 @@
 #version=0.2    
 import warnings
 import json
+import subprocess
+import shutil
+import inspect
+import tempfile
+
 try:
     from urllib3.exceptions import NotOpenSSLWarning
     warnings.simplefilter("ignore", NotOpenSSLWarning)
@@ -84,6 +89,18 @@ class BaseService():
         return command_map
     
     @classmethod
+    def get_core_command_map(cls):
+        # compile_for(cls, platform: str = "auto", onefile: bool = True, output_dir: str = None):
+        command_map = {
+            'compile_for': {
+                'required_args': ['platform','onefile','output_dir'],
+                'method': cls.example,
+            },
+
+        }
+        return command_map    
+    
+    @classmethod
     def example(cls,**kargs):
         raise Exception("Unimplemented - please ignore this instructive method")
 
@@ -100,19 +117,25 @@ class BaseService():
         # If you detect "!XYZ=JSON+PATH -- inline replace the key with values"
         cfg_in = {}
         for key in list(kwargs.keys()):
+
             if type(kwargs[key]) != str or not kwargs[key].endswith(".json]]"):
                 continue
-            with open(kwargs[key].replace("]]","").replace("[[",""), "r") as f:
-                cfg_in = json.load(f)                
+            pth = kwargs[key].replace("]]","").replace("[[","")
+            with open(pth.strip(), "r") as f:
+                #print(f"READING {pth}")
+                parse_str = f.read()
+                #print(f"READING {parse_str}")
+                cfg_in = json.loads(parse_str)                
+    
             if key.startswith("[["):
                 kwargs.update(cfg_in)
                 del kwargs[key]
             elif kwargs[key].startswith("[["):
                 kwargs[key] = cfg_in
 
-
         command_map = cls.get_command_map()
-        assert '__command'  in  kwargs, f"Need at leas one command. Like >command_exec COMMAND: COMMAND is required from {cls.get_command_map().keys()} "
+        command_map.update(cls.get_core_command_map())
+        assert '__command'  in  kwargs, f"Need at least one command. Like >command_exec COMMAND: COMMAND is required from {command_map.keys()} "
         
         assert len(kwargs['__command']) == 1, f"Exactly one command must be specified {kwargs['__command']}:{kwargs['__command']} "
         cmd = kwargs['__command'][0]
@@ -128,7 +151,16 @@ class BaseService():
         method_kwargs = kwargs
         return method(**method_kwargs)   
 
-    
+    @staticmethod
+    def _strip_enclosing_quotes(value: str) -> str:
+        if (
+            isinstance(value, str)
+            and len(value) >= 2
+            and value[0] == value[-1]
+            and value[0] in ("'", '"', "`")
+        ):
+            return value[1:-1]
+        return value    
     @classmethod
     def run_cli(cls):
         """This method parses CLI arguments, converts them to kwargs, and passes them to run."""
@@ -152,29 +184,23 @@ class BaseService():
             elif '=' in item:
                 # Split key=value pairs
                 key, value = item.split('=', 1)
-                kwargs[key] = value
+                kwargs[key] = BaseService._strip_enclosing_quotes(value)
             else:
                 # Treat anything without '=' as a positional argument
                 positional_args.append(item)
-
+        #print(" ARG WORK")
+        #print(f"kwargs {kwargs}")
+        #print(f"positional_args {positional_args}")
         # Store the positional args as a list under the '__command' key
         if positional_args:
             kwargs['__command'] = positional_args
         #print(cls)
 
         kwargs = cls.add_depth(kwargs)
-        print(json.dumps(kwargs, indent = 4))
+        #print(json.dumps(kwargs, indent = 4))
         kwargs = cls.add_depth(kwargs)
-        print(json.dumps(kwargs, indent = 4))
-        #result = cls.run(**kwargs)
-        #if not verbose:
-        #    with suppress_stdout():
-        #        result = cls.run(**kwargs)
-        #else:
-        #result = cls.run(**kwargs)
-        
-        #print(json.dumps(kwargs, indent = 4))
-        #print(json.dumps(kwargs, indent = 4))
+        #print("Debug json:"+json.dumps(kwargs, indent = 4))
+        #return
         result = cls.run(**kwargs)
         print(f"{result}")
         #return result
@@ -382,6 +408,48 @@ class BaseService():
 
         _flatten(nested, parent_key)
         return flat
+    '''
+_cmd_start kwargs: {'protocol': 'http', 'host': '127.0.0.1', 'port': '8003', 'url': '/do_upload', 'command_uri': '/cmd', 'upload_dir': './tmp/upload', 'settings_dir': './tmp/settings', 'tokens': '<<DSH_SERVER_TOKEN_LIST>>', 'openai_api_key': '<<OPENAI_API_KEY>>', 'published': []}
+_cmd_start cmdDict: {'protocol': 'http', 'host': '127.0.0.1', 'port': '8003', 'url': '/do_upload', 'command_uri': '/cmd', 'upload_dir': './tmp/upload', 'settings_dir': './tmp/settings', 'tokens': '<<DSH_SERVER_TOKEN_LIST>>', 'openai_api_key': '<<OPENAI_API_KEY>>'}
+'''
+
+    @classmethod
+    def compile_for(cls, platform: str = "auto", onefile: bool = True, output_dir: str = None):
+        """
+        Compiles the current service class to a standalone binary using Nuitka.
+
+        Parameters:
+        - platform: Target platform (currently placeholder; actual cross-compilation is not implemented).
+        - onefile: Whether to bundle output as a single executable.
+        - output_dir: Where to place the compiled binary. If None, creates a temp directory.
+        """
+        source_file = inspect.getfile(cls)
+        service_name = cls.__name__
+        output_dir = output_dir or tempfile.mkdtemp()
+        build_args = [
+            "nuitka",
+            "--standalone",
+            "--follow-imports",
+            f"--output-dir={output_dir}",
+        ]
+
+        if onefile:
+            build_args.append("--onefile")
+
+        build_args.append(source_file)
+
+        print(f"Compiling {service_name} from {source_file} to {output_dir}...")
+        subprocess.run(build_args, check=True)
+        print(f"Compilation complete. Files in: {output_dir}")
+
+    @classmethod
+    def get_binary_name(cls, platform: str = None):
+        """
+        Returns the expected output binary filename based on class name and platform.
+        """
+        name = cls.__name__
+        ext = ".exe" if (platform or sys.platform).startswith("win") else ""
+        return f"{name}{ext}"
 
 
     #@classmethod
