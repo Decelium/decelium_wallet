@@ -239,10 +239,7 @@ class BaseData(dict, metaclass=BaseDataMeta):
         else:
             value = init_dict[key]
         """Validates and converts a single key value based on its expected type."""
-        #if isinstance(expected_type, FunctionType):
-        #    value = expected_type(value)
-        from processing_graph.ProcessingNode import ProcessingNode
-        #print(f"***validate_and_convert {key}->{expected_type},{type(expected_type)}:{ isinstance(ProcessingNode.ServiceMap, type)}{ isinstance(expected_type, type) }{  isinstance(value, dict)}{ isinstance(value, dict)}")
+        
         if isinstance(expected_type, FunctionType):
             if expected_type.__code__.co_argcount == 1:
                 value = expected_type(value)
