@@ -321,6 +321,8 @@ class BaseService():
 
         nested = {}
         for flat_key, value in flat.items():
+            if isinstance(value, str) and value.lower() in ("true", "false"):
+                value = True if value.lower() == "true" else False                 
             keys = flat_key.split(sep)
             is_root_index = keys[0].isdigit()
             if is_root_index:
@@ -408,10 +410,7 @@ class BaseService():
 
         _flatten(nested, parent_key)
         return flat
-    '''
-_cmd_start kwargs: {'protocol': 'http', 'host': '127.0.0.1', 'port': '8003', 'url': '/do_upload', 'command_uri': '/cmd', 'upload_dir': './tmp/upload', 'settings_dir': './tmp/settings', 'tokens': '<<DSH_SERVER_TOKEN_LIST>>', 'openai_api_key': '<<OPENAI_API_KEY>>', 'published': []}
-_cmd_start cmdDict: {'protocol': 'http', 'host': '127.0.0.1', 'port': '8003', 'url': '/do_upload', 'command_uri': '/cmd', 'upload_dir': './tmp/upload', 'settings_dir': './tmp/settings', 'tokens': '<<DSH_SERVER_TOKEN_LIST>>', 'openai_api_key': '<<OPENAI_API_KEY>>'}
-'''
+
 
     @classmethod
     def compile_for(cls, platform: str = "auto", onefile: bool = True, output_dir: str = None):

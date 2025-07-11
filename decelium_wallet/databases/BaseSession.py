@@ -163,7 +163,7 @@ class DataSession(BaseSession):
         if self.f_unlocked not in in_dict:
             in_dict[self.f_unlocked] = False
 
-        super().__init__(in_dict, trim=trim)
+        super().__init__(in_dict, trim=trim) 
 
     def is_contained_path(self, path: str) -> bool:
         if (self[self.f_unlocked] == True):
@@ -178,14 +178,14 @@ class DataSession(BaseSession):
 
     def exists(self, path: str) -> bool:
         if not self.is_contained_path(path):
-            raise Exception(f"Not a contained path {path}")
+            raise Exception(f"7 Not a contained path {path}. You should be using a relative ../ path. is not in {self[self.f_root]}")
         assert isinstance(path, str) and path, "Must supply a non-empty path"
         full_path = os.path.join(self[self.f_root], path)
         return os.path.exists(full_path)
 
     def delete(self, path: str) -> bool:
         if not self.is_contained_path(path):
-            raise Exception(f"Not a contained path {path}")
+            raise Exception(f"6 Not a contained path {path}. You should be using a relative ../ path.  is not in {self[self.f_root]}")
         assert isinstance(path, str) and path, "Must supply a non-empty path"
         full_path = os.path.join(self[self.f_root], path)
         if os.path.isdir(full_path):
@@ -199,7 +199,7 @@ class DataSession(BaseSession):
 
     def open(self, path: str, mode: str = 'r'):
         if not self.is_contained_path(path):
-            raise Exception(f"Not a contained path {path}")
+            raise Exception(f"5 Not a contained path {path}. You should be using a relative ../ path.  is not in {self[self.f_root]}")
 
         assert isinstance(path, str) and len(path) > 0
         assert isinstance(mode, str) and mode in ['r', 'rb', 'w', 'wb']
@@ -217,7 +217,7 @@ class DataSession(BaseSession):
 
     def listdir(self, path: str):
         if not self.is_contained_path(path):
-            raise Exception(f"Not a contained path {path}")
+            raise Exception(f"4 Not a contained path {path}. You should be using a relative ../ path.  is not in {self[self.f_root]}")
 
         """Lists the contents of the directory at the given path."""
         assert isinstance(path, str) and path, "Must supply a non-empty path"
@@ -232,21 +232,21 @@ class DataSession(BaseSession):
 
     def isfile(self, path: str) -> bool:
         if not self.is_contained_path(path):
-            raise Exception(f"Not a contained path {path}")
+            raise Exception(f"3 Not a contained path {path}. You should be using a relative ../ path.  is not in {self[self.f_root]}")
 
         full_path = os.path.join(self[self.f_root], path)
         return os.path.isfile(full_path)
 
     def isfolder(self, path: str) -> bool:
         if not self.is_contained_path(path):
-            raise Exception(f"Not a contained path {path}")
+            raise Exception(f"2 Not a contained path {path}. You should be using a relative ../ path.  is not in {self[self.f_root]}")
 
         full_path = os.path.join(self[self.f_root], path)
         return os.path.isdir(full_path)
     
     def mkdir(self, path: str, exist_ok: bool = True) -> None:
         if not self.is_contained_path(path):
-            raise Exception(f"Not a contained path {path}")
+            raise Exception(f"1 Not a contained path {path}. You should be using a relative ../ path.")
 
         assert isinstance(path, str) and path, "Must supply a non-empty path"
         full_path = os.path.join(self[self.f_root], path)

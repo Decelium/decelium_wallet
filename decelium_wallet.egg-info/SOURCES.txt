@@ -52,6 +52,11 @@ decelium_wallet/commands/upload_dns.py
 decelium_wallet/commands/upload_ipfs.py
 decelium_wallet/database/__init__.py
 decelium_wallet/database/sqldb.py
+decelium_wallet/databases/BaseSession.py
+decelium_wallet/databases/BaseSession_tests.py
+decelium_wallet/databases/__init__.py
+decelium_wallet/databases/graphman_TODELETE.py
+decelium_wallet/databases/nosqlite.py
 decelium_wallet/networkchannels/__init__.py
 decelium_wallet/networkchannels/http_client.py
 decelium_wallet/networkchannels/http_server.py
